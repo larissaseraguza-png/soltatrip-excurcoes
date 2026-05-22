@@ -64,7 +64,8 @@ function FinanceiroPage() {
 
   const total = pagamentos.reduce((s, p) => (p.status === "pago" ? s + Number(p.valor) : s), 0);
   const pendente = pagamentos.reduce((s, p) => (p.status === "pendente" ? s + Number(p.valor) : s), 0);
-  const potencial = Number(excursao?.preco ?? 0) * Number(excursao?.total_vagas ?? 0);
+  const custoOnibus = Number(excursao?.custo_onibus ?? 0);
+  const lucro = total - custoOnibus;
   const nomeMap = new Map(passageiros.map((p) => [p.id, p.nome] as const));
 
   return (
