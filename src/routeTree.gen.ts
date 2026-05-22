@@ -44,6 +44,7 @@ import { Route as StaffPassageiroIdRouteImport } from './routes/staff.passageiro
 import { Route as PassageiroViagemIdRouteImport } from './routes/passageiro.viagem.$id'
 import { Route as ExcursionistaExcursaoIdRouteImport } from './routes/excursionista.excursao.$id'
 import { Route as AppExcursaoNovaRouteImport } from './routes/app.excursao.nova'
+import { Route as AppExcursaoIdRouteImport } from './routes/app.excursao.$id'
 
 const StaffRoute = StaffRouteImport.update({
   id: '/staff',
@@ -221,6 +222,11 @@ const AppExcursaoNovaRoute = AppExcursaoNovaRouteImport.update({
   path: '/excursao/nova',
   getParentRoute: () => AppRoute,
 } as any)
+const AppExcursaoIdRoute = AppExcursaoIdRouteImport.update({
+  id: '/excursao/$id',
+  path: '/excursao/$id',
+  getParentRoute: () => AppRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -254,6 +260,7 @@ export interface FileRoutesByFullPath {
   '/excursionista/': typeof ExcursionistaIndexRoute
   '/passageiro/': typeof PassageiroIndexRoute
   '/staff/': typeof StaffIndexRoute
+  '/app/excursao/$id': typeof AppExcursaoIdRoute
   '/app/excursao/nova': typeof AppExcursaoNovaRoute
   '/excursionista/excursao/$id': typeof ExcursionistaExcursaoIdRoute
   '/passageiro/viagem/$id': typeof PassageiroViagemIdRoute
@@ -287,6 +294,7 @@ export interface FileRoutesByTo {
   '/excursionista': typeof ExcursionistaIndexRoute
   '/passageiro': typeof PassageiroIndexRoute
   '/staff': typeof StaffIndexRoute
+  '/app/excursao/$id': typeof AppExcursaoIdRoute
   '/app/excursao/nova': typeof AppExcursaoNovaRoute
   '/excursionista/excursao/$id': typeof ExcursionistaExcursaoIdRoute
   '/passageiro/viagem/$id': typeof PassageiroViagemIdRoute
@@ -325,6 +333,7 @@ export interface FileRoutesById {
   '/excursionista/': typeof ExcursionistaIndexRoute
   '/passageiro/': typeof PassageiroIndexRoute
   '/staff/': typeof StaffIndexRoute
+  '/app/excursao/$id': typeof AppExcursaoIdRoute
   '/app/excursao/nova': typeof AppExcursaoNovaRoute
   '/excursionista/excursao/$id': typeof ExcursionistaExcursaoIdRoute
   '/passageiro/viagem/$id': typeof PassageiroViagemIdRoute
@@ -364,6 +373,7 @@ export interface FileRouteTypes {
     | '/excursionista/'
     | '/passageiro/'
     | '/staff/'
+    | '/app/excursao/$id'
     | '/app/excursao/nova'
     | '/excursionista/excursao/$id'
     | '/passageiro/viagem/$id'
@@ -397,6 +407,7 @@ export interface FileRouteTypes {
     | '/excursionista'
     | '/passageiro'
     | '/staff'
+    | '/app/excursao/$id'
     | '/app/excursao/nova'
     | '/excursionista/excursao/$id'
     | '/passageiro/viagem/$id'
@@ -434,6 +445,7 @@ export interface FileRouteTypes {
     | '/excursionista/'
     | '/passageiro/'
     | '/staff/'
+    | '/app/excursao/$id'
     | '/app/excursao/nova'
     | '/excursionista/excursao/$id'
     | '/passageiro/viagem/$id'
@@ -696,16 +708,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppExcursaoNovaRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/excursao/$id': {
+      id: '/app/excursao/$id'
+      path: '/excursao/$id'
+      fullPath: '/app/excursao/$id'
+      preLoaderRoute: typeof AppExcursaoIdRouteImport
+      parentRoute: typeof AppRoute
+    }
   }
 }
 
 interface AppRouteChildren {
   AppIndexRoute: typeof AppIndexRoute
+  AppExcursaoIdRoute: typeof AppExcursaoIdRoute
   AppExcursaoNovaRoute: typeof AppExcursaoNovaRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
   AppIndexRoute: AppIndexRoute,
+  AppExcursaoIdRoute: AppExcursaoIdRoute,
   AppExcursaoNovaRoute: AppExcursaoNovaRoute,
 }
 
