@@ -51,7 +51,7 @@ function AuthPage() {
   const [info, setInfo] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
-  if (loading || (user && roleLoading)) {
+  if (loading || (!busy && user && roleLoading)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="h-6 w-6 animate-spin text-primary" />
@@ -59,12 +59,8 @@ function AuthPage() {
     );
   }
 
-  // Já autenticado: vai pra área do papel
-  if (user && role) return <Navigate to={roleHome[role]} />;
-  // Autenticado sem papel: força logout pra reiniciar fluxo
-  if (user && !role) {
-    supabase.auth.signOut();
-  }
+  // Já autenticado: vai pra área do papel, mas nunca interrompe uma tentativa de login/cadastro em andamento.
+  if (!busy && user && role) return <Navigate to={roleHome[role]} />;
 
   function pickRole(r: AppRole) {
     setError(null);
@@ -105,7 +101,7 @@ function AuthPage() {
         if (roleErr) throw roleErr;
 
         if (data.session) {
-          navigate({ to: roleHome[selectedRole] });
+          navigate({ to: roleHome[selectedRole], replace: true });
           return;
         }
         setInfo("Conta criada! Faça login para continuar.");
@@ -117,18 +113,19 @@ function AuthPage() {
         if (!data.user) throw new Error("Falha ao entrar.");
 
         // Valida função
-        const { data: rRow } = await supabase
+        const { data: rRow, error: roleErr } = await supabase
           .from("user_roles")
           .select("role")
           .eq("user_id", data.user.id)
           .maybeSingle();
+        if (roleErr) throw roleErr;
 
         const userRole = rRow?.role as AppRole | undefined;
         if (!userRole || userRole !== selectedRole) {
           await supabase.auth.signOut();
           throw new Error("Você não tem acesso a este tipo de perfil");
         }
-        navigate({ to: roleHome[userRole] });
+        navigate({ to: roleHome[userRole], replace: true });
       }
     } catch (err: any) {
       setError(err.message ?? "Erro inesperado");
