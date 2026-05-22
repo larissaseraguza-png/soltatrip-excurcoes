@@ -87,11 +87,20 @@ function FinanceiroPage() {
         </button>
       </div>
 
-      <div className="grid grid-cols-3 gap-2 mb-5">
-        <Stat icon={CheckCircle2} label="Recebido" value={`R$ ${total.toFixed(0)}`} color="text-neon-green" />
-        <Stat icon={Clock} label="A receber" value={`R$ ${pendente.toFixed(0)}`} color="text-yellow-400" />
-        <Stat icon={TrendingUp} label="Potencial" value={`R$ ${potencial.toFixed(0)}`} color="text-neon-pink" />
+      <div className="grid grid-cols-3 gap-2 mb-3">
+        <Stat icon={CheckCircle2} label="Receita" value={`R$ ${total.toFixed(0)}`} color="text-neon-green" />
+        <Stat icon={Bus} label="Despesas" value={`R$ ${custoOnibus.toFixed(0)}`} color="text-red-400" />
+        <Stat icon={TrendingUp} label="Lucro" value={`R$ ${lucro.toFixed(0)}`} color={lucro >= 0 ? "text-neon-pink" : "text-red-400"} />
       </div>
+
+      <div className="glass rounded-2xl p-3 mb-3 flex items-center gap-2">
+        <Clock className="h-4 w-4 text-yellow-400" />
+        <span className="text-xs text-muted-foreground">A receber:</span>
+        <span className="text-sm font-bold ml-auto">R$ {pendente.toFixed(2)}</span>
+      </div>
+
+      <CustoOnibusEditor excursaoId={id} valorAtual={custoOnibus} />
+
 
       {isLoading ? (
         <div className="flex justify-center py-10"><Loader2 className="h-5 w-5 animate-spin text-primary" /></div>
