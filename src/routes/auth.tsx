@@ -46,7 +46,7 @@ function AuthPage() {
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
-        navigate({ to: "/app" });
+        navigate({ to: "/selecionar-perfil" });
       }
     } catch (err: any) {
       setError(err.message ?? "Erro inesperado");
