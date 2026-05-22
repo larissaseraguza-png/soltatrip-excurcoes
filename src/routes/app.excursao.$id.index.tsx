@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useParams, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, Calendar, MapPin, Clock, Users, DollarSign, Loader2, Trash2, ChevronRight, Wallet, QrCode, MessageCircle } from "lucide-react";
+import { ArrowLeft, Calendar, MapPin, Clock, Users, DollarSign, Loader2, Trash2, ChevronRight, Wallet, QrCode, MessageCircle, MapPinned } from "lucide-react";
 
 export const Route = createFileRoute("/app/excursao/$id/")({
   component: ExcursaoDetalhe,
@@ -77,8 +77,11 @@ function ExcursaoDetalhe() {
         </div>
       )}
 
+      <PontosSummary excursaoId={id} />
+
       <div className="space-y-2 mb-6">
         <NavCard to="/app/excursao/$id/passageiros" id={id} icon={Users} title="Passageiros" desc="Cadastrar, confirmar e gerenciar a lista" />
+        <NavCard to="/app/excursao/$id/pontos" id={id} icon={MapPinned} title="Pontos de embarque" desc="Definir locais e horários de embarque" />
         <NavCard to="/app/excursao/$id/financeiro" id={id} icon={Wallet} title="Financeiro" desc="Lançar pagamentos e acompanhar entradas" />
         <NavCard to="/app/excursao/$id/checkin" id={id} icon={QrCode} title="Check-in QR" desc="Embarcar passageiros com leitor de QR" />
         <NavCard to="/app/excursao/$id/chat" id={id} icon={MessageCircle} title="Chat da viagem" desc="Conversa em tempo real com o grupo" />
@@ -116,5 +119,64 @@ function NavCard({ to, id, icon: Icon, title, desc }: { to: string; id: string; 
       </div>
       <ChevronRight className="h-4 w-4 text-muted-foreground" />
     </Link>
+  );
+}
+
+function PontosSummary({ excursaoId }: { excursaoId: string }) {
+  const { data: pontos = [] } = useQuery({
+    queryKey: ["pontos", excursaoId],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("pontos_embarque")
+        .select("id, nome, horario")
+        .eq("excursao_id", excursaoId)
+        .order("ordem", { ascending: true });
+      return (data ?? []) as { id: string; nome: string; horario: string | null }[];
+    },
+  });
+  const { data: counts = {} } = useQuery({
+    queryKey: ["pontos-counts", excursaoId],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("passageiros")
+        .select("ponto_embarque_id")
+        .eq("excursao_id", excursaoId);
+      const map: Record<string, number> = {};
+      (data ?? []).forEach((p: any) => {
+        const k = p.ponto_embarque_id ?? "_sem";
+        map[k] = (map[k] ?? 0) + 1;
+      });
+      return map;
+    },
+  });
+
+  if (pontos.length === 0) return null;
+  const semPonto = counts["_sem"] ?? 0;
+
+  return (
+    <div className="glass rounded-2xl p-4 mb-4">
+      <div className="flex items-center justify-between mb-3">
+        <p className="text-xs uppercase tracking-wider text-muted-foreground font-bold">Ocupação por ponto</p>
+        <Link to="/app/excursao/$id/pontos" params={{ id: excursaoId }} className="text-xs font-bold text-neon-pink">Gerenciar</Link>
+      </div>
+      <ul className="space-y-1.5">
+        {pontos.map((p) => (
+          <li key={p.id} className="flex items-center justify-between text-sm">
+            <span className="flex items-center gap-2 min-w-0">
+              <MapPin className="h-3.5 w-3.5 text-neon-pink shrink-0" />
+              <span className="truncate">{p.nome}</span>
+              {p.horario && <span className="text-xs text-muted-foreground">{p.horario}</span>}
+            </span>
+            <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-secondary">{counts[p.id] ?? 0}</span>
+          </li>
+        ))}
+        {semPonto > 0 && (
+          <li className="flex items-center justify-between text-sm">
+            <span className="text-muted-foreground italic">Sem ponto definido</span>
+            <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-yellow-500/10 text-yellow-400">{semPonto}</span>
+          </li>
+        )}
+      </ul>
+    </div>
   );
 }
