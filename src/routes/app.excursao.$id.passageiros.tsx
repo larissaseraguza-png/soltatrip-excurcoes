@@ -255,7 +255,15 @@ function PassageirosPage() {
         </ul>
       )}
 
-      {open && <NewPassageiroModal excursaoId={id} pontos={pontos} onClose={() => setOpen(false)} />}
+      {open && (
+        <NewPassageiroModal
+          excursaoId={id}
+          pontos={pontos}
+          totalVagas={excursao?.total_vagas ?? 0}
+          taken={taken}
+          onClose={() => setOpen(false)}
+        />
+      )}
     </div>
   );
 }
