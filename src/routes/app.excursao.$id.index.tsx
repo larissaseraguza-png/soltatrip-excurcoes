@@ -8,7 +8,7 @@ export const Route = createFileRoute("/app/excursao/$id/")({
 });
 
 function ExcursaoDetalhe() {
-  const { id } = useParams({ from: "/app/excursao/$id" });
+  const { id } = useParams({ from: "/app/excursao/$id/" });
   const navigate = useNavigate();
   const { data, isLoading } = useQuery({
     queryKey: ["excursao", id],
