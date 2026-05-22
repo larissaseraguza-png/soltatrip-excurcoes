@@ -1,8 +1,9 @@
 import { createFileRoute, Link, useParams } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, Plus, Loader2, Trash2, QrCode, UserCheck, Search, MapPin } from "lucide-react";
-import { useState } from "react";
+import { ArrowLeft, Plus, Loader2, Trash2, QrCode, UserCheck, Search, MapPin, Armchair } from "lucide-react";
+import { useState, useMemo } from "react";
+import { SeatMap } from "@/components/SeatMap";
 
 export const Route = createFileRoute("/app/excursao/$id/passageiros")({
   component: PassageirosPage,
@@ -27,12 +28,21 @@ function PassageirosPage() {
   const [search, setSearch] = useState("");
   const [pontoFilter, setPontoFilter] = useState<string>("todos");
   const [open, setOpen] = useState(false);
+  const [showMap, setShowMap] = useState(false);
 
   const { data: excursao } = useQuery({
     queryKey: ["excursao", id],
     queryFn: async () => {
       const { data } = await supabase.from("excursoes").select("titulo,total_vagas").eq("id", id).single();
       return data;
+    },
+  });
+
+  const { data: pagamentos = [] } = useQuery({
+    queryKey: ["pagamentos", id],
+    queryFn: async () => {
+      const { data } = await supabase.from("pagamentos").select("passageiro_id,status").eq("excursao_id", id);
+      return data ?? [];
     },
   });
 
@@ -90,6 +100,22 @@ function PassageirosPage() {
 
   const pontoNome = (pid: string | null) => pontos.find((p) => p.id === pid)?.nome ?? null;
 
+  const pagoMap = useMemo(() => {
+    const m = new Map<string, boolean>();
+    for (const pg of pagamentos) {
+      if (pg.status === "pago") m.set(pg.passageiro_id, true);
+    }
+    return m;
+  }, [pagamentos]);
+
+  const taken = useMemo(() => {
+    const t: Record<string, { pago: boolean; nome: string }> = {};
+    for (const p of passageiros) {
+      if (p.assento) t[p.assento] = { pago: !!pagoMap.get(p.id), nome: p.nome };
+    }
+    return t;
+  }, [passageiros, pagoMap]);
+
   const filtered = passageiros.filter((p) => {
     const matchSearch =
       p.nome.toLowerCase().includes(search.toLowerCase()) ||
@@ -132,6 +158,20 @@ function PassageirosPage() {
         />
       </div>
 
+      <button
+        onClick={() => setShowMap((v) => !v)}
+        className="w-full mb-4 inline-flex items-center justify-center gap-2 h-10 rounded-xl glass text-sm font-bold"
+      >
+        <Armchair className="h-4 w-4 text-neon-green" />
+        {showMap ? "Ocultar mapa de assentos" : "Ver mapa de assentos"}
+      </button>
+
+      {showMap && (
+        <div className="mb-4">
+          <SeatMap total={excursao?.total_vagas ?? 0} taken={taken} />
+        </div>
+      )}
+
       {pontos.length > 0 && (
         <div className="flex gap-2 overflow-x-auto pb-1 mb-4 -mx-1 px-1">
           <Chip active={pontoFilter === "todos"} onClick={() => setPontoFilter("todos")}>Todos</Chip>
@@ -143,6 +183,7 @@ function PassageirosPage() {
           <Chip active={pontoFilter === "_sem"} onClick={() => setPontoFilter("_sem")}>Sem ponto</Chip>
         </div>
       )}
+
 
       {isLoading ? (
         <div className="flex justify-center py-10"><Loader2 className="h-5 w-5 animate-spin text-primary" /></div>
@@ -214,7 +255,15 @@ function PassageirosPage() {
         </ul>
       )}
 
-      {open && <NewPassageiroModal excursaoId={id} pontos={pontos} onClose={() => setOpen(false)} />}
+      {open && (
+        <NewPassageiroModal
+          excursaoId={id}
+          pontos={pontos}
+          totalVagas={excursao?.total_vagas ?? 0}
+          taken={taken}
+          onClose={() => setOpen(false)}
+        />
+      )}
     </div>
   );
 }
@@ -232,7 +281,19 @@ function Chip({ children, active, onClick }: { children: React.ReactNode; active
   );
 }
 
-function NewPassageiroModal({ excursaoId, pontos, onClose }: { excursaoId: string; pontos: Ponto[]; onClose: () => void }) {
+function NewPassageiroModal({
+  excursaoId,
+  pontos,
+  totalVagas,
+  taken,
+  onClose,
+}: {
+  excursaoId: string;
+  pontos: Ponto[];
+  totalVagas: number;
+  taken: Record<string, { pago: boolean; nome: string }>;
+  onClose: () => void;
+}) {
   const qc = useQueryClient();
   const [form, setForm] = useState({ nome: "", telefone: "", documento: "", assento: "", ponto_embarque_id: "" });
   const [saving, setSaving] = useState(false);
@@ -256,20 +317,34 @@ function NewPassageiroModal({ excursaoId, pontos, onClose }: { excursaoId: strin
   }
 
   return (
-    <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur flex items-end sm:items-center justify-center p-4" onClick={onClose}>
+    <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur flex items-end sm:items-center justify-center p-4 overflow-y-auto" onClick={onClose}>
       <form
         onSubmit={save}
         onClick={(e) => e.stopPropagation()}
-        className="glass rounded-3xl p-6 w-full max-w-md border border-border"
+        className="glass rounded-3xl p-6 w-full max-w-md border border-border my-4"
       >
         <h2 className="font-display text-xl font-black mb-4">Novo passageiro</h2>
         <div className="space-y-3">
           <Field label="Nome" required value={form.nome} onChange={(v) => setForm({ ...form, nome: v })} />
-          <div className="grid grid-cols-2 gap-3">
-            <Field label="Telefone" value={form.telefone} onChange={(v) => setForm({ ...form, telefone: v })} />
-            <Field label="Assento" value={form.assento} onChange={(v) => setForm({ ...form, assento: v })} />
-          </div>
+          <Field label="Telefone" value={form.telefone} onChange={(v) => setForm({ ...form, telefone: v })} />
           <Field label="Documento" value={form.documento} onChange={(v) => setForm({ ...form, documento: v })} />
+
+          {totalVagas > 0 && (
+            <div>
+              <span className="text-[10px] uppercase tracking-wider font-bold text-muted-foreground">
+                Escolha a poltrona {form.assento && <span className="text-neon-pink">— Selecionado: {form.assento}</span>}
+              </span>
+              <div className="mt-1">
+                <SeatMap
+                  total={totalVagas}
+                  taken={taken}
+                  selected={form.assento || null}
+                  onSelect={(a) => setForm({ ...form, assento: form.assento === a ? "" : a })}
+                />
+              </div>
+            </div>
+          )}
+
           <label className="block">
             <span className="text-[10px] uppercase tracking-wider font-bold text-muted-foreground">Ponto de embarque</span>
             {pontos.length === 0 ? (
