@@ -33,16 +33,21 @@ function AuthPage() {
     setBusy(true);
     try {
       if (mode === "signup") {
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email,
           password,
           options: {
             data: { full_name: fullName },
-            emailRedirectTo: `${window.location.origin}/app`,
+            emailRedirectTo: `${window.location.origin}/selecionar-perfil`,
           },
         });
         if (error) throw error;
-        setInfo("Conta criada! Verifique seu e-mail para confirmar.");
+        if (data.session) {
+          navigate({ to: "/selecionar-perfil" });
+        } else {
+          setInfo("Conta criada! Faça login para continuar.");
+          setMode("signin");
+        }
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
