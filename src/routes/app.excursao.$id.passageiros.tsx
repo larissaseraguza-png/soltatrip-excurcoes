@@ -1,8 +1,9 @@
 import { createFileRoute, Link, useParams } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, Plus, Loader2, Trash2, QrCode, UserCheck, Search, MapPin } from "lucide-react";
-import { useState } from "react";
+import { ArrowLeft, Plus, Loader2, Trash2, QrCode, UserCheck, Search, MapPin, Armchair } from "lucide-react";
+import { useState, useMemo } from "react";
+import { SeatMap } from "@/components/SeatMap";
 
 export const Route = createFileRoute("/app/excursao/$id/passageiros")({
   component: PassageirosPage,
