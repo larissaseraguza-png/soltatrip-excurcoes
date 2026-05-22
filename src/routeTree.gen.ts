@@ -9,17 +9,33 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as StaffRouteImport } from './routes/staff'
 import { Route as ExcursionistaRouteImport } from './routes/excursionista'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as StaffIndexRouteImport } from './routes/staff.index'
 import { Route as ExcursionistaIndexRouteImport } from './routes/excursionista.index'
+import { Route as StaffSuporteRouteImport } from './routes/staff.suporte'
+import { Route as StaffPassageirosRouteImport } from './routes/staff.passageiros'
+import { Route as StaffOnibusRouteImport } from './routes/staff.onibus'
+import { Route as StaffMensagensRouteImport } from './routes/staff.mensagens'
+import { Route as StaffFinanceiroRouteImport } from './routes/staff.financeiro'
+import { Route as StaffEquipeRouteImport } from './routes/staff.equipe'
+import { Route as StaffConfiguracoesRouteImport } from './routes/staff.configuracoes'
+import { Route as StaffCheckinRouteImport } from './routes/staff.checkin'
 import { Route as ExcursionistaPassageirosRouteImport } from './routes/excursionista.passageiros'
 import { Route as ExcursionistaInfoRouteImport } from './routes/excursionista.info'
 import { Route as ExcursionistaFinanceiroRouteImport } from './routes/excursionista.financeiro'
 import { Route as ExcursionistaEditarRouteImport } from './routes/excursionista.editar'
 import { Route as ExcursionistaCheckinRouteImport } from './routes/excursionista.checkin'
 import { Route as ExcursionistaChatRouteImport } from './routes/excursionista.chat'
+import { Route as StaffPassageiroIdRouteImport } from './routes/staff.passageiro.$id'
 import { Route as ExcursionistaExcursaoIdRouteImport } from './routes/excursionista.excursao.$id'
 
+const StaffRoute = StaffRouteImport.update({
+  id: '/staff',
+  path: '/staff',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ExcursionistaRoute = ExcursionistaRouteImport.update({
   id: '/excursionista',
   path: '/excursionista',
@@ -30,10 +46,55 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const StaffIndexRoute = StaffIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => StaffRoute,
+} as any)
 const ExcursionistaIndexRoute = ExcursionistaIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => ExcursionistaRoute,
+} as any)
+const StaffSuporteRoute = StaffSuporteRouteImport.update({
+  id: '/suporte',
+  path: '/suporte',
+  getParentRoute: () => StaffRoute,
+} as any)
+const StaffPassageirosRoute = StaffPassageirosRouteImport.update({
+  id: '/passageiros',
+  path: '/passageiros',
+  getParentRoute: () => StaffRoute,
+} as any)
+const StaffOnibusRoute = StaffOnibusRouteImport.update({
+  id: '/onibus',
+  path: '/onibus',
+  getParentRoute: () => StaffRoute,
+} as any)
+const StaffMensagensRoute = StaffMensagensRouteImport.update({
+  id: '/mensagens',
+  path: '/mensagens',
+  getParentRoute: () => StaffRoute,
+} as any)
+const StaffFinanceiroRoute = StaffFinanceiroRouteImport.update({
+  id: '/financeiro',
+  path: '/financeiro',
+  getParentRoute: () => StaffRoute,
+} as any)
+const StaffEquipeRoute = StaffEquipeRouteImport.update({
+  id: '/equipe',
+  path: '/equipe',
+  getParentRoute: () => StaffRoute,
+} as any)
+const StaffConfiguracoesRoute = StaffConfiguracoesRouteImport.update({
+  id: '/configuracoes',
+  path: '/configuracoes',
+  getParentRoute: () => StaffRoute,
+} as any)
+const StaffCheckinRoute = StaffCheckinRouteImport.update({
+  id: '/checkin',
+  path: '/checkin',
+  getParentRoute: () => StaffRoute,
 } as any)
 const ExcursionistaPassageirosRoute =
   ExcursionistaPassageirosRouteImport.update({
@@ -66,6 +127,11 @@ const ExcursionistaChatRoute = ExcursionistaChatRouteImport.update({
   path: '/chat',
   getParentRoute: () => ExcursionistaRoute,
 } as any)
+const StaffPassageiroIdRoute = StaffPassageiroIdRouteImport.update({
+  id: '/passageiro/$id',
+  path: '/passageiro/$id',
+  getParentRoute: () => StaffRoute,
+} as any)
 const ExcursionistaExcursaoIdRoute = ExcursionistaExcursaoIdRouteImport.update({
   id: '/excursao/$id',
   path: '/excursao/$id',
@@ -75,14 +141,25 @@ const ExcursionistaExcursaoIdRoute = ExcursionistaExcursaoIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/excursionista': typeof ExcursionistaRouteWithChildren
+  '/staff': typeof StaffRouteWithChildren
   '/excursionista/chat': typeof ExcursionistaChatRoute
   '/excursionista/checkin': typeof ExcursionistaCheckinRoute
   '/excursionista/editar': typeof ExcursionistaEditarRoute
   '/excursionista/financeiro': typeof ExcursionistaFinanceiroRoute
   '/excursionista/info': typeof ExcursionistaInfoRoute
   '/excursionista/passageiros': typeof ExcursionistaPassageirosRoute
+  '/staff/checkin': typeof StaffCheckinRoute
+  '/staff/configuracoes': typeof StaffConfiguracoesRoute
+  '/staff/equipe': typeof StaffEquipeRoute
+  '/staff/financeiro': typeof StaffFinanceiroRoute
+  '/staff/mensagens': typeof StaffMensagensRoute
+  '/staff/onibus': typeof StaffOnibusRoute
+  '/staff/passageiros': typeof StaffPassageirosRoute
+  '/staff/suporte': typeof StaffSuporteRoute
   '/excursionista/': typeof ExcursionistaIndexRoute
+  '/staff/': typeof StaffIndexRoute
   '/excursionista/excursao/$id': typeof ExcursionistaExcursaoIdRoute
+  '/staff/passageiro/$id': typeof StaffPassageiroIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -92,35 +169,67 @@ export interface FileRoutesByTo {
   '/excursionista/financeiro': typeof ExcursionistaFinanceiroRoute
   '/excursionista/info': typeof ExcursionistaInfoRoute
   '/excursionista/passageiros': typeof ExcursionistaPassageirosRoute
+  '/staff/checkin': typeof StaffCheckinRoute
+  '/staff/configuracoes': typeof StaffConfiguracoesRoute
+  '/staff/equipe': typeof StaffEquipeRoute
+  '/staff/financeiro': typeof StaffFinanceiroRoute
+  '/staff/mensagens': typeof StaffMensagensRoute
+  '/staff/onibus': typeof StaffOnibusRoute
+  '/staff/passageiros': typeof StaffPassageirosRoute
+  '/staff/suporte': typeof StaffSuporteRoute
   '/excursionista': typeof ExcursionistaIndexRoute
+  '/staff': typeof StaffIndexRoute
   '/excursionista/excursao/$id': typeof ExcursionistaExcursaoIdRoute
+  '/staff/passageiro/$id': typeof StaffPassageiroIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/excursionista': typeof ExcursionistaRouteWithChildren
+  '/staff': typeof StaffRouteWithChildren
   '/excursionista/chat': typeof ExcursionistaChatRoute
   '/excursionista/checkin': typeof ExcursionistaCheckinRoute
   '/excursionista/editar': typeof ExcursionistaEditarRoute
   '/excursionista/financeiro': typeof ExcursionistaFinanceiroRoute
   '/excursionista/info': typeof ExcursionistaInfoRoute
   '/excursionista/passageiros': typeof ExcursionistaPassageirosRoute
+  '/staff/checkin': typeof StaffCheckinRoute
+  '/staff/configuracoes': typeof StaffConfiguracoesRoute
+  '/staff/equipe': typeof StaffEquipeRoute
+  '/staff/financeiro': typeof StaffFinanceiroRoute
+  '/staff/mensagens': typeof StaffMensagensRoute
+  '/staff/onibus': typeof StaffOnibusRoute
+  '/staff/passageiros': typeof StaffPassageirosRoute
+  '/staff/suporte': typeof StaffSuporteRoute
   '/excursionista/': typeof ExcursionistaIndexRoute
+  '/staff/': typeof StaffIndexRoute
   '/excursionista/excursao/$id': typeof ExcursionistaExcursaoIdRoute
+  '/staff/passageiro/$id': typeof StaffPassageiroIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
     | '/excursionista'
+    | '/staff'
     | '/excursionista/chat'
     | '/excursionista/checkin'
     | '/excursionista/editar'
     | '/excursionista/financeiro'
     | '/excursionista/info'
     | '/excursionista/passageiros'
+    | '/staff/checkin'
+    | '/staff/configuracoes'
+    | '/staff/equipe'
+    | '/staff/financeiro'
+    | '/staff/mensagens'
+    | '/staff/onibus'
+    | '/staff/passageiros'
+    | '/staff/suporte'
     | '/excursionista/'
+    | '/staff/'
     | '/excursionista/excursao/$id'
+    | '/staff/passageiro/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -130,29 +239,58 @@ export interface FileRouteTypes {
     | '/excursionista/financeiro'
     | '/excursionista/info'
     | '/excursionista/passageiros'
+    | '/staff/checkin'
+    | '/staff/configuracoes'
+    | '/staff/equipe'
+    | '/staff/financeiro'
+    | '/staff/mensagens'
+    | '/staff/onibus'
+    | '/staff/passageiros'
+    | '/staff/suporte'
     | '/excursionista'
+    | '/staff'
     | '/excursionista/excursao/$id'
+    | '/staff/passageiro/$id'
   id:
     | '__root__'
     | '/'
     | '/excursionista'
+    | '/staff'
     | '/excursionista/chat'
     | '/excursionista/checkin'
     | '/excursionista/editar'
     | '/excursionista/financeiro'
     | '/excursionista/info'
     | '/excursionista/passageiros'
+    | '/staff/checkin'
+    | '/staff/configuracoes'
+    | '/staff/equipe'
+    | '/staff/financeiro'
+    | '/staff/mensagens'
+    | '/staff/onibus'
+    | '/staff/passageiros'
+    | '/staff/suporte'
     | '/excursionista/'
+    | '/staff/'
     | '/excursionista/excursao/$id'
+    | '/staff/passageiro/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ExcursionistaRoute: typeof ExcursionistaRouteWithChildren
+  StaffRoute: typeof StaffRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/staff': {
+      id: '/staff'
+      path: '/staff'
+      fullPath: '/staff'
+      preLoaderRoute: typeof StaffRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/excursionista': {
       id: '/excursionista'
       path: '/excursionista'
@@ -167,12 +305,75 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/staff/': {
+      id: '/staff/'
+      path: '/'
+      fullPath: '/staff/'
+      preLoaderRoute: typeof StaffIndexRouteImport
+      parentRoute: typeof StaffRoute
+    }
     '/excursionista/': {
       id: '/excursionista/'
       path: '/'
       fullPath: '/excursionista/'
       preLoaderRoute: typeof ExcursionistaIndexRouteImport
       parentRoute: typeof ExcursionistaRoute
+    }
+    '/staff/suporte': {
+      id: '/staff/suporte'
+      path: '/suporte'
+      fullPath: '/staff/suporte'
+      preLoaderRoute: typeof StaffSuporteRouteImport
+      parentRoute: typeof StaffRoute
+    }
+    '/staff/passageiros': {
+      id: '/staff/passageiros'
+      path: '/passageiros'
+      fullPath: '/staff/passageiros'
+      preLoaderRoute: typeof StaffPassageirosRouteImport
+      parentRoute: typeof StaffRoute
+    }
+    '/staff/onibus': {
+      id: '/staff/onibus'
+      path: '/onibus'
+      fullPath: '/staff/onibus'
+      preLoaderRoute: typeof StaffOnibusRouteImport
+      parentRoute: typeof StaffRoute
+    }
+    '/staff/mensagens': {
+      id: '/staff/mensagens'
+      path: '/mensagens'
+      fullPath: '/staff/mensagens'
+      preLoaderRoute: typeof StaffMensagensRouteImport
+      parentRoute: typeof StaffRoute
+    }
+    '/staff/financeiro': {
+      id: '/staff/financeiro'
+      path: '/financeiro'
+      fullPath: '/staff/financeiro'
+      preLoaderRoute: typeof StaffFinanceiroRouteImport
+      parentRoute: typeof StaffRoute
+    }
+    '/staff/equipe': {
+      id: '/staff/equipe'
+      path: '/equipe'
+      fullPath: '/staff/equipe'
+      preLoaderRoute: typeof StaffEquipeRouteImport
+      parentRoute: typeof StaffRoute
+    }
+    '/staff/configuracoes': {
+      id: '/staff/configuracoes'
+      path: '/configuracoes'
+      fullPath: '/staff/configuracoes'
+      preLoaderRoute: typeof StaffConfiguracoesRouteImport
+      parentRoute: typeof StaffRoute
+    }
+    '/staff/checkin': {
+      id: '/staff/checkin'
+      path: '/checkin'
+      fullPath: '/staff/checkin'
+      preLoaderRoute: typeof StaffCheckinRouteImport
+      parentRoute: typeof StaffRoute
     }
     '/excursionista/passageiros': {
       id: '/excursionista/passageiros'
@@ -216,6 +417,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ExcursionistaChatRouteImport
       parentRoute: typeof ExcursionistaRoute
     }
+    '/staff/passageiro/$id': {
+      id: '/staff/passageiro/$id'
+      path: '/passageiro/$id'
+      fullPath: '/staff/passageiro/$id'
+      preLoaderRoute: typeof StaffPassageiroIdRouteImport
+      parentRoute: typeof StaffRoute
+    }
     '/excursionista/excursao/$id': {
       id: '/excursionista/excursao/$id'
       path: '/excursao/$id'
@@ -252,9 +460,38 @@ const ExcursionistaRouteWithChildren = ExcursionistaRoute._addFileChildren(
   ExcursionistaRouteChildren,
 )
 
+interface StaffRouteChildren {
+  StaffCheckinRoute: typeof StaffCheckinRoute
+  StaffConfiguracoesRoute: typeof StaffConfiguracoesRoute
+  StaffEquipeRoute: typeof StaffEquipeRoute
+  StaffFinanceiroRoute: typeof StaffFinanceiroRoute
+  StaffMensagensRoute: typeof StaffMensagensRoute
+  StaffOnibusRoute: typeof StaffOnibusRoute
+  StaffPassageirosRoute: typeof StaffPassageirosRoute
+  StaffSuporteRoute: typeof StaffSuporteRoute
+  StaffIndexRoute: typeof StaffIndexRoute
+  StaffPassageiroIdRoute: typeof StaffPassageiroIdRoute
+}
+
+const StaffRouteChildren: StaffRouteChildren = {
+  StaffCheckinRoute: StaffCheckinRoute,
+  StaffConfiguracoesRoute: StaffConfiguracoesRoute,
+  StaffEquipeRoute: StaffEquipeRoute,
+  StaffFinanceiroRoute: StaffFinanceiroRoute,
+  StaffMensagensRoute: StaffMensagensRoute,
+  StaffOnibusRoute: StaffOnibusRoute,
+  StaffPassageirosRoute: StaffPassageirosRoute,
+  StaffSuporteRoute: StaffSuporteRoute,
+  StaffIndexRoute: StaffIndexRoute,
+  StaffPassageiroIdRoute: StaffPassageiroIdRoute,
+}
+
+const StaffRouteWithChildren = StaffRoute._addFileChildren(StaffRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ExcursionistaRoute: ExcursionistaRouteWithChildren,
+  StaffRoute: StaffRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
