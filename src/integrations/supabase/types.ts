@@ -14,6 +14,45 @@ export type Database = {
   }
   public: {
     Tables: {
+      checkins: {
+        Row: {
+          created_at: string
+          excursao_id: string
+          feito_por: string | null
+          id: string
+          passageiro_id: string
+        }
+        Insert: {
+          created_at?: string
+          excursao_id: string
+          feito_por?: string | null
+          id?: string
+          passageiro_id: string
+        }
+        Update: {
+          created_at?: string
+          excursao_id?: string
+          feito_por?: string | null
+          id?: string
+          passageiro_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "checkins_excursao_id_fkey"
+            columns: ["excursao_id"]
+            isOneToOne: false
+            referencedRelation: "excursoes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "checkins_passageiro_id_fkey"
+            columns: ["passageiro_id"]
+            isOneToOne: false
+            referencedRelation: "passageiros"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       excursoes: {
         Row: {
           banner_url: string | null
@@ -70,6 +109,41 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      mensagens: {
+        Row: {
+          autor_id: string
+          autor_nome: string | null
+          conteudo: string
+          created_at: string
+          excursao_id: string
+          id: string
+        }
+        Insert: {
+          autor_id: string
+          autor_nome?: string | null
+          conteudo: string
+          created_at?: string
+          excursao_id: string
+          id?: string
+        }
+        Update: {
+          autor_id?: string
+          autor_nome?: string | null
+          conteudo?: string
+          created_at?: string
+          excursao_id?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mensagens_excursao_id_fkey"
+            columns: ["excursao_id"]
+            isOneToOne: false
+            referencedRelation: "excursoes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       pagamentos: {
         Row: {
