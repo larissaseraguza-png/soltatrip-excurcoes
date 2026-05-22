@@ -158,6 +158,20 @@ function PassageirosPage() {
         />
       </div>
 
+      <button
+        onClick={() => setShowMap((v) => !v)}
+        className="w-full mb-4 inline-flex items-center justify-center gap-2 h-10 rounded-xl glass text-sm font-bold"
+      >
+        <Armchair className="h-4 w-4 text-neon-green" />
+        {showMap ? "Ocultar mapa de assentos" : "Ver mapa de assentos"}
+      </button>
+
+      {showMap && (
+        <div className="mb-4">
+          <SeatMap total={excursao?.total_vagas ?? 0} taken={taken} />
+        </div>
+      )}
+
       {pontos.length > 0 && (
         <div className="flex gap-2 overflow-x-auto pb-1 mb-4 -mx-1 px-1">
           <Chip active={pontoFilter === "todos"} onClick={() => setPontoFilter("todos")}>Todos</Chip>
@@ -169,6 +183,7 @@ function PassageirosPage() {
           <Chip active={pontoFilter === "_sem"} onClick={() => setPontoFilter("_sem")}>Sem ponto</Chip>
         </div>
       )}
+
 
       {isLoading ? (
         <div className="flex justify-center py-10"><Loader2 className="h-5 w-5 animate-spin text-primary" /></div>
