@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
+import type { User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 
 export type AppRole = "excursionista" | "staff" | "passageiro";
 
-export function useRole() {
-  const { user, loading: authLoading } = useAuth();
+export function useRoleForUser(user: User | null, authLoading: boolean) {
   const [role, setRole] = useState<AppRole | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -34,6 +34,11 @@ export function useRole() {
   }, [user, authLoading]);
 
   return { role, loading: authLoading || loading };
+}
+
+export function useRole() {
+  const { user, loading: authLoading } = useAuth();
+  return useRoleForUser(user, authLoading);
 }
 
 export const roleHome: Record<AppRole, "/app" | "/staff" | "/passageiro"> = {
