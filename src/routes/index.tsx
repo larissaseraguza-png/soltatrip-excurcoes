@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import heroBus from "@/assets/hero-bus.jpg";
 import {
   Bus, QrCode, Users, Wallet, MessageCircle, MapPin, Sparkles,
@@ -48,12 +48,12 @@ function Nav() {
             <a href="#features" className="hover:text-foreground transition">Recursos</a>
             <a href="#flow" className="hover:text-foreground transition">Como funciona</a>
           </nav>
-          <a
-            href="#cta"
+          <Link
+            to="/auth"
             className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90 transition glow-primary"
           >
             Começar <ArrowRight className="h-4 w-4" />
-          </a>
+          </Link>
         </div>
       </div>
     </header>
@@ -79,9 +79,9 @@ function Hero() {
             Passageiros, pagamentos PIX, check-in por QR Code e comunicação — tudo num só app.
           </p>
           <div className="mt-9 flex flex-col sm:flex-row items-center gap-3">
-            <a href="#cta" className="inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-3.5 font-semibold text-primary-foreground glow-primary hover:opacity-90 transition">
+            <Link to="/auth" className="inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-3.5 font-semibold text-primary-foreground glow-primary hover:opacity-90 transition">
               Criar minha excursão <ArrowRight className="h-4 w-4" />
-            </a>
+            </Link>
             <a href="#personas" className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-6 py-3.5 font-semibold hover:bg-secondary transition">
               Ver para quem é
             </a>
