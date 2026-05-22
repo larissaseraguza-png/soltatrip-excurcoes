@@ -1,8 +1,8 @@
 import { createFileRoute, Link, useParams } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, Plus, Loader2, CheckCircle2, Clock, XCircle, TrendingUp } from "lucide-react";
-import { useState } from "react";
+import { ArrowLeft, Plus, Loader2, CheckCircle2, Clock, TrendingUp, Bus, Wallet, Save } from "lucide-react";
+import { useState, useEffect } from "react";
 
 export const Route = createFileRoute("/app/excursao/$id/financeiro")({
   component: FinanceiroPage,
