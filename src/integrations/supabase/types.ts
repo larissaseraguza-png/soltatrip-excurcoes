@@ -214,6 +214,7 @@ export type Database = {
           excursao_id: string
           id: string
           nome: string
+          ponto_embarque_id: string | null
           qr_code: string
           status: string
           telefone: string | null
@@ -227,6 +228,7 @@ export type Database = {
           excursao_id: string
           id?: string
           nome: string
+          ponto_embarque_id?: string | null
           qr_code?: string
           status?: string
           telefone?: string | null
@@ -240,6 +242,7 @@ export type Database = {
           excursao_id?: string
           id?: string
           nome?: string
+          ponto_embarque_id?: string | null
           qr_code?: string
           status?: string
           telefone?: string | null
@@ -248,6 +251,48 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "passageiros_excursao_id_fkey"
+            columns: ["excursao_id"]
+            isOneToOne: false
+            referencedRelation: "excursoes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "passageiros_ponto_embarque_id_fkey"
+            columns: ["ponto_embarque_id"]
+            isOneToOne: false
+            referencedRelation: "pontos_embarque"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pontos_embarque: {
+        Row: {
+          created_at: string
+          excursao_id: string
+          horario: string | null
+          id: string
+          nome: string
+          ordem: number
+        }
+        Insert: {
+          created_at?: string
+          excursao_id: string
+          horario?: string | null
+          id?: string
+          nome: string
+          ordem?: number
+        }
+        Update: {
+          created_at?: string
+          excursao_id?: string
+          horario?: string | null
+          id?: string
+          nome?: string
+          ordem?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pontos_embarque_excursao_id_fkey"
             columns: ["excursao_id"]
             isOneToOne: false
             referencedRelation: "excursoes"
