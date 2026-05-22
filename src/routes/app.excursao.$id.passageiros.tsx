@@ -28,12 +28,21 @@ function PassageirosPage() {
   const [search, setSearch] = useState("");
   const [pontoFilter, setPontoFilter] = useState<string>("todos");
   const [open, setOpen] = useState(false);
+  const [showMap, setShowMap] = useState(false);
 
   const { data: excursao } = useQuery({
     queryKey: ["excursao", id],
     queryFn: async () => {
       const { data } = await supabase.from("excursoes").select("titulo,total_vagas").eq("id", id).single();
       return data;
+    },
+  });
+
+  const { data: pagamentos = [] } = useQuery({
+    queryKey: ["pagamentos", id],
+    queryFn: async () => {
+      const { data } = await supabase.from("pagamentos").select("passageiro_id,status").eq("excursao_id", id);
+      return data ?? [];
     },
   });
 
