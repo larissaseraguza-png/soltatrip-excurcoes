@@ -53,6 +53,47 @@ export type Database = {
           },
         ]
       }
+      equipe_excursoes: {
+        Row: {
+          convite_email: string | null
+          created_at: string
+          excursao_id: string
+          id: string
+          papel: string
+          staff_user_id: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          convite_email?: string | null
+          created_at?: string
+          excursao_id: string
+          id?: string
+          papel?: string
+          staff_user_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          convite_email?: string | null
+          created_at?: string
+          excursao_id?: string
+          id?: string
+          papel?: string
+          staff_user_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "equipe_excursoes_excursao_id_fkey"
+            columns: ["excursao_id"]
+            isOneToOne: false
+            referencedRelation: "excursoes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       excursoes: {
         Row: {
           banner_url: string | null
@@ -219,6 +260,7 @@ export type Database = {
           status: string
           telefone: string | null
           updated_at: string
+          user_id: string | null
         }
         Insert: {
           assento?: string | null
@@ -233,6 +275,7 @@ export type Database = {
           status?: string
           telefone?: string | null
           updated_at?: string
+          user_id?: string | null
         }
         Update: {
           assento?: string | null
@@ -247,6 +290,7 @@ export type Database = {
           status?: string
           telefone?: string | null
           updated_at?: string
+          user_id?: string | null
         }
         Relationships: [
           {
