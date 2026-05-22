@@ -50,7 +50,7 @@ function NovaExcursao() {
           preco: Number(form.preco) || 0,
           total_vagas: Number(form.total_vagas) || 0,
           cor: form.cor,
-          status: "ativa",
+          status: "publicada",
         })
         .select("id")
         .single();
