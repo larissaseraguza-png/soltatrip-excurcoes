@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import heroBus from "@/assets/hero-bus.jpg";
 import {
   Bus, QrCode, Users, Wallet, MessageCircle, MapPin, Sparkles,
