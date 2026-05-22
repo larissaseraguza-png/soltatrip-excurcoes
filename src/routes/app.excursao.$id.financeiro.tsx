@@ -1,8 +1,8 @@
 import { createFileRoute, Link, useParams } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, Plus, Loader2, CheckCircle2, Clock, XCircle, TrendingUp } from "lucide-react";
-import { useState } from "react";
+import { ArrowLeft, Plus, Loader2, CheckCircle2, Clock, TrendingUp, Bus, Wallet, Save } from "lucide-react";
+import { useState, useEffect } from "react";
 
 export const Route = createFileRoute("/app/excursao/$id/financeiro")({
   component: FinanceiroPage,
@@ -28,7 +28,7 @@ function FinanceiroPage() {
 
   const { data: excursao } = useQuery({
     queryKey: ["excursao", id],
-    queryFn: async () => (await supabase.from("excursoes").select("titulo,preco,total_vagas").eq("id", id).single()).data,
+    queryFn: async () => (await supabase.from("excursoes").select("titulo,preco,total_vagas,custo_onibus").eq("id", id).single()).data,
   });
 
   const { data: passageiros = [] } = useQuery({
@@ -64,7 +64,8 @@ function FinanceiroPage() {
 
   const total = pagamentos.reduce((s, p) => (p.status === "pago" ? s + Number(p.valor) : s), 0);
   const pendente = pagamentos.reduce((s, p) => (p.status === "pendente" ? s + Number(p.valor) : s), 0);
-  const potencial = Number(excursao?.preco ?? 0) * Number(excursao?.total_vagas ?? 0);
+  const custoOnibus = Number(excursao?.custo_onibus ?? 0);
+  const lucro = total - custoOnibus;
   const nomeMap = new Map(passageiros.map((p) => [p.id, p.nome] as const));
 
   return (
@@ -86,11 +87,20 @@ function FinanceiroPage() {
         </button>
       </div>
 
-      <div className="grid grid-cols-3 gap-2 mb-5">
-        <Stat icon={CheckCircle2} label="Recebido" value={`R$ ${total.toFixed(0)}`} color="text-neon-green" />
-        <Stat icon={Clock} label="A receber" value={`R$ ${pendente.toFixed(0)}`} color="text-yellow-400" />
-        <Stat icon={TrendingUp} label="Potencial" value={`R$ ${potencial.toFixed(0)}`} color="text-neon-pink" />
+      <div className="grid grid-cols-3 gap-2 mb-3">
+        <Stat icon={CheckCircle2} label="Receita" value={`R$ ${total.toFixed(0)}`} color="text-neon-green" />
+        <Stat icon={Bus} label="Despesas" value={`R$ ${custoOnibus.toFixed(0)}`} color="text-red-400" />
+        <Stat icon={TrendingUp} label="Lucro" value={`R$ ${lucro.toFixed(0)}`} color={lucro >= 0 ? "text-neon-pink" : "text-red-400"} />
       </div>
+
+      <div className="glass rounded-2xl p-3 mb-3 flex items-center gap-2">
+        <Clock className="h-4 w-4 text-yellow-400" />
+        <span className="text-xs text-muted-foreground">A receber:</span>
+        <span className="text-sm font-bold ml-auto">R$ {pendente.toFixed(2)}</span>
+      </div>
+
+      <CustoOnibusEditor excursaoId={id} valorAtual={custoOnibus} />
+
 
       {isLoading ? (
         <div className="flex justify-center py-10"><Loader2 className="h-5 w-5 animate-spin text-primary" /></div>
@@ -259,6 +269,58 @@ function NewPagamentoModal({
           </button>
         </div>
       </form>
+    </div>
+  );
+}
+
+function CustoOnibusEditor({ excursaoId, valorAtual }: { excursaoId: string; valorAtual: number }) {
+  const qc = useQueryClient();
+  const [valor, setValor] = useState(String(valorAtual));
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+
+  useEffect(() => { setValor(String(valorAtual)); }, [valorAtual]);
+
+  const dirty = Number(valor || 0) !== valorAtual;
+
+  async function save() {
+    setSaving(true);
+    const { error } = await supabase.from("excursoes").update({ custo_onibus: Number(valor || 0) }).eq("id", excursaoId);
+    setSaving(false);
+    if (error) { alert(error.message); return; }
+    setSaved(true);
+    setTimeout(() => setSaved(false), 1500);
+    qc.invalidateQueries({ queryKey: ["excursao", excursaoId] });
+  }
+
+  return (
+    <div className="glass rounded-2xl p-4 mb-5">
+      <div className="flex items-center gap-2 mb-2">
+        <Bus className="h-4 w-4 text-neon-pink" />
+        <p className="text-[10px] uppercase tracking-wider font-bold text-muted-foreground">Custo do ônibus / transporte</p>
+      </div>
+      <div className="flex gap-2">
+        <div className="flex-1 flex items-center gap-2 h-11 px-3 rounded-xl bg-input border border-border">
+          <span className="text-sm text-muted-foreground">R$</span>
+          <input
+            type="number"
+            step="0.01"
+            value={valor}
+            onChange={(e) => setValor(e.target.value)}
+            className="flex-1 bg-transparent text-sm outline-none"
+            placeholder="0,00"
+          />
+        </div>
+        <button
+          onClick={save}
+          disabled={saving || !dirty}
+          className="h-11 px-4 rounded-xl bg-gradient-to-r from-neon-pink to-neon-purple text-primary-foreground font-bold text-sm disabled:opacity-40 inline-flex items-center gap-1.5"
+        >
+          {saved ? <CheckCircle2 className="h-4 w-4" /> : <Save className="h-4 w-4" />}
+          {saving ? "..." : saved ? "Salvo" : "Salvar"}
+        </button>
+      </div>
+      <p className="text-[10px] text-muted-foreground mt-2">Despesa total com transporte. Entra no cálculo do lucro líquido.</p>
     </div>
   );
 }
