@@ -79,9 +79,9 @@ function Hero() {
             Passageiros, pagamentos PIX, check-in por QR Code e comunicação — tudo num só app.
           </p>
           <div className="mt-9 flex flex-col sm:flex-row items-center gap-3">
-            <a href="#cta" className="inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-3.5 font-semibold text-primary-foreground glow-primary hover:opacity-90 transition">
+            <Link to="/auth" className="inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-3.5 font-semibold text-primary-foreground glow-primary hover:opacity-90 transition">
               Criar minha excursão <ArrowRight className="h-4 w-4" />
-            </a>
+            </Link>
             <a href="#personas" className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-6 py-3.5 font-semibold hover:bg-secondary transition">
               Ver para quem é
             </a>
