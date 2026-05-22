@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useParams } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, Plus, Loader2, Trash2, QrCode, UserCheck, UserX, Search } from "lucide-react";
+import { ArrowLeft, Plus, Loader2, Trash2, QrCode, UserCheck, Search, MapPin } from "lucide-react";
 import { useState } from "react";
 
 export const Route = createFileRoute("/app/excursao/$id/passageiros")({
@@ -16,12 +16,16 @@ type Passageiro = {
   assento: string | null;
   status: string;
   qr_code: string;
+  ponto_embarque_id: string | null;
 };
+
+type Ponto = { id: string; nome: string; horario: string | null };
 
 function PassageirosPage() {
   const { id } = useParams({ from: "/app/excursao/$id/passageiros" });
   const qc = useQueryClient();
   const [search, setSearch] = useState("");
+  const [pontoFilter, setPontoFilter] = useState<string>("todos");
   const [open, setOpen] = useState(false);
 
   const { data: excursao } = useQuery({
@@ -29,6 +33,18 @@ function PassageirosPage() {
     queryFn: async () => {
       const { data } = await supabase.from("excursoes").select("titulo,total_vagas").eq("id", id).single();
       return data;
+    },
+  });
+
+  const { data: pontos = [] } = useQuery({
+    queryKey: ["pontos", id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("pontos_embarque")
+        .select("id, nome, horario")
+        .eq("excursao_id", id)
+        .order("ordem", { ascending: true });
+      return (data ?? []) as Ponto[];
     },
   });
 
@@ -49,7 +65,10 @@ function PassageirosPage() {
     mutationFn: async (pid: string) => {
       await supabase.from("passageiros").delete().eq("id", pid);
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["passageiros", id] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["passageiros", id] });
+      qc.invalidateQueries({ queryKey: ["pontos-counts", id] });
+    },
   });
 
   const statusMut = useMutation({
@@ -59,10 +78,27 @@ function PassageirosPage() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["passageiros", id] }),
   });
 
-  const filtered = passageiros.filter((p) =>
-    p.nome.toLowerCase().includes(search.toLowerCase()) ||
-    (p.telefone ?? "").includes(search)
-  );
+  const pontoMut = useMutation({
+    mutationFn: async ({ pid, ponto_embarque_id }: { pid: string; ponto_embarque_id: string | null }) => {
+      await supabase.from("passageiros").update({ ponto_embarque_id }).eq("id", pid);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["passageiros", id] });
+      qc.invalidateQueries({ queryKey: ["pontos-counts", id] });
+    },
+  });
+
+  const pontoNome = (pid: string | null) => pontos.find((p) => p.id === pid)?.nome ?? null;
+
+  const filtered = passageiros.filter((p) => {
+    const matchSearch =
+      p.nome.toLowerCase().includes(search.toLowerCase()) ||
+      (p.telefone ?? "").includes(search);
+    const matchPonto =
+      pontoFilter === "todos" ||
+      (pontoFilter === "_sem" ? !p.ponto_embarque_id : p.ponto_embarque_id === pontoFilter);
+    return matchSearch && matchPonto;
+  });
 
   return (
     <div>
@@ -86,7 +122,7 @@ function PassageirosPage() {
         </button>
       </div>
 
-      <div className="relative mb-4">
+      <div className="relative mb-3">
         <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
         <input
           value={search}
@@ -96,17 +132,29 @@ function PassageirosPage() {
         />
       </div>
 
+      {pontos.length > 0 && (
+        <div className="flex gap-2 overflow-x-auto pb-1 mb-4 -mx-1 px-1">
+          <Chip active={pontoFilter === "todos"} onClick={() => setPontoFilter("todos")}>Todos</Chip>
+          {pontos.map((p) => (
+            <Chip key={p.id} active={pontoFilter === p.id} onClick={() => setPontoFilter(p.id)}>
+              {p.nome}
+            </Chip>
+          ))}
+          <Chip active={pontoFilter === "_sem"} onClick={() => setPontoFilter("_sem")}>Sem ponto</Chip>
+        </div>
+      )}
+
       {isLoading ? (
         <div className="flex justify-center py-10"><Loader2 className="h-5 w-5 animate-spin text-primary" /></div>
       ) : filtered.length === 0 ? (
         <div className="glass rounded-2xl p-8 text-center text-sm text-muted-foreground">
-          Nenhum passageiro {search ? "encontrado" : "ainda"}.
+          Nenhum passageiro {search || pontoFilter !== "todos" ? "encontrado" : "ainda"}.
         </div>
       ) : (
         <ul className="space-y-2">
           {filtered.map((p) => (
             <li key={p.id} className="glass rounded-2xl p-4 flex items-center gap-3">
-              <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-neon-purple to-neon-pink flex items-center justify-center font-black text-sm">
+              <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-neon-purple to-neon-pink flex items-center justify-center font-black text-sm shrink-0">
                 {p.nome.charAt(0).toUpperCase()}
               </div>
               <div className="flex-1 min-w-0">
@@ -114,9 +162,26 @@ function PassageirosPage() {
                 <p className="text-xs text-muted-foreground truncate">
                   {p.telefone ?? "sem telefone"} • {p.assento ? `Assento ${p.assento}` : "sem assento"}
                 </p>
+                {pontos.length > 0 && (
+                  <div className="flex items-center gap-1 mt-1.5">
+                    <MapPin className="h-3 w-3 text-neon-pink" />
+                    <select
+                      value={p.ponto_embarque_id ?? ""}
+                      onChange={(e) => pontoMut.mutate({ pid: p.id, ponto_embarque_id: e.target.value || null })}
+                      className="text-xs bg-secondary/50 border border-border rounded-md px-1.5 py-0.5 max-w-[160px] truncate"
+                    >
+                      <option value="">Sem ponto</option>
+                      {pontos.map((pt) => (
+                        <option key={pt.id} value={pt.id}>{pt.nome}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+                {pontos.length === 0 && p.ponto_embarque_id && (
+                  <p className="text-xs text-muted-foreground mt-0.5">📍 {pontoNome(p.ponto_embarque_id)}</p>
+                )}
               </div>
-              <StatusPill status={p.status} />
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1 shrink-0">
                 {p.status !== "confirmado" && (
                   <button
                     title="Confirmar"
@@ -126,19 +191,16 @@ function PassageirosPage() {
                     <UserCheck className="h-4 w-4" />
                   </button>
                 )}
-                <Link
+                <button
                   title="QR"
-                  to="/app/excursao/$id/passageiros"
-                  params={{ id }}
-                  className="h-8 w-8 rounded-lg bg-secondary text-foreground hover:bg-secondary/80 flex items-center justify-center"
-                  onClick={(e) => {
-                    e.preventDefault();
+                  onClick={() => {
                     navigator.clipboard.writeText(p.qr_code);
                     alert(`Código QR copiado: ${p.qr_code}`);
                   }}
+                  className="h-8 w-8 rounded-lg bg-secondary text-foreground hover:bg-secondary/80 flex items-center justify-center"
                 >
                   <QrCode className="h-4 w-4" />
-                </Link>
+                </button>
                 <button
                   title="Remover"
                   onClick={() => confirm(`Remover ${p.nome}?`) && removeMut.mutate(p.id)}
@@ -152,28 +214,27 @@ function PassageirosPage() {
         </ul>
       )}
 
-      {open && <NewPassageiroModal excursaoId={id} onClose={() => setOpen(false)} />}
+      {open && <NewPassageiroModal excursaoId={id} pontos={pontos} onClose={() => setOpen(false)} />}
     </div>
   );
 }
 
-function StatusPill({ status }: { status: string }) {
-  const map: Record<string, string> = {
-    pendente: "bg-yellow-500/10 text-yellow-400",
-    confirmado: "bg-neon-green/10 text-neon-green",
-    embarcado: "bg-neon-purple/15 text-neon-purple",
-    cancelado: "bg-red-500/10 text-red-400",
-  };
+function Chip({ children, active, onClick }: { children: React.ReactNode; active: boolean; onClick: () => void }) {
   return (
-    <span className={`hidden sm:inline-flex text-[10px] uppercase tracking-wider font-bold px-2 py-1 rounded-full ${map[status] ?? "bg-secondary"}`}>
-      {status}
-    </span>
+    <button
+      onClick={onClick}
+      className={`shrink-0 h-8 px-3 rounded-full text-xs font-bold transition ${
+        active ? "bg-gradient-to-r from-neon-pink to-neon-purple text-primary-foreground" : "bg-secondary text-muted-foreground"
+      }`}
+    >
+      {children}
+    </button>
   );
 }
 
-function NewPassageiroModal({ excursaoId, onClose }: { excursaoId: string; onClose: () => void }) {
+function NewPassageiroModal({ excursaoId, pontos, onClose }: { excursaoId: string; pontos: Ponto[]; onClose: () => void }) {
   const qc = useQueryClient();
-  const [form, setForm] = useState({ nome: "", telefone: "", documento: "", assento: "" });
+  const [form, setForm] = useState({ nome: "", telefone: "", documento: "", assento: "", ponto_embarque_id: "" });
   const [saving, setSaving] = useState(false);
 
   async function save(e: React.FormEvent) {
@@ -185,10 +246,12 @@ function NewPassageiroModal({ excursaoId, onClose }: { excursaoId: string; onClo
       telefone: form.telefone || null,
       documento: form.documento || null,
       assento: form.assento || null,
+      ponto_embarque_id: form.ponto_embarque_id || null,
     });
     setSaving(false);
     if (error) { alert(error.message); return; }
     qc.invalidateQueries({ queryKey: ["passageiros", excursaoId] });
+    qc.invalidateQueries({ queryKey: ["pontos-counts", excursaoId] });
     onClose();
   }
 
@@ -207,6 +270,27 @@ function NewPassageiroModal({ excursaoId, onClose }: { excursaoId: string; onClo
             <Field label="Assento" value={form.assento} onChange={(v) => setForm({ ...form, assento: v })} />
           </div>
           <Field label="Documento" value={form.documento} onChange={(v) => setForm({ ...form, documento: v })} />
+          <label className="block">
+            <span className="text-[10px] uppercase tracking-wider font-bold text-muted-foreground">Ponto de embarque</span>
+            {pontos.length === 0 ? (
+              <p className="mt-1 text-xs text-muted-foreground italic">
+                Nenhum ponto cadastrado. Adicione em "Pontos de embarque".
+              </p>
+            ) : (
+              <select
+                value={form.ponto_embarque_id}
+                onChange={(e) => setForm({ ...form, ponto_embarque_id: e.target.value })}
+                className="mt-1 w-full h-11 px-3 rounded-xl bg-input border border-border text-sm"
+              >
+                <option value="">— Selecionar —</option>
+                {pontos.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.nome}{p.horario ? ` (${p.horario})` : ""}
+                  </option>
+                ))}
+              </select>
+            )}
+          </label>
         </div>
         <div className="flex gap-2 mt-5">
           <button type="button" onClick={onClose} className="flex-1 h-11 rounded-xl bg-secondary font-semibold">Cancelar</button>
