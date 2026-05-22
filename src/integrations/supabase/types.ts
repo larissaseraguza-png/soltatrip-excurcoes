@@ -58,6 +58,7 @@ export type Database = {
           banner_url: string | null
           cor: string | null
           created_at: string
+          custo_onibus: number
           data_evento: string
           descricao: string | null
           destino: string
@@ -76,6 +77,7 @@ export type Database = {
           banner_url?: string | null
           cor?: string | null
           created_at?: string
+          custo_onibus?: number
           data_evento: string
           descricao?: string | null
           destino: string
@@ -94,6 +96,7 @@ export type Database = {
           banner_url?: string | null
           cor?: string | null
           created_at?: string
+          custo_onibus?: number
           data_evento?: string
           descricao?: string | null
           destino?: string

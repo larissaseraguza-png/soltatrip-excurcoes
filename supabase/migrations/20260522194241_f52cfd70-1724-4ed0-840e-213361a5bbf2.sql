@@ -1,0 +1,1 @@
+ALTER TABLE public.excursoes ADD COLUMN IF NOT EXISTS custo_onibus numeric NOT NULL DEFAULT 0;
