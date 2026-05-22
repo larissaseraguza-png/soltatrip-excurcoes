@@ -71,6 +71,113 @@ export type Database = {
         }
         Relationships: []
       }
+      pagamentos: {
+        Row: {
+          comprovante_url: string | null
+          created_at: string
+          excursao_id: string
+          id: string
+          metodo: string
+          observacao: string | null
+          pago_em: string | null
+          passageiro_id: string
+          status: string
+          updated_at: string
+          valor: number
+        }
+        Insert: {
+          comprovante_url?: string | null
+          created_at?: string
+          excursao_id: string
+          id?: string
+          metodo?: string
+          observacao?: string | null
+          pago_em?: string | null
+          passageiro_id: string
+          status?: string
+          updated_at?: string
+          valor?: number
+        }
+        Update: {
+          comprovante_url?: string | null
+          created_at?: string
+          excursao_id?: string
+          id?: string
+          metodo?: string
+          observacao?: string | null
+          pago_em?: string | null
+          passageiro_id?: string
+          status?: string
+          updated_at?: string
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pagamentos_excursao_id_fkey"
+            columns: ["excursao_id"]
+            isOneToOne: false
+            referencedRelation: "excursoes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pagamentos_passageiro_id_fkey"
+            columns: ["passageiro_id"]
+            isOneToOne: false
+            referencedRelation: "passageiros"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      passageiros: {
+        Row: {
+          assento: string | null
+          created_at: string
+          documento: string | null
+          embarcado_em: string | null
+          excursao_id: string
+          id: string
+          nome: string
+          qr_code: string
+          status: string
+          telefone: string | null
+          updated_at: string
+        }
+        Insert: {
+          assento?: string | null
+          created_at?: string
+          documento?: string | null
+          embarcado_em?: string | null
+          excursao_id: string
+          id?: string
+          nome: string
+          qr_code?: string
+          status?: string
+          telefone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          assento?: string | null
+          created_at?: string
+          documento?: string | null
+          embarcado_em?: string | null
+          excursao_id?: string
+          id?: string
+          nome?: string
+          qr_code?: string
+          status?: string
+          telefone?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "passageiros_excursao_id_fkey"
+            columns: ["excursao_id"]
+            isOneToOne: false
+            referencedRelation: "excursoes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null

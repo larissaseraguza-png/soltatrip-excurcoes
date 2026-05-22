@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useParams, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, Calendar, MapPin, Clock, Users, DollarSign, Loader2, Trash2 } from "lucide-react";
+import { ArrowLeft, Calendar, MapPin, Clock, Users, DollarSign, Loader2, Trash2, ChevronRight, Wallet } from "lucide-react";
 
 export const Route = createFileRoute("/app/excursao/$id")({
   component: ExcursaoDetalhe,
@@ -77,9 +77,9 @@ function ExcursaoDetalhe() {
         </div>
       )}
 
-      <div className="glass rounded-2xl p-5 border-dashed border border-border text-center text-sm text-muted-foreground mb-4">
-        <p className="font-semibold text-foreground mb-1">Módulos 2, 3 e 4 em breve</p>
-        Passageiros, financeiro, QR check-in e chat aparecem aqui depois.
+      <div className="space-y-2 mb-6">
+        <NavCard to="/app/excursao/$id/passageiros" id={id} icon={Users} title="Passageiros" desc="Cadastrar, confirmar e gerenciar a lista" />
+        <NavCard to="/app/excursao/$id/financeiro" id={id} icon={Wallet} title="Financeiro" desc="Lançar pagamentos e acompanhar entradas" />
       </div>
 
       <button
@@ -99,5 +99,20 @@ function Info({ icon: Icon, label, value }: { icon: any; label: string; value: R
       <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">{label}</p>
       <p className="text-sm font-semibold">{value}</p>
     </div>
+  );
+}
+
+function NavCard({ to, id, icon: Icon, title, desc }: { to: string; id: string; icon: any; title: string; desc: string }) {
+  return (
+    <Link to={to} params={{ id }} className="glass rounded-2xl p-4 flex items-center gap-3 hover:border-neon-pink/40 transition border border-transparent">
+      <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-neon-purple to-neon-pink flex items-center justify-center">
+        <Icon className="h-5 w-5" />
+      </div>
+      <div className="flex-1">
+        <p className="font-semibold">{title}</p>
+        <p className="text-xs text-muted-foreground">{desc}</p>
+      </div>
+      <ChevronRight className="h-4 w-4 text-muted-foreground" />
+    </Link>
   );
 }
