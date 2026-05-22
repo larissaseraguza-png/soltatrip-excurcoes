@@ -14,7 +14,90 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      excursoes: {
+        Row: {
+          banner_url: string | null
+          cor: string | null
+          created_at: string
+          data_evento: string
+          descricao: string | null
+          destino: string
+          horario_retorno: string | null
+          horario_saida: string | null
+          id: string
+          organizer_id: string
+          ponto_embarque: string | null
+          preco: number
+          status: string
+          titulo: string
+          total_vagas: number
+          updated_at: string
+        }
+        Insert: {
+          banner_url?: string | null
+          cor?: string | null
+          created_at?: string
+          data_evento: string
+          descricao?: string | null
+          destino: string
+          horario_retorno?: string | null
+          horario_saida?: string | null
+          id?: string
+          organizer_id: string
+          ponto_embarque?: string | null
+          preco?: number
+          status?: string
+          titulo: string
+          total_vagas?: number
+          updated_at?: string
+        }
+        Update: {
+          banner_url?: string | null
+          cor?: string | null
+          created_at?: string
+          data_evento?: string
+          descricao?: string | null
+          destino?: string
+          horario_retorno?: string | null
+          horario_saida?: string | null
+          id?: string
+          organizer_id?: string
+          ponto_embarque?: string | null
+          preco?: number
+          status?: string
+          titulo?: string
+          total_vagas?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          full_name: string | null
+          id: string
+          phone: string | null
+          updated_at: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          full_name?: string | null
+          id: string
+          phone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          full_name?: string | null
+          id?: string
+          phone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
