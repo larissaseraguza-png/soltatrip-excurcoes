@@ -28,7 +28,7 @@ function FinanceiroPage() {
 
   const { data: excursao } = useQuery({
     queryKey: ["excursao", id],
-    queryFn: async () => (await supabase.from("excursoes").select("titulo,preco,total_vagas").eq("id", id).single()).data,
+    queryFn: async () => (await supabase.from("excursoes").select("titulo,preco,total_vagas,custo_onibus").eq("id", id).single()).data,
   });
 
   const { data: passageiros = [] } = useQuery({
