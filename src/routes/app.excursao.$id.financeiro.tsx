@@ -272,3 +272,55 @@ function NewPagamentoModal({
     </div>
   );
 }
+
+function CustoOnibusEditor({ excursaoId, valorAtual }: { excursaoId: string; valorAtual: number }) {
+  const qc = useQueryClient();
+  const [valor, setValor] = useState(String(valorAtual));
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+
+  useEffect(() => { setValor(String(valorAtual)); }, [valorAtual]);
+
+  const dirty = Number(valor || 0) !== valorAtual;
+
+  async function save() {
+    setSaving(true);
+    const { error } = await supabase.from("excursoes").update({ custo_onibus: Number(valor || 0) }).eq("id", excursaoId);
+    setSaving(false);
+    if (error) { alert(error.message); return; }
+    setSaved(true);
+    setTimeout(() => setSaved(false), 1500);
+    qc.invalidateQueries({ queryKey: ["excursao", excursaoId] });
+  }
+
+  return (
+    <div className="glass rounded-2xl p-4 mb-5">
+      <div className="flex items-center gap-2 mb-2">
+        <Bus className="h-4 w-4 text-neon-pink" />
+        <p className="text-[10px] uppercase tracking-wider font-bold text-muted-foreground">Custo do ônibus / transporte</p>
+      </div>
+      <div className="flex gap-2">
+        <div className="flex-1 flex items-center gap-2 h-11 px-3 rounded-xl bg-input border border-border">
+          <span className="text-sm text-muted-foreground">R$</span>
+          <input
+            type="number"
+            step="0.01"
+            value={valor}
+            onChange={(e) => setValor(e.target.value)}
+            className="flex-1 bg-transparent text-sm outline-none"
+            placeholder="0,00"
+          />
+        </div>
+        <button
+          onClick={save}
+          disabled={saving || !dirty}
+          className="h-11 px-4 rounded-xl bg-gradient-to-r from-neon-pink to-neon-purple text-primary-foreground font-bold text-sm disabled:opacity-40 inline-flex items-center gap-1.5"
+        >
+          {saved ? <CheckCircle2 className="h-4 w-4" /> : <Save className="h-4 w-4" />}
+          {saving ? "..." : saved ? "Salvo" : "Salvar"}
+        </button>
+      </div>
+      <p className="text-[10px] text-muted-foreground mt-2">Despesa total com transporte. Entra no cálculo do lucro líquido.</p>
+    </div>
+  );
+}
