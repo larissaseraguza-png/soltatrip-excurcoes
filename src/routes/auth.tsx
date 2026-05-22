@@ -23,7 +23,8 @@ function AuthPage() {
   const [info, setInfo] = useState<string | null>(null);
 
   if (loading) return null;
-  if (user) return <Navigate to="/app" />;
+  if (user) return <Navigate to="/selecionar-perfil" />;
+
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
