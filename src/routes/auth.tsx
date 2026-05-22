@@ -23,7 +23,8 @@ function AuthPage() {
   const [info, setInfo] = useState<string | null>(null);
 
   if (loading) return null;
-  if (user) return <Navigate to="/app" />;
+  if (user) return <Navigate to="/selecionar-perfil" />;
+
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -45,7 +46,7 @@ function AuthPage() {
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
-        navigate({ to: "/app" });
+        navigate({ to: "/selecionar-perfil" });
       }
     } catch (err: any) {
       setError(err.message ?? "Erro inesperado");

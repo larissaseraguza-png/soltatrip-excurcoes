@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as StaffRouteImport } from './routes/staff'
+import { Route as SelecionarPerfilRouteImport } from './routes/selecionar-perfil'
 import { Route as PassageiroRouteImport } from './routes/passageiro'
 import { Route as ExcursionistaRouteImport } from './routes/excursionista'
 import { Route as AuthRouteImport } from './routes/auth'
@@ -55,6 +56,11 @@ import { Route as AppExcursaoIdChatRouteImport } from './routes/app.excursao.$id
 const StaffRoute = StaffRouteImport.update({
   id: '/staff',
   path: '/staff',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SelecionarPerfilRoute = SelecionarPerfilRouteImport.update({
+  id: '/selecionar-perfil',
+  path: '/selecionar-perfil',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PassageiroRoute = PassageiroRouteImport.update({
@@ -271,6 +277,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/excursionista': typeof ExcursionistaRouteWithChildren
   '/passageiro': typeof PassageiroRouteWithChildren
+  '/selecionar-perfil': typeof SelecionarPerfilRoute
   '/staff': typeof StaffRouteWithChildren
   '/excursionista/chat': typeof ExcursionistaChatRoute
   '/excursionista/checkin': typeof ExcursionistaCheckinRoute
@@ -312,6 +319,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/selecionar-perfil': typeof SelecionarPerfilRoute
   '/excursionista/chat': typeof ExcursionistaChatRoute
   '/excursionista/checkin': typeof ExcursionistaCheckinRoute
   '/excursionista/editar': typeof ExcursionistaEditarRoute
@@ -355,6 +363,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/excursionista': typeof ExcursionistaRouteWithChildren
   '/passageiro': typeof PassageiroRouteWithChildren
+  '/selecionar-perfil': typeof SelecionarPerfilRoute
   '/staff': typeof StaffRouteWithChildren
   '/excursionista/chat': typeof ExcursionistaChatRoute
   '/excursionista/checkin': typeof ExcursionistaCheckinRoute
@@ -401,6 +410,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/excursionista'
     | '/passageiro'
+    | '/selecionar-perfil'
     | '/staff'
     | '/excursionista/chat'
     | '/excursionista/checkin'
@@ -442,6 +452,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/selecionar-perfil'
     | '/excursionista/chat'
     | '/excursionista/checkin'
     | '/excursionista/editar'
@@ -484,6 +495,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/excursionista'
     | '/passageiro'
+    | '/selecionar-perfil'
     | '/staff'
     | '/excursionista/chat'
     | '/excursionista/checkin'
@@ -529,6 +541,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   ExcursionistaRoute: typeof ExcursionistaRouteWithChildren
   PassageiroRoute: typeof PassageiroRouteWithChildren
+  SelecionarPerfilRoute: typeof SelecionarPerfilRoute
   StaffRoute: typeof StaffRouteWithChildren
 }
 
@@ -539,6 +552,13 @@ declare module '@tanstack/react-router' {
       path: '/staff'
       fullPath: '/staff'
       preLoaderRoute: typeof StaffRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/selecionar-perfil': {
+      id: '/selecionar-perfil'
+      path: '/selecionar-perfil'
+      fullPath: '/selecionar-perfil'
+      preLoaderRoute: typeof SelecionarPerfilRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/passageiro': {
@@ -955,6 +975,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   ExcursionistaRoute: ExcursionistaRouteWithChildren,
   PassageiroRoute: PassageiroRouteWithChildren,
+  SelecionarPerfilRoute: SelecionarPerfilRoute,
   StaffRoute: StaffRouteWithChildren,
 }
 export const routeTree = rootRouteImport
