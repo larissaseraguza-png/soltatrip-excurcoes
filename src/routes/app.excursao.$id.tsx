@@ -101,3 +101,18 @@ function Info({ icon: Icon, label, value }: { icon: any; label: string; value: R
     </div>
   );
 }
+
+function NavCard({ to, id, icon: Icon, title, desc }: { to: string; id: string; icon: any; title: string; desc: string }) {
+  return (
+    <Link to={to} params={{ id }} className="glass rounded-2xl p-4 flex items-center gap-3 hover:border-neon-pink/40 transition border border-transparent">
+      <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-neon-purple to-neon-pink flex items-center justify-center">
+        <Icon className="h-5 w-5" />
+      </div>
+      <div className="flex-1">
+        <p className="font-semibold">{title}</p>
+        <p className="text-xs text-muted-foreground">{desc}</p>
+      </div>
+      <ChevronRight className="h-4 w-4 text-muted-foreground" />
+    </Link>
+  );
+}
