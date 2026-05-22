@@ -281,7 +281,19 @@ function Chip({ children, active, onClick }: { children: React.ReactNode; active
   );
 }
 
-function NewPassageiroModal({ excursaoId, pontos, onClose }: { excursaoId: string; pontos: Ponto[]; onClose: () => void }) {
+function NewPassageiroModal({
+  excursaoId,
+  pontos,
+  totalVagas,
+  taken,
+  onClose,
+}: {
+  excursaoId: string;
+  pontos: Ponto[];
+  totalVagas: number;
+  taken: Record<string, { pago: boolean; nome: string }>;
+  onClose: () => void;
+}) {
   const qc = useQueryClient();
   const [form, setForm] = useState({ nome: "", telefone: "", documento: "", assento: "", ponto_embarque_id: "" });
   const [saving, setSaving] = useState(false);
@@ -305,20 +317,34 @@ function NewPassageiroModal({ excursaoId, pontos, onClose }: { excursaoId: strin
   }
 
   return (
-    <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur flex items-end sm:items-center justify-center p-4" onClick={onClose}>
+    <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur flex items-end sm:items-center justify-center p-4 overflow-y-auto" onClick={onClose}>
       <form
         onSubmit={save}
         onClick={(e) => e.stopPropagation()}
-        className="glass rounded-3xl p-6 w-full max-w-md border border-border"
+        className="glass rounded-3xl p-6 w-full max-w-md border border-border my-4"
       >
         <h2 className="font-display text-xl font-black mb-4">Novo passageiro</h2>
         <div className="space-y-3">
           <Field label="Nome" required value={form.nome} onChange={(v) => setForm({ ...form, nome: v })} />
-          <div className="grid grid-cols-2 gap-3">
-            <Field label="Telefone" value={form.telefone} onChange={(v) => setForm({ ...form, telefone: v })} />
-            <Field label="Assento" value={form.assento} onChange={(v) => setForm({ ...form, assento: v })} />
-          </div>
+          <Field label="Telefone" value={form.telefone} onChange={(v) => setForm({ ...form, telefone: v })} />
           <Field label="Documento" value={form.documento} onChange={(v) => setForm({ ...form, documento: v })} />
+
+          {totalVagas > 0 && (
+            <div>
+              <span className="text-[10px] uppercase tracking-wider font-bold text-muted-foreground">
+                Escolha a poltrona {form.assento && <span className="text-neon-pink">— Selecionado: {form.assento}</span>}
+              </span>
+              <div className="mt-1">
+                <SeatMap
+                  total={totalVagas}
+                  taken={taken}
+                  selected={form.assento || null}
+                  onSelect={(a) => setForm({ ...form, assento: form.assento === a ? "" : a })}
+                />
+              </div>
+            </div>
+          )}
+
           <label className="block">
             <span className="text-[10px] uppercase tracking-wider font-bold text-muted-foreground">Ponto de embarque</span>
             {pontos.length === 0 ? (
