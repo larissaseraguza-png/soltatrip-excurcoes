@@ -12,6 +12,8 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as StaffRouteImport } from './routes/staff'
 import { Route as PassageiroRouteImport } from './routes/passageiro'
 import { Route as ExcursionistaRouteImport } from './routes/excursionista'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AppRouteImport } from './routes/app'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as StaffIndexRouteImport } from './routes/staff.index'
 import { Route as PassageiroIndexRouteImport } from './routes/passageiro.index'
@@ -54,6 +56,16 @@ const PassageiroRoute = PassageiroRouteImport.update({
 const ExcursionistaRoute = ExcursionistaRouteImport.update({
   id: '/excursionista',
   path: '/excursionista',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppRoute = AppRouteImport.update({
+  id: '/app',
+  path: '/app',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -200,6 +212,8 @@ const ExcursionistaExcursaoIdRoute = ExcursionistaExcursaoIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/app': typeof AppRoute
+  '/auth': typeof AuthRoute
   '/excursionista': typeof ExcursionistaRouteWithChildren
   '/passageiro': typeof PassageiroRouteWithChildren
   '/staff': typeof StaffRouteWithChildren
@@ -233,6 +247,8 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/app': typeof AppRoute
+  '/auth': typeof AuthRoute
   '/excursionista/chat': typeof ExcursionistaChatRoute
   '/excursionista/checkin': typeof ExcursionistaCheckinRoute
   '/excursionista/editar': typeof ExcursionistaEditarRoute
@@ -264,6 +280,8 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/app': typeof AppRoute
+  '/auth': typeof AuthRoute
   '/excursionista': typeof ExcursionistaRouteWithChildren
   '/passageiro': typeof PassageiroRouteWithChildren
   '/staff': typeof StaffRouteWithChildren
@@ -299,6 +317,8 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/app'
+    | '/auth'
     | '/excursionista'
     | '/passageiro'
     | '/staff'
@@ -332,6 +352,8 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/app'
+    | '/auth'
     | '/excursionista/chat'
     | '/excursionista/checkin'
     | '/excursionista/editar'
@@ -362,6 +384,8 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/app'
+    | '/auth'
     | '/excursionista'
     | '/passageiro'
     | '/staff'
@@ -396,6 +420,8 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AppRoute: typeof AppRoute
+  AuthRoute: typeof AuthRoute
   ExcursionistaRoute: typeof ExcursionistaRouteWithChildren
   PassageiroRoute: typeof PassageiroRouteWithChildren
   StaffRoute: typeof StaffRouteWithChildren
@@ -422,6 +448,20 @@ declare module '@tanstack/react-router' {
       path: '/excursionista'
       fullPath: '/excursionista'
       preLoaderRoute: typeof ExcursionistaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/app': {
+      id: '/app'
+      path: '/app'
+      fullPath: '/app'
+      preLoaderRoute: typeof AppRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -707,6 +747,8 @@ const StaffRouteWithChildren = StaffRoute._addFileChildren(StaffRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AppRoute: AppRoute,
+  AuthRoute: AuthRoute,
   ExcursionistaRoute: ExcursionistaRouteWithChildren,
   PassageiroRoute: PassageiroRouteWithChildren,
   StaffRoute: StaffRouteWithChildren,
@@ -714,3 +756,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
