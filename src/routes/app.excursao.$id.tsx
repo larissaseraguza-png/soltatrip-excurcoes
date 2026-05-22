@@ -77,9 +77,9 @@ function ExcursaoDetalhe() {
         </div>
       )}
 
-      <div className="glass rounded-2xl p-5 border-dashed border border-border text-center text-sm text-muted-foreground mb-4">
-        <p className="font-semibold text-foreground mb-1">Módulos 2, 3 e 4 em breve</p>
-        Passageiros, financeiro, QR check-in e chat aparecem aqui depois.
+      <div className="space-y-2 mb-6">
+        <NavCard to="/app/excursao/$id/passageiros" id={id} icon={Users} title="Passageiros" desc="Cadastrar, confirmar e gerenciar a lista" />
+        <NavCard to="/app/excursao/$id/financeiro" id={id} icon={Wallet} title="Financeiro" desc="Lançar pagamentos e acompanhar entradas" />
       </div>
 
       <button
