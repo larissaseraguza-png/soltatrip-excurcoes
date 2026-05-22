@@ -9,38 +9,157 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as ExcursionistaRouteImport } from './routes/excursionista'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ExcursionistaIndexRouteImport } from './routes/excursionista.index'
+import { Route as ExcursionistaPassageirosRouteImport } from './routes/excursionista.passageiros'
+import { Route as ExcursionistaInfoRouteImport } from './routes/excursionista.info'
+import { Route as ExcursionistaFinanceiroRouteImport } from './routes/excursionista.financeiro'
+import { Route as ExcursionistaEditarRouteImport } from './routes/excursionista.editar'
+import { Route as ExcursionistaCheckinRouteImport } from './routes/excursionista.checkin'
+import { Route as ExcursionistaChatRouteImport } from './routes/excursionista.chat'
+import { Route as ExcursionistaExcursaoIdRouteImport } from './routes/excursionista.excursao.$id'
 
+const ExcursionistaRoute = ExcursionistaRouteImport.update({
+  id: '/excursionista',
+  path: '/excursionista',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ExcursionistaIndexRoute = ExcursionistaIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => ExcursionistaRoute,
+} as any)
+const ExcursionistaPassageirosRoute =
+  ExcursionistaPassageirosRouteImport.update({
+    id: '/passageiros',
+    path: '/passageiros',
+    getParentRoute: () => ExcursionistaRoute,
+  } as any)
+const ExcursionistaInfoRoute = ExcursionistaInfoRouteImport.update({
+  id: '/info',
+  path: '/info',
+  getParentRoute: () => ExcursionistaRoute,
+} as any)
+const ExcursionistaFinanceiroRoute = ExcursionistaFinanceiroRouteImport.update({
+  id: '/financeiro',
+  path: '/financeiro',
+  getParentRoute: () => ExcursionistaRoute,
+} as any)
+const ExcursionistaEditarRoute = ExcursionistaEditarRouteImport.update({
+  id: '/editar',
+  path: '/editar',
+  getParentRoute: () => ExcursionistaRoute,
+} as any)
+const ExcursionistaCheckinRoute = ExcursionistaCheckinRouteImport.update({
+  id: '/checkin',
+  path: '/checkin',
+  getParentRoute: () => ExcursionistaRoute,
+} as any)
+const ExcursionistaChatRoute = ExcursionistaChatRouteImport.update({
+  id: '/chat',
+  path: '/chat',
+  getParentRoute: () => ExcursionistaRoute,
+} as any)
+const ExcursionistaExcursaoIdRoute = ExcursionistaExcursaoIdRouteImport.update({
+  id: '/excursao/$id',
+  path: '/excursao/$id',
+  getParentRoute: () => ExcursionistaRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/excursionista': typeof ExcursionistaRouteWithChildren
+  '/excursionista/chat': typeof ExcursionistaChatRoute
+  '/excursionista/checkin': typeof ExcursionistaCheckinRoute
+  '/excursionista/editar': typeof ExcursionistaEditarRoute
+  '/excursionista/financeiro': typeof ExcursionistaFinanceiroRoute
+  '/excursionista/info': typeof ExcursionistaInfoRoute
+  '/excursionista/passageiros': typeof ExcursionistaPassageirosRoute
+  '/excursionista/': typeof ExcursionistaIndexRoute
+  '/excursionista/excursao/$id': typeof ExcursionistaExcursaoIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/excursionista/chat': typeof ExcursionistaChatRoute
+  '/excursionista/checkin': typeof ExcursionistaCheckinRoute
+  '/excursionista/editar': typeof ExcursionistaEditarRoute
+  '/excursionista/financeiro': typeof ExcursionistaFinanceiroRoute
+  '/excursionista/info': typeof ExcursionistaInfoRoute
+  '/excursionista/passageiros': typeof ExcursionistaPassageirosRoute
+  '/excursionista': typeof ExcursionistaIndexRoute
+  '/excursionista/excursao/$id': typeof ExcursionistaExcursaoIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/excursionista': typeof ExcursionistaRouteWithChildren
+  '/excursionista/chat': typeof ExcursionistaChatRoute
+  '/excursionista/checkin': typeof ExcursionistaCheckinRoute
+  '/excursionista/editar': typeof ExcursionistaEditarRoute
+  '/excursionista/financeiro': typeof ExcursionistaFinanceiroRoute
+  '/excursionista/info': typeof ExcursionistaInfoRoute
+  '/excursionista/passageiros': typeof ExcursionistaPassageirosRoute
+  '/excursionista/': typeof ExcursionistaIndexRoute
+  '/excursionista/excursao/$id': typeof ExcursionistaExcursaoIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/excursionista'
+    | '/excursionista/chat'
+    | '/excursionista/checkin'
+    | '/excursionista/editar'
+    | '/excursionista/financeiro'
+    | '/excursionista/info'
+    | '/excursionista/passageiros'
+    | '/excursionista/'
+    | '/excursionista/excursao/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/excursionista/chat'
+    | '/excursionista/checkin'
+    | '/excursionista/editar'
+    | '/excursionista/financeiro'
+    | '/excursionista/info'
+    | '/excursionista/passageiros'
+    | '/excursionista'
+    | '/excursionista/excursao/$id'
+  id:
+    | '__root__'
+    | '/'
+    | '/excursionista'
+    | '/excursionista/chat'
+    | '/excursionista/checkin'
+    | '/excursionista/editar'
+    | '/excursionista/financeiro'
+    | '/excursionista/info'
+    | '/excursionista/passageiros'
+    | '/excursionista/'
+    | '/excursionista/excursao/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ExcursionistaRoute: typeof ExcursionistaRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/excursionista': {
+      id: '/excursionista'
+      path: '/excursionista'
+      fullPath: '/excursionista'
+      preLoaderRoute: typeof ExcursionistaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -48,11 +167,94 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/excursionista/': {
+      id: '/excursionista/'
+      path: '/'
+      fullPath: '/excursionista/'
+      preLoaderRoute: typeof ExcursionistaIndexRouteImport
+      parentRoute: typeof ExcursionistaRoute
+    }
+    '/excursionista/passageiros': {
+      id: '/excursionista/passageiros'
+      path: '/passageiros'
+      fullPath: '/excursionista/passageiros'
+      preLoaderRoute: typeof ExcursionistaPassageirosRouteImport
+      parentRoute: typeof ExcursionistaRoute
+    }
+    '/excursionista/info': {
+      id: '/excursionista/info'
+      path: '/info'
+      fullPath: '/excursionista/info'
+      preLoaderRoute: typeof ExcursionistaInfoRouteImport
+      parentRoute: typeof ExcursionistaRoute
+    }
+    '/excursionista/financeiro': {
+      id: '/excursionista/financeiro'
+      path: '/financeiro'
+      fullPath: '/excursionista/financeiro'
+      preLoaderRoute: typeof ExcursionistaFinanceiroRouteImport
+      parentRoute: typeof ExcursionistaRoute
+    }
+    '/excursionista/editar': {
+      id: '/excursionista/editar'
+      path: '/editar'
+      fullPath: '/excursionista/editar'
+      preLoaderRoute: typeof ExcursionistaEditarRouteImport
+      parentRoute: typeof ExcursionistaRoute
+    }
+    '/excursionista/checkin': {
+      id: '/excursionista/checkin'
+      path: '/checkin'
+      fullPath: '/excursionista/checkin'
+      preLoaderRoute: typeof ExcursionistaCheckinRouteImport
+      parentRoute: typeof ExcursionistaRoute
+    }
+    '/excursionista/chat': {
+      id: '/excursionista/chat'
+      path: '/chat'
+      fullPath: '/excursionista/chat'
+      preLoaderRoute: typeof ExcursionistaChatRouteImport
+      parentRoute: typeof ExcursionistaRoute
+    }
+    '/excursionista/excursao/$id': {
+      id: '/excursionista/excursao/$id'
+      path: '/excursao/$id'
+      fullPath: '/excursionista/excursao/$id'
+      preLoaderRoute: typeof ExcursionistaExcursaoIdRouteImport
+      parentRoute: typeof ExcursionistaRoute
+    }
   }
 }
 
+interface ExcursionistaRouteChildren {
+  ExcursionistaChatRoute: typeof ExcursionistaChatRoute
+  ExcursionistaCheckinRoute: typeof ExcursionistaCheckinRoute
+  ExcursionistaEditarRoute: typeof ExcursionistaEditarRoute
+  ExcursionistaFinanceiroRoute: typeof ExcursionistaFinanceiroRoute
+  ExcursionistaInfoRoute: typeof ExcursionistaInfoRoute
+  ExcursionistaPassageirosRoute: typeof ExcursionistaPassageirosRoute
+  ExcursionistaIndexRoute: typeof ExcursionistaIndexRoute
+  ExcursionistaExcursaoIdRoute: typeof ExcursionistaExcursaoIdRoute
+}
+
+const ExcursionistaRouteChildren: ExcursionistaRouteChildren = {
+  ExcursionistaChatRoute: ExcursionistaChatRoute,
+  ExcursionistaCheckinRoute: ExcursionistaCheckinRoute,
+  ExcursionistaEditarRoute: ExcursionistaEditarRoute,
+  ExcursionistaFinanceiroRoute: ExcursionistaFinanceiroRoute,
+  ExcursionistaInfoRoute: ExcursionistaInfoRoute,
+  ExcursionistaPassageirosRoute: ExcursionistaPassageirosRoute,
+  ExcursionistaIndexRoute: ExcursionistaIndexRoute,
+  ExcursionistaExcursaoIdRoute: ExcursionistaExcursaoIdRoute,
+}
+
+const ExcursionistaRouteWithChildren = ExcursionistaRoute._addFileChildren(
+  ExcursionistaRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ExcursionistaRoute: ExcursionistaRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
