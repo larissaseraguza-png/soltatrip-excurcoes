@@ -10,9 +10,11 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as StaffRouteImport } from './routes/staff'
+import { Route as PassageiroRouteImport } from './routes/passageiro'
 import { Route as ExcursionistaRouteImport } from './routes/excursionista'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as StaffIndexRouteImport } from './routes/staff.index'
+import { Route as PassageiroIndexRouteImport } from './routes/passageiro.index'
 import { Route as ExcursionistaIndexRouteImport } from './routes/excursionista.index'
 import { Route as StaffSuporteRouteImport } from './routes/staff.suporte'
 import { Route as StaffPassageirosRouteImport } from './routes/staff.passageiros'
@@ -22,6 +24,13 @@ import { Route as StaffFinanceiroRouteImport } from './routes/staff.financeiro'
 import { Route as StaffEquipeRouteImport } from './routes/staff.equipe'
 import { Route as StaffConfiguracoesRouteImport } from './routes/staff.configuracoes'
 import { Route as StaffCheckinRouteImport } from './routes/staff.checkin'
+import { Route as PassageiroTicketRouteImport } from './routes/passageiro.ticket'
+import { Route as PassageiroSuporteRouteImport } from './routes/passageiro.suporte'
+import { Route as PassageiroRegrasRouteImport } from './routes/passageiro.regras'
+import { Route as PassageiroPerfilRouteImport } from './routes/passageiro.perfil'
+import { Route as PassageiroPagamentosRouteImport } from './routes/passageiro.pagamentos'
+import { Route as PassageiroInformacoesRouteImport } from './routes/passageiro.informacoes'
+import { Route as PassageiroChatRouteImport } from './routes/passageiro.chat'
 import { Route as ExcursionistaPassageirosRouteImport } from './routes/excursionista.passageiros'
 import { Route as ExcursionistaInfoRouteImport } from './routes/excursionista.info'
 import { Route as ExcursionistaFinanceiroRouteImport } from './routes/excursionista.financeiro'
@@ -29,11 +38,17 @@ import { Route as ExcursionistaEditarRouteImport } from './routes/excursionista.
 import { Route as ExcursionistaCheckinRouteImport } from './routes/excursionista.checkin'
 import { Route as ExcursionistaChatRouteImport } from './routes/excursionista.chat'
 import { Route as StaffPassageiroIdRouteImport } from './routes/staff.passageiro.$id'
+import { Route as PassageiroViagemIdRouteImport } from './routes/passageiro.viagem.$id'
 import { Route as ExcursionistaExcursaoIdRouteImport } from './routes/excursionista.excursao.$id'
 
 const StaffRoute = StaffRouteImport.update({
   id: '/staff',
   path: '/staff',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PassageiroRoute = PassageiroRouteImport.update({
+  id: '/passageiro',
+  path: '/passageiro',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ExcursionistaRoute = ExcursionistaRouteImport.update({
@@ -50,6 +65,11 @@ const StaffIndexRoute = StaffIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => StaffRoute,
+} as any)
+const PassageiroIndexRoute = PassageiroIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => PassageiroRoute,
 } as any)
 const ExcursionistaIndexRoute = ExcursionistaIndexRouteImport.update({
   id: '/',
@@ -96,6 +116,41 @@ const StaffCheckinRoute = StaffCheckinRouteImport.update({
   path: '/checkin',
   getParentRoute: () => StaffRoute,
 } as any)
+const PassageiroTicketRoute = PassageiroTicketRouteImport.update({
+  id: '/ticket',
+  path: '/ticket',
+  getParentRoute: () => PassageiroRoute,
+} as any)
+const PassageiroSuporteRoute = PassageiroSuporteRouteImport.update({
+  id: '/suporte',
+  path: '/suporte',
+  getParentRoute: () => PassageiroRoute,
+} as any)
+const PassageiroRegrasRoute = PassageiroRegrasRouteImport.update({
+  id: '/regras',
+  path: '/regras',
+  getParentRoute: () => PassageiroRoute,
+} as any)
+const PassageiroPerfilRoute = PassageiroPerfilRouteImport.update({
+  id: '/perfil',
+  path: '/perfil',
+  getParentRoute: () => PassageiroRoute,
+} as any)
+const PassageiroPagamentosRoute = PassageiroPagamentosRouteImport.update({
+  id: '/pagamentos',
+  path: '/pagamentos',
+  getParentRoute: () => PassageiroRoute,
+} as any)
+const PassageiroInformacoesRoute = PassageiroInformacoesRouteImport.update({
+  id: '/informacoes',
+  path: '/informacoes',
+  getParentRoute: () => PassageiroRoute,
+} as any)
+const PassageiroChatRoute = PassageiroChatRouteImport.update({
+  id: '/chat',
+  path: '/chat',
+  getParentRoute: () => PassageiroRoute,
+} as any)
 const ExcursionistaPassageirosRoute =
   ExcursionistaPassageirosRouteImport.update({
     id: '/passageiros',
@@ -132,6 +187,11 @@ const StaffPassageiroIdRoute = StaffPassageiroIdRouteImport.update({
   path: '/passageiro/$id',
   getParentRoute: () => StaffRoute,
 } as any)
+const PassageiroViagemIdRoute = PassageiroViagemIdRouteImport.update({
+  id: '/viagem/$id',
+  path: '/viagem/$id',
+  getParentRoute: () => PassageiroRoute,
+} as any)
 const ExcursionistaExcursaoIdRoute = ExcursionistaExcursaoIdRouteImport.update({
   id: '/excursao/$id',
   path: '/excursao/$id',
@@ -141,6 +201,7 @@ const ExcursionistaExcursaoIdRoute = ExcursionistaExcursaoIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/excursionista': typeof ExcursionistaRouteWithChildren
+  '/passageiro': typeof PassageiroRouteWithChildren
   '/staff': typeof StaffRouteWithChildren
   '/excursionista/chat': typeof ExcursionistaChatRoute
   '/excursionista/checkin': typeof ExcursionistaCheckinRoute
@@ -148,6 +209,13 @@ export interface FileRoutesByFullPath {
   '/excursionista/financeiro': typeof ExcursionistaFinanceiroRoute
   '/excursionista/info': typeof ExcursionistaInfoRoute
   '/excursionista/passageiros': typeof ExcursionistaPassageirosRoute
+  '/passageiro/chat': typeof PassageiroChatRoute
+  '/passageiro/informacoes': typeof PassageiroInformacoesRoute
+  '/passageiro/pagamentos': typeof PassageiroPagamentosRoute
+  '/passageiro/perfil': typeof PassageiroPerfilRoute
+  '/passageiro/regras': typeof PassageiroRegrasRoute
+  '/passageiro/suporte': typeof PassageiroSuporteRoute
+  '/passageiro/ticket': typeof PassageiroTicketRoute
   '/staff/checkin': typeof StaffCheckinRoute
   '/staff/configuracoes': typeof StaffConfiguracoesRoute
   '/staff/equipe': typeof StaffEquipeRoute
@@ -157,8 +225,10 @@ export interface FileRoutesByFullPath {
   '/staff/passageiros': typeof StaffPassageirosRoute
   '/staff/suporte': typeof StaffSuporteRoute
   '/excursionista/': typeof ExcursionistaIndexRoute
+  '/passageiro/': typeof PassageiroIndexRoute
   '/staff/': typeof StaffIndexRoute
   '/excursionista/excursao/$id': typeof ExcursionistaExcursaoIdRoute
+  '/passageiro/viagem/$id': typeof PassageiroViagemIdRoute
   '/staff/passageiro/$id': typeof StaffPassageiroIdRoute
 }
 export interface FileRoutesByTo {
@@ -169,6 +239,13 @@ export interface FileRoutesByTo {
   '/excursionista/financeiro': typeof ExcursionistaFinanceiroRoute
   '/excursionista/info': typeof ExcursionistaInfoRoute
   '/excursionista/passageiros': typeof ExcursionistaPassageirosRoute
+  '/passageiro/chat': typeof PassageiroChatRoute
+  '/passageiro/informacoes': typeof PassageiroInformacoesRoute
+  '/passageiro/pagamentos': typeof PassageiroPagamentosRoute
+  '/passageiro/perfil': typeof PassageiroPerfilRoute
+  '/passageiro/regras': typeof PassageiroRegrasRoute
+  '/passageiro/suporte': typeof PassageiroSuporteRoute
+  '/passageiro/ticket': typeof PassageiroTicketRoute
   '/staff/checkin': typeof StaffCheckinRoute
   '/staff/configuracoes': typeof StaffConfiguracoesRoute
   '/staff/equipe': typeof StaffEquipeRoute
@@ -178,14 +255,17 @@ export interface FileRoutesByTo {
   '/staff/passageiros': typeof StaffPassageirosRoute
   '/staff/suporte': typeof StaffSuporteRoute
   '/excursionista': typeof ExcursionistaIndexRoute
+  '/passageiro': typeof PassageiroIndexRoute
   '/staff': typeof StaffIndexRoute
   '/excursionista/excursao/$id': typeof ExcursionistaExcursaoIdRoute
+  '/passageiro/viagem/$id': typeof PassageiroViagemIdRoute
   '/staff/passageiro/$id': typeof StaffPassageiroIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/excursionista': typeof ExcursionistaRouteWithChildren
+  '/passageiro': typeof PassageiroRouteWithChildren
   '/staff': typeof StaffRouteWithChildren
   '/excursionista/chat': typeof ExcursionistaChatRoute
   '/excursionista/checkin': typeof ExcursionistaCheckinRoute
@@ -193,6 +273,13 @@ export interface FileRoutesById {
   '/excursionista/financeiro': typeof ExcursionistaFinanceiroRoute
   '/excursionista/info': typeof ExcursionistaInfoRoute
   '/excursionista/passageiros': typeof ExcursionistaPassageirosRoute
+  '/passageiro/chat': typeof PassageiroChatRoute
+  '/passageiro/informacoes': typeof PassageiroInformacoesRoute
+  '/passageiro/pagamentos': typeof PassageiroPagamentosRoute
+  '/passageiro/perfil': typeof PassageiroPerfilRoute
+  '/passageiro/regras': typeof PassageiroRegrasRoute
+  '/passageiro/suporte': typeof PassageiroSuporteRoute
+  '/passageiro/ticket': typeof PassageiroTicketRoute
   '/staff/checkin': typeof StaffCheckinRoute
   '/staff/configuracoes': typeof StaffConfiguracoesRoute
   '/staff/equipe': typeof StaffEquipeRoute
@@ -202,8 +289,10 @@ export interface FileRoutesById {
   '/staff/passageiros': typeof StaffPassageirosRoute
   '/staff/suporte': typeof StaffSuporteRoute
   '/excursionista/': typeof ExcursionistaIndexRoute
+  '/passageiro/': typeof PassageiroIndexRoute
   '/staff/': typeof StaffIndexRoute
   '/excursionista/excursao/$id': typeof ExcursionistaExcursaoIdRoute
+  '/passageiro/viagem/$id': typeof PassageiroViagemIdRoute
   '/staff/passageiro/$id': typeof StaffPassageiroIdRoute
 }
 export interface FileRouteTypes {
@@ -211,6 +300,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/excursionista'
+    | '/passageiro'
     | '/staff'
     | '/excursionista/chat'
     | '/excursionista/checkin'
@@ -218,6 +308,13 @@ export interface FileRouteTypes {
     | '/excursionista/financeiro'
     | '/excursionista/info'
     | '/excursionista/passageiros'
+    | '/passageiro/chat'
+    | '/passageiro/informacoes'
+    | '/passageiro/pagamentos'
+    | '/passageiro/perfil'
+    | '/passageiro/regras'
+    | '/passageiro/suporte'
+    | '/passageiro/ticket'
     | '/staff/checkin'
     | '/staff/configuracoes'
     | '/staff/equipe'
@@ -227,8 +324,10 @@ export interface FileRouteTypes {
     | '/staff/passageiros'
     | '/staff/suporte'
     | '/excursionista/'
+    | '/passageiro/'
     | '/staff/'
     | '/excursionista/excursao/$id'
+    | '/passageiro/viagem/$id'
     | '/staff/passageiro/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -239,6 +338,13 @@ export interface FileRouteTypes {
     | '/excursionista/financeiro'
     | '/excursionista/info'
     | '/excursionista/passageiros'
+    | '/passageiro/chat'
+    | '/passageiro/informacoes'
+    | '/passageiro/pagamentos'
+    | '/passageiro/perfil'
+    | '/passageiro/regras'
+    | '/passageiro/suporte'
+    | '/passageiro/ticket'
     | '/staff/checkin'
     | '/staff/configuracoes'
     | '/staff/equipe'
@@ -248,13 +354,16 @@ export interface FileRouteTypes {
     | '/staff/passageiros'
     | '/staff/suporte'
     | '/excursionista'
+    | '/passageiro'
     | '/staff'
     | '/excursionista/excursao/$id'
+    | '/passageiro/viagem/$id'
     | '/staff/passageiro/$id'
   id:
     | '__root__'
     | '/'
     | '/excursionista'
+    | '/passageiro'
     | '/staff'
     | '/excursionista/chat'
     | '/excursionista/checkin'
@@ -262,6 +371,13 @@ export interface FileRouteTypes {
     | '/excursionista/financeiro'
     | '/excursionista/info'
     | '/excursionista/passageiros'
+    | '/passageiro/chat'
+    | '/passageiro/informacoes'
+    | '/passageiro/pagamentos'
+    | '/passageiro/perfil'
+    | '/passageiro/regras'
+    | '/passageiro/suporte'
+    | '/passageiro/ticket'
     | '/staff/checkin'
     | '/staff/configuracoes'
     | '/staff/equipe'
@@ -271,14 +387,17 @@ export interface FileRouteTypes {
     | '/staff/passageiros'
     | '/staff/suporte'
     | '/excursionista/'
+    | '/passageiro/'
     | '/staff/'
     | '/excursionista/excursao/$id'
+    | '/passageiro/viagem/$id'
     | '/staff/passageiro/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ExcursionistaRoute: typeof ExcursionistaRouteWithChildren
+  PassageiroRoute: typeof PassageiroRouteWithChildren
   StaffRoute: typeof StaffRouteWithChildren
 }
 
@@ -289,6 +408,13 @@ declare module '@tanstack/react-router' {
       path: '/staff'
       fullPath: '/staff'
       preLoaderRoute: typeof StaffRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/passageiro': {
+      id: '/passageiro'
+      path: '/passageiro'
+      fullPath: '/passageiro'
+      preLoaderRoute: typeof PassageiroRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/excursionista': {
@@ -311,6 +437,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/staff/'
       preLoaderRoute: typeof StaffIndexRouteImport
       parentRoute: typeof StaffRoute
+    }
+    '/passageiro/': {
+      id: '/passageiro/'
+      path: '/'
+      fullPath: '/passageiro/'
+      preLoaderRoute: typeof PassageiroIndexRouteImport
+      parentRoute: typeof PassageiroRoute
     }
     '/excursionista/': {
       id: '/excursionista/'
@@ -375,6 +508,55 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StaffCheckinRouteImport
       parentRoute: typeof StaffRoute
     }
+    '/passageiro/ticket': {
+      id: '/passageiro/ticket'
+      path: '/ticket'
+      fullPath: '/passageiro/ticket'
+      preLoaderRoute: typeof PassageiroTicketRouteImport
+      parentRoute: typeof PassageiroRoute
+    }
+    '/passageiro/suporte': {
+      id: '/passageiro/suporte'
+      path: '/suporte'
+      fullPath: '/passageiro/suporte'
+      preLoaderRoute: typeof PassageiroSuporteRouteImport
+      parentRoute: typeof PassageiroRoute
+    }
+    '/passageiro/regras': {
+      id: '/passageiro/regras'
+      path: '/regras'
+      fullPath: '/passageiro/regras'
+      preLoaderRoute: typeof PassageiroRegrasRouteImport
+      parentRoute: typeof PassageiroRoute
+    }
+    '/passageiro/perfil': {
+      id: '/passageiro/perfil'
+      path: '/perfil'
+      fullPath: '/passageiro/perfil'
+      preLoaderRoute: typeof PassageiroPerfilRouteImport
+      parentRoute: typeof PassageiroRoute
+    }
+    '/passageiro/pagamentos': {
+      id: '/passageiro/pagamentos'
+      path: '/pagamentos'
+      fullPath: '/passageiro/pagamentos'
+      preLoaderRoute: typeof PassageiroPagamentosRouteImport
+      parentRoute: typeof PassageiroRoute
+    }
+    '/passageiro/informacoes': {
+      id: '/passageiro/informacoes'
+      path: '/informacoes'
+      fullPath: '/passageiro/informacoes'
+      preLoaderRoute: typeof PassageiroInformacoesRouteImport
+      parentRoute: typeof PassageiroRoute
+    }
+    '/passageiro/chat': {
+      id: '/passageiro/chat'
+      path: '/chat'
+      fullPath: '/passageiro/chat'
+      preLoaderRoute: typeof PassageiroChatRouteImport
+      parentRoute: typeof PassageiroRoute
+    }
     '/excursionista/passageiros': {
       id: '/excursionista/passageiros'
       path: '/passageiros'
@@ -424,6 +606,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StaffPassageiroIdRouteImport
       parentRoute: typeof StaffRoute
     }
+    '/passageiro/viagem/$id': {
+      id: '/passageiro/viagem/$id'
+      path: '/viagem/$id'
+      fullPath: '/passageiro/viagem/$id'
+      preLoaderRoute: typeof PassageiroViagemIdRouteImport
+      parentRoute: typeof PassageiroRoute
+    }
     '/excursionista/excursao/$id': {
       id: '/excursionista/excursao/$id'
       path: '/excursao/$id'
@@ -460,6 +649,34 @@ const ExcursionistaRouteWithChildren = ExcursionistaRoute._addFileChildren(
   ExcursionistaRouteChildren,
 )
 
+interface PassageiroRouteChildren {
+  PassageiroChatRoute: typeof PassageiroChatRoute
+  PassageiroInformacoesRoute: typeof PassageiroInformacoesRoute
+  PassageiroPagamentosRoute: typeof PassageiroPagamentosRoute
+  PassageiroPerfilRoute: typeof PassageiroPerfilRoute
+  PassageiroRegrasRoute: typeof PassageiroRegrasRoute
+  PassageiroSuporteRoute: typeof PassageiroSuporteRoute
+  PassageiroTicketRoute: typeof PassageiroTicketRoute
+  PassageiroIndexRoute: typeof PassageiroIndexRoute
+  PassageiroViagemIdRoute: typeof PassageiroViagemIdRoute
+}
+
+const PassageiroRouteChildren: PassageiroRouteChildren = {
+  PassageiroChatRoute: PassageiroChatRoute,
+  PassageiroInformacoesRoute: PassageiroInformacoesRoute,
+  PassageiroPagamentosRoute: PassageiroPagamentosRoute,
+  PassageiroPerfilRoute: PassageiroPerfilRoute,
+  PassageiroRegrasRoute: PassageiroRegrasRoute,
+  PassageiroSuporteRoute: PassageiroSuporteRoute,
+  PassageiroTicketRoute: PassageiroTicketRoute,
+  PassageiroIndexRoute: PassageiroIndexRoute,
+  PassageiroViagemIdRoute: PassageiroViagemIdRoute,
+}
+
+const PassageiroRouteWithChildren = PassageiroRoute._addFileChildren(
+  PassageiroRouteChildren,
+)
+
 interface StaffRouteChildren {
   StaffCheckinRoute: typeof StaffCheckinRoute
   StaffConfiguracoesRoute: typeof StaffConfiguracoesRoute
@@ -491,6 +708,7 @@ const StaffRouteWithChildren = StaffRoute._addFileChildren(StaffRouteChildren)
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ExcursionistaRoute: ExcursionistaRouteWithChildren,
+  PassageiroRoute: PassageiroRouteWithChildren,
   StaffRoute: StaffRouteWithChildren,
 }
 export const routeTree = rootRouteImport
