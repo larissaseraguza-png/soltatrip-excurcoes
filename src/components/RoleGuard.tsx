@@ -1,11 +1,11 @@
 import { Navigate } from "@tanstack/react-router";
 import { Loader2 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
-import { useRole, roleHome, type AppRole } from "@/hooks/use-role";
+import { useRoleForUser, roleHome, type AppRole } from "@/hooks/use-role";
 
 export function RoleGuard({ allow, children }: { allow: AppRole; children: React.ReactNode }) {
   const { user, loading: aLoading } = useAuth();
-  const { role, loading: rLoading } = useRole();
+  const { role, loading: rLoading } = useRoleForUser(user, aLoading);
 
   if (aLoading || rLoading) {
     return (
