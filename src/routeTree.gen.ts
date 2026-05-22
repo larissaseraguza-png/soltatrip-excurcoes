@@ -18,6 +18,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as StaffIndexRouteImport } from './routes/staff.index'
 import { Route as PassageiroIndexRouteImport } from './routes/passageiro.index'
 import { Route as ExcursionistaIndexRouteImport } from './routes/excursionista.index'
+import { Route as AppIndexRouteImport } from './routes/app.index'
 import { Route as StaffSuporteRouteImport } from './routes/staff.suporte'
 import { Route as StaffPassageirosRouteImport } from './routes/staff.passageiros'
 import { Route as StaffOnibusRouteImport } from './routes/staff.onibus'
@@ -87,6 +88,11 @@ const ExcursionistaIndexRoute = ExcursionistaIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => ExcursionistaRoute,
+} as any)
+const AppIndexRoute = AppIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppRoute,
 } as any)
 const StaffSuporteRoute = StaffSuporteRouteImport.update({
   id: '/suporte',
@@ -212,7 +218,7 @@ const ExcursionistaExcursaoIdRoute = ExcursionistaExcursaoIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/app': typeof AppRoute
+  '/app': typeof AppRouteWithChildren
   '/auth': typeof AuthRoute
   '/excursionista': typeof ExcursionistaRouteWithChildren
   '/passageiro': typeof PassageiroRouteWithChildren
@@ -238,6 +244,7 @@ export interface FileRoutesByFullPath {
   '/staff/onibus': typeof StaffOnibusRoute
   '/staff/passageiros': typeof StaffPassageirosRoute
   '/staff/suporte': typeof StaffSuporteRoute
+  '/app/': typeof AppIndexRoute
   '/excursionista/': typeof ExcursionistaIndexRoute
   '/passageiro/': typeof PassageiroIndexRoute
   '/staff/': typeof StaffIndexRoute
@@ -247,7 +254,6 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/app': typeof AppRoute
   '/auth': typeof AuthRoute
   '/excursionista/chat': typeof ExcursionistaChatRoute
   '/excursionista/checkin': typeof ExcursionistaCheckinRoute
@@ -270,6 +276,7 @@ export interface FileRoutesByTo {
   '/staff/onibus': typeof StaffOnibusRoute
   '/staff/passageiros': typeof StaffPassageirosRoute
   '/staff/suporte': typeof StaffSuporteRoute
+  '/app': typeof AppIndexRoute
   '/excursionista': typeof ExcursionistaIndexRoute
   '/passageiro': typeof PassageiroIndexRoute
   '/staff': typeof StaffIndexRoute
@@ -280,7 +287,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/app': typeof AppRoute
+  '/app': typeof AppRouteWithChildren
   '/auth': typeof AuthRoute
   '/excursionista': typeof ExcursionistaRouteWithChildren
   '/passageiro': typeof PassageiroRouteWithChildren
@@ -306,6 +313,7 @@ export interface FileRoutesById {
   '/staff/onibus': typeof StaffOnibusRoute
   '/staff/passageiros': typeof StaffPassageirosRoute
   '/staff/suporte': typeof StaffSuporteRoute
+  '/app/': typeof AppIndexRoute
   '/excursionista/': typeof ExcursionistaIndexRoute
   '/passageiro/': typeof PassageiroIndexRoute
   '/staff/': typeof StaffIndexRoute
@@ -343,6 +351,7 @@ export interface FileRouteTypes {
     | '/staff/onibus'
     | '/staff/passageiros'
     | '/staff/suporte'
+    | '/app/'
     | '/excursionista/'
     | '/passageiro/'
     | '/staff/'
@@ -352,7 +361,6 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/app'
     | '/auth'
     | '/excursionista/chat'
     | '/excursionista/checkin'
@@ -375,6 +383,7 @@ export interface FileRouteTypes {
     | '/staff/onibus'
     | '/staff/passageiros'
     | '/staff/suporte'
+    | '/app'
     | '/excursionista'
     | '/passageiro'
     | '/staff'
@@ -410,6 +419,7 @@ export interface FileRouteTypes {
     | '/staff/onibus'
     | '/staff/passageiros'
     | '/staff/suporte'
+    | '/app/'
     | '/excursionista/'
     | '/passageiro/'
     | '/staff/'
@@ -420,7 +430,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  AppRoute: typeof AppRoute
+  AppRoute: typeof AppRouteWithChildren
   AuthRoute: typeof AuthRoute
   ExcursionistaRoute: typeof ExcursionistaRouteWithChildren
   PassageiroRoute: typeof PassageiroRouteWithChildren
@@ -491,6 +501,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/excursionista/'
       preLoaderRoute: typeof ExcursionistaIndexRouteImport
       parentRoute: typeof ExcursionistaRoute
+    }
+    '/app/': {
+      id: '/app/'
+      path: '/'
+      fullPath: '/app/'
+      preLoaderRoute: typeof AppIndexRouteImport
+      parentRoute: typeof AppRoute
     }
     '/staff/suporte': {
       id: '/staff/suporte'
@@ -663,6 +680,16 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AppRouteChildren {
+  AppIndexRoute: typeof AppIndexRoute
+}
+
+const AppRouteChildren: AppRouteChildren = {
+  AppIndexRoute: AppIndexRoute,
+}
+
+const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
+
 interface ExcursionistaRouteChildren {
   ExcursionistaChatRoute: typeof ExcursionistaChatRoute
   ExcursionistaCheckinRoute: typeof ExcursionistaCheckinRoute
@@ -747,7 +774,7 @@ const StaffRouteWithChildren = StaffRoute._addFileChildren(StaffRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AppRoute: AppRoute,
+  AppRoute: AppRouteWithChildren,
   AuthRoute: AuthRoute,
   ExcursionistaRoute: ExcursionistaRouteWithChildren,
   PassageiroRoute: PassageiroRouteWithChildren,
