@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useParams, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, Calendar, MapPin, Clock, Users, DollarSign, Loader2, Trash2, ChevronRight, Wallet, QrCode, MessageCircle, MapPinned } from "lucide-react";
+import { ArrowLeft, Calendar, MapPin, Clock, Users, DollarSign, Loader2, Trash2, ChevronRight, Wallet, QrCode, MessageCircle, MapPinned, UserCog } from "lucide-react";
 
 export const Route = createFileRoute("/app/excursao/$id/")({
   component: ExcursaoDetalhe,
@@ -85,6 +85,7 @@ function ExcursaoDetalhe() {
         <NavCard to="/app/excursao/$id/financeiro" id={id} icon={Wallet} title="Financeiro" desc="Lançar pagamentos e acompanhar entradas" />
         <NavCard to="/app/excursao/$id/checkin" id={id} icon={QrCode} title="Check-in QR" desc="Embarcar passageiros com leitor de QR" />
         <NavCard to="/app/excursao/$id/chat" id={id} icon={MessageCircle} title="Chat da viagem" desc="Conversa em tempo real com o grupo" />
+        <NavCard to="/app/excursao/$id/equipe" id={id} icon={UserCog} title="Equipe / Staff" desc="Convidar e gerenciar staff desta excursão" />
       </div>
 
       <button
