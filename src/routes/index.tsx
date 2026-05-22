@@ -48,12 +48,12 @@ function Nav() {
             <a href="#features" className="hover:text-foreground transition">Recursos</a>
             <a href="#flow" className="hover:text-foreground transition">Como funciona</a>
           </nav>
-          <a
-            href="#cta"
+          <Link
+            to="/auth"
             className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90 transition glow-primary"
           >
             Começar <ArrowRight className="h-4 w-4" />
-          </a>
+          </Link>
         </div>
       </div>
     </header>
