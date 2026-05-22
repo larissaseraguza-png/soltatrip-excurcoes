@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate, Navigate } from "@tanstack/react-ro
 import { useState, type FormEvent } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
-import { useRole, roleHome, type AppRole } from "@/hooks/use-role";
+import { useRoleForUser, roleHome, type AppRole } from "@/hooks/use-role";
 import {
   Bus, Loader2, Mail, Lock, AlertCircle, Crown, Shield, Ticket, ArrowLeft,
 } from "lucide-react";
@@ -37,7 +37,7 @@ const accents = {
 
 function AuthPage() {
   const { user, loading } = useAuth();
-  const { role, loading: roleLoading } = useRole();
+  const { role, loading: roleLoading } = useRoleForUser(user, loading);
   const navigate = useNavigate();
 
   const [mode, setMode] = useState<"signin" | "signup">("signin");
