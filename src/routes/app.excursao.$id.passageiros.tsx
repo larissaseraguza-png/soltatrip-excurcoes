@@ -100,6 +100,22 @@ function PassageirosPage() {
 
   const pontoNome = (pid: string | null) => pontos.find((p) => p.id === pid)?.nome ?? null;
 
+  const pagoMap = useMemo(() => {
+    const m = new Map<string, boolean>();
+    for (const pg of pagamentos) {
+      if (pg.status === "pago") m.set(pg.passageiro_id, true);
+    }
+    return m;
+  }, [pagamentos]);
+
+  const taken = useMemo(() => {
+    const t: Record<string, { pago: boolean; nome: string }> = {};
+    for (const p of passageiros) {
+      if (p.assento) t[p.assento] = { pago: !!pagoMap.get(p.id), nome: p.nome };
+    }
+    return t;
+  }, [passageiros, pagoMap]);
+
   const filtered = passageiros.filter((p) => {
     const matchSearch =
       p.nome.toLowerCase().includes(search.toLowerCase()) ||
