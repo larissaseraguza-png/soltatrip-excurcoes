@@ -85,6 +85,7 @@ function ExcursaoDetalhe() {
         <NavCard to="/app/excursao/$id/financeiro" id={id} icon={Wallet} title="Financeiro" desc="Lançar pagamentos e acompanhar entradas" />
         <NavCard to="/app/excursao/$id/checkin" id={id} icon={QrCode} title="Check-in QR" desc="Embarcar passageiros com leitor de QR" />
         <NavCard to="/app/excursao/$id/chat" id={id} icon={MessageCircle} title="Chat da viagem" desc="Conversa em tempo real com o grupo" />
+        <NavCard to="/app/excursao/$id/equipe" id={id} icon={UserCog} title="Equipe / Staff" desc="Convidar e gerenciar staff desta excursão" />
       </div>
 
       <button
