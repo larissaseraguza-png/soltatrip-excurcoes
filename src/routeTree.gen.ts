@@ -44,7 +44,7 @@ import { Route as StaffPassageiroIdRouteImport } from './routes/staff.passageiro
 import { Route as PassageiroViagemIdRouteImport } from './routes/passageiro.viagem.$id'
 import { Route as ExcursionistaExcursaoIdRouteImport } from './routes/excursionista.excursao.$id'
 import { Route as AppExcursaoNovaRouteImport } from './routes/app.excursao.nova'
-import { Route as AppExcursaoIdRouteImport } from './routes/app.excursao.$id'
+import { Route as AppExcursaoIdIndexRouteImport } from './routes/app.excursao.$id.index'
 import { Route as AppExcursaoIdPassageirosRouteImport } from './routes/app.excursao.$id.passageiros'
 import { Route as AppExcursaoIdFinanceiroRouteImport } from './routes/app.excursao.$id.financeiro'
 import { Route as AppExcursaoIdCheckinRouteImport } from './routes/app.excursao.$id.checkin'
@@ -226,31 +226,31 @@ const AppExcursaoNovaRoute = AppExcursaoNovaRouteImport.update({
   path: '/excursao/nova',
   getParentRoute: () => AppRoute,
 } as any)
-const AppExcursaoIdRoute = AppExcursaoIdRouteImport.update({
-  id: '/excursao/$id',
-  path: '/excursao/$id',
+const AppExcursaoIdIndexRoute = AppExcursaoIdIndexRouteImport.update({
+  id: '/excursao/$id/',
+  path: '/excursao/$id/',
   getParentRoute: () => AppRoute,
 } as any)
 const AppExcursaoIdPassageirosRoute =
   AppExcursaoIdPassageirosRouteImport.update({
-    id: '/passageiros',
-    path: '/passageiros',
-    getParentRoute: () => AppExcursaoIdRoute,
+    id: '/excursao/$id/passageiros',
+    path: '/excursao/$id/passageiros',
+    getParentRoute: () => AppRoute,
   } as any)
 const AppExcursaoIdFinanceiroRoute = AppExcursaoIdFinanceiroRouteImport.update({
-  id: '/financeiro',
-  path: '/financeiro',
-  getParentRoute: () => AppExcursaoIdRoute,
+  id: '/excursao/$id/financeiro',
+  path: '/excursao/$id/financeiro',
+  getParentRoute: () => AppRoute,
 } as any)
 const AppExcursaoIdCheckinRoute = AppExcursaoIdCheckinRouteImport.update({
-  id: '/checkin',
-  path: '/checkin',
-  getParentRoute: () => AppExcursaoIdRoute,
+  id: '/excursao/$id/checkin',
+  path: '/excursao/$id/checkin',
+  getParentRoute: () => AppRoute,
 } as any)
 const AppExcursaoIdChatRoute = AppExcursaoIdChatRouteImport.update({
-  id: '/chat',
-  path: '/chat',
-  getParentRoute: () => AppExcursaoIdRoute,
+  id: '/excursao/$id/chat',
+  path: '/excursao/$id/chat',
+  getParentRoute: () => AppRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
@@ -285,7 +285,6 @@ export interface FileRoutesByFullPath {
   '/excursionista/': typeof ExcursionistaIndexRoute
   '/passageiro/': typeof PassageiroIndexRoute
   '/staff/': typeof StaffIndexRoute
-  '/app/excursao/$id': typeof AppExcursaoIdRouteWithChildren
   '/app/excursao/nova': typeof AppExcursaoNovaRoute
   '/excursionista/excursao/$id': typeof ExcursionistaExcursaoIdRoute
   '/passageiro/viagem/$id': typeof PassageiroViagemIdRoute
@@ -294,6 +293,7 @@ export interface FileRoutesByFullPath {
   '/app/excursao/$id/checkin': typeof AppExcursaoIdCheckinRoute
   '/app/excursao/$id/financeiro': typeof AppExcursaoIdFinanceiroRoute
   '/app/excursao/$id/passageiros': typeof AppExcursaoIdPassageirosRoute
+  '/app/excursao/$id/': typeof AppExcursaoIdIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -323,7 +323,6 @@ export interface FileRoutesByTo {
   '/excursionista': typeof ExcursionistaIndexRoute
   '/passageiro': typeof PassageiroIndexRoute
   '/staff': typeof StaffIndexRoute
-  '/app/excursao/$id': typeof AppExcursaoIdRouteWithChildren
   '/app/excursao/nova': typeof AppExcursaoNovaRoute
   '/excursionista/excursao/$id': typeof ExcursionistaExcursaoIdRoute
   '/passageiro/viagem/$id': typeof PassageiroViagemIdRoute
@@ -332,6 +331,7 @@ export interface FileRoutesByTo {
   '/app/excursao/$id/checkin': typeof AppExcursaoIdCheckinRoute
   '/app/excursao/$id/financeiro': typeof AppExcursaoIdFinanceiroRoute
   '/app/excursao/$id/passageiros': typeof AppExcursaoIdPassageirosRoute
+  '/app/excursao/$id': typeof AppExcursaoIdIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -366,7 +366,6 @@ export interface FileRoutesById {
   '/excursionista/': typeof ExcursionistaIndexRoute
   '/passageiro/': typeof PassageiroIndexRoute
   '/staff/': typeof StaffIndexRoute
-  '/app/excursao/$id': typeof AppExcursaoIdRouteWithChildren
   '/app/excursao/nova': typeof AppExcursaoNovaRoute
   '/excursionista/excursao/$id': typeof ExcursionistaExcursaoIdRoute
   '/passageiro/viagem/$id': typeof PassageiroViagemIdRoute
@@ -375,6 +374,7 @@ export interface FileRoutesById {
   '/app/excursao/$id/checkin': typeof AppExcursaoIdCheckinRoute
   '/app/excursao/$id/financeiro': typeof AppExcursaoIdFinanceiroRoute
   '/app/excursao/$id/passageiros': typeof AppExcursaoIdPassageirosRoute
+  '/app/excursao/$id/': typeof AppExcursaoIdIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -410,7 +410,6 @@ export interface FileRouteTypes {
     | '/excursionista/'
     | '/passageiro/'
     | '/staff/'
-    | '/app/excursao/$id'
     | '/app/excursao/nova'
     | '/excursionista/excursao/$id'
     | '/passageiro/viagem/$id'
@@ -419,6 +418,7 @@ export interface FileRouteTypes {
     | '/app/excursao/$id/checkin'
     | '/app/excursao/$id/financeiro'
     | '/app/excursao/$id/passageiros'
+    | '/app/excursao/$id/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -448,7 +448,6 @@ export interface FileRouteTypes {
     | '/excursionista'
     | '/passageiro'
     | '/staff'
-    | '/app/excursao/$id'
     | '/app/excursao/nova'
     | '/excursionista/excursao/$id'
     | '/passageiro/viagem/$id'
@@ -457,6 +456,7 @@ export interface FileRouteTypes {
     | '/app/excursao/$id/checkin'
     | '/app/excursao/$id/financeiro'
     | '/app/excursao/$id/passageiros'
+    | '/app/excursao/$id'
   id:
     | '__root__'
     | '/'
@@ -490,7 +490,6 @@ export interface FileRouteTypes {
     | '/excursionista/'
     | '/passageiro/'
     | '/staff/'
-    | '/app/excursao/$id'
     | '/app/excursao/nova'
     | '/excursionista/excursao/$id'
     | '/passageiro/viagem/$id'
@@ -499,6 +498,7 @@ export interface FileRouteTypes {
     | '/app/excursao/$id/checkin'
     | '/app/excursao/$id/financeiro'
     | '/app/excursao/$id/passageiros'
+    | '/app/excursao/$id/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -757,72 +757,62 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppExcursaoNovaRouteImport
       parentRoute: typeof AppRoute
     }
-    '/app/excursao/$id': {
-      id: '/app/excursao/$id'
+    '/app/excursao/$id/': {
+      id: '/app/excursao/$id/'
       path: '/excursao/$id'
-      fullPath: '/app/excursao/$id'
-      preLoaderRoute: typeof AppExcursaoIdRouteImport
+      fullPath: '/app/excursao/$id/'
+      preLoaderRoute: typeof AppExcursaoIdIndexRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/excursao/$id/passageiros': {
       id: '/app/excursao/$id/passageiros'
-      path: '/passageiros'
+      path: '/excursao/$id/passageiros'
       fullPath: '/app/excursao/$id/passageiros'
       preLoaderRoute: typeof AppExcursaoIdPassageirosRouteImport
-      parentRoute: typeof AppExcursaoIdRoute
+      parentRoute: typeof AppRoute
     }
     '/app/excursao/$id/financeiro': {
       id: '/app/excursao/$id/financeiro'
-      path: '/financeiro'
+      path: '/excursao/$id/financeiro'
       fullPath: '/app/excursao/$id/financeiro'
       preLoaderRoute: typeof AppExcursaoIdFinanceiroRouteImport
-      parentRoute: typeof AppExcursaoIdRoute
+      parentRoute: typeof AppRoute
     }
     '/app/excursao/$id/checkin': {
       id: '/app/excursao/$id/checkin'
-      path: '/checkin'
+      path: '/excursao/$id/checkin'
       fullPath: '/app/excursao/$id/checkin'
       preLoaderRoute: typeof AppExcursaoIdCheckinRouteImport
-      parentRoute: typeof AppExcursaoIdRoute
+      parentRoute: typeof AppRoute
     }
     '/app/excursao/$id/chat': {
       id: '/app/excursao/$id/chat'
-      path: '/chat'
+      path: '/excursao/$id/chat'
       fullPath: '/app/excursao/$id/chat'
       preLoaderRoute: typeof AppExcursaoIdChatRouteImport
-      parentRoute: typeof AppExcursaoIdRoute
+      parentRoute: typeof AppRoute
     }
   }
 }
 
-interface AppExcursaoIdRouteChildren {
+interface AppRouteChildren {
+  AppIndexRoute: typeof AppIndexRoute
+  AppExcursaoNovaRoute: typeof AppExcursaoNovaRoute
   AppExcursaoIdChatRoute: typeof AppExcursaoIdChatRoute
   AppExcursaoIdCheckinRoute: typeof AppExcursaoIdCheckinRoute
   AppExcursaoIdFinanceiroRoute: typeof AppExcursaoIdFinanceiroRoute
   AppExcursaoIdPassageirosRoute: typeof AppExcursaoIdPassageirosRoute
-}
-
-const AppExcursaoIdRouteChildren: AppExcursaoIdRouteChildren = {
-  AppExcursaoIdChatRoute: AppExcursaoIdChatRoute,
-  AppExcursaoIdCheckinRoute: AppExcursaoIdCheckinRoute,
-  AppExcursaoIdFinanceiroRoute: AppExcursaoIdFinanceiroRoute,
-  AppExcursaoIdPassageirosRoute: AppExcursaoIdPassageirosRoute,
-}
-
-const AppExcursaoIdRouteWithChildren = AppExcursaoIdRoute._addFileChildren(
-  AppExcursaoIdRouteChildren,
-)
-
-interface AppRouteChildren {
-  AppIndexRoute: typeof AppIndexRoute
-  AppExcursaoIdRoute: typeof AppExcursaoIdRouteWithChildren
-  AppExcursaoNovaRoute: typeof AppExcursaoNovaRoute
+  AppExcursaoIdIndexRoute: typeof AppExcursaoIdIndexRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
   AppIndexRoute: AppIndexRoute,
-  AppExcursaoIdRoute: AppExcursaoIdRouteWithChildren,
   AppExcursaoNovaRoute: AppExcursaoNovaRoute,
+  AppExcursaoIdChatRoute: AppExcursaoIdChatRoute,
+  AppExcursaoIdCheckinRoute: AppExcursaoIdCheckinRoute,
+  AppExcursaoIdFinanceiroRoute: AppExcursaoIdFinanceiroRoute,
+  AppExcursaoIdPassageirosRoute: AppExcursaoIdPassageirosRoute,
+  AppExcursaoIdIndexRoute: AppExcursaoIdIndexRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
@@ -920,3 +910,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
