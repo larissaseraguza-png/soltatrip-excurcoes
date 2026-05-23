@@ -2,7 +2,6 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { StaffShell, Pill } from "@/components/staff/Shell";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/use-auth";
 import { useStaffExcursao } from "@/hooks/use-staff-excursao";
 import { useRealtimeSync } from "@/hooks/use-realtime-sync";
 import { Search, Loader2, MapPin, Armchair, Phone, Bus } from "lucide-react";
@@ -12,7 +11,6 @@ export const Route = createFileRoute("/staff/passageiros")({
   component: PassageirosStaff,
 });
 
-type Vinculo = { excursao: { id: string; titulo: string } | null };
 type Passageiro = {
   id: string;
   nome: string;
@@ -25,7 +23,6 @@ type Passageiro = {
 type Ponto = { id: string; nome: string; horario: string | null };
 
 function PassageirosStaff() {
-  const { user } = useAuth();
   const { excursao, onibusId, onibus, loading: loadingExc } = useStaffExcursao();
   const [search, setSearch] = useState("");
 
