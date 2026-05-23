@@ -62,12 +62,14 @@ function PontosPage() {
     const { error } = await supabase.from("pontos_embarque").insert({
       excursao_id: id,
       nome: form.nome.trim(),
+      endereco: form.endereco.trim() || null,
+      referencia: form.referencia.trim() || null,
       horario: form.horario.trim() || null,
       ordem: pontos.length,
     });
     setSaving(false);
     if (error) { alert(error.message); return; }
-    setForm({ nome: "", horario: "" });
+    setForm({ nome: "", endereco: "", referencia: "", horario: "" });
     qc.invalidateQueries({ queryKey: ["pontos", id] });
   }
 
@@ -78,7 +80,7 @@ function PontosPage() {
       </Link>
 
       <h1 className="font-display text-2xl font-black mb-1">Pontos de embarque</h1>
-      <p className="text-sm text-muted-foreground mb-5">Cadastre os locais onde os passageiros podem embarcar.</p>
+      <p className="text-sm text-muted-foreground mb-5">Cadastre múltiplos locais. O passageiro escolhe onde irá embarcar.</p>
 
       <form onSubmit={add} className="glass rounded-2xl p-4 mb-5 space-y-3">
         <div className="grid grid-cols-[1fr_120px] gap-2">
@@ -88,7 +90,7 @@ function PontosPage() {
               required
               value={form.nome}
               onChange={(e) => setForm({ ...form, nome: e.target.value })}
-              placeholder="Ex: Rodoviária"
+              placeholder="Ex: Aeroporto, Posto Shell"
               className="mt-1 w-full h-11 px-3 rounded-xl bg-input border border-border text-sm"
             />
           </label>
@@ -102,6 +104,24 @@ function PontosPage() {
             />
           </label>
         </div>
+        <label className="block">
+          <span className="text-[10px] uppercase tracking-wider font-bold text-muted-foreground">Endereço</span>
+          <input
+            value={form.endereco}
+            onChange={(e) => setForm({ ...form, endereco: e.target.value })}
+            placeholder="Av. Paulista, 1578"
+            className="mt-1 w-full h-11 px-3 rounded-xl bg-input border border-border text-sm"
+          />
+        </label>
+        <label className="block">
+          <span className="text-[10px] uppercase tracking-wider font-bold text-muted-foreground">Referência</span>
+          <input
+            value={form.referencia}
+            onChange={(e) => setForm({ ...form, referencia: e.target.value })}
+            placeholder="Próximo ao metrô (opcional)"
+            className="mt-1 w-full h-11 px-3 rounded-xl bg-input border border-border text-sm"
+          />
+        </label>
         <button
           disabled={saving || !form.nome.trim()}
           className="w-full h-11 rounded-xl bg-gradient-to-r from-neon-pink to-neon-purple text-primary-foreground font-bold text-sm flex items-center justify-center gap-1.5 disabled:opacity-50"
