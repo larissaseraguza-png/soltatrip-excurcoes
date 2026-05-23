@@ -712,3 +712,253 @@ function Field({ label, value, onChange, required }: { label: string; value: str
     </label>
   );
 }
+
+type PagamentoRow = {
+  id: string;
+  valor: number;
+  metodo: string;
+  status: string;
+  observacao: string | null;
+  pago_em: string | null;
+  created_at: string;
+};
+
+function FinanceiroPaxModal({
+  passageiro,
+  excursaoId,
+  onClose,
+}: {
+  passageiro: Passageiro;
+  excursaoId: string;
+  onClose: () => void;
+}) {
+  const qc = useQueryClient();
+  const [valor, setValor] = useState("");
+  const [metodo, setMetodo] = useState<"pix" | "dinheiro" | "cartao" | "transferencia" | "manual">("pix");
+  const [observacao, setObservacao] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  const { data: paxLive } = useQuery({
+    queryKey: ["passageiro-fin", passageiro.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("passageiros")
+        .select("total_price, amount_paid, payment_status")
+        .eq("id", passageiro.id)
+        .single();
+      return data;
+    },
+    initialData: {
+      total_price: passageiro.total_price,
+      amount_paid: passageiro.amount_paid,
+      payment_status: passageiro.payment_status,
+    } as any,
+  });
+
+  const { data: pagamentos = [], isLoading } = useQuery({
+    queryKey: ["pagamentos-pax", passageiro.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("pagamentos")
+        .select("*")
+        .eq("passageiro_id", passageiro.id)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data as PagamentoRow[];
+    },
+  });
+
+  useRealtimeSync(
+    `pax-fin-${passageiro.id}`,
+    [
+      { table: "pagamentos", filter: `passageiro_id=eq.${passageiro.id}` },
+      { table: "passageiros", filter: `id=eq.${passageiro.id}` },
+    ],
+    [
+      ["pagamentos-pax", passageiro.id],
+      ["passageiro-fin", passageiro.id],
+      ["passageiros", excursaoId],
+      ["pagamentos", excursaoId],
+    ],
+  );
+
+  const total = Number(paxLive?.total_price ?? 0);
+  const pago = Number(paxLive?.amount_paid ?? 0);
+  const restante = Math.max(0, total - pago);
+
+  async function addPagamento(e: React.FormEvent) {
+    e.preventDefault();
+    const v = Number(valor);
+    if (!v || v <= 0) {
+      toast.error("Informe um valor válido");
+      return;
+    }
+    setSaving(true);
+    const { error } = await supabase.from("pagamentos").insert({
+      excursao_id: excursaoId,
+      passageiro_id: passageiro.id,
+      valor: v,
+      metodo,
+      status: "pago",
+      observacao: observacao || null,
+      pago_em: new Date().toISOString(),
+    });
+    setSaving(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success(`+ R$ ${v.toFixed(2)} registrado`);
+    setValor("");
+    setObservacao("");
+    qc.invalidateQueries({ queryKey: ["pagamentos-pax", passageiro.id] });
+    qc.invalidateQueries({ queryKey: ["passageiro-fin", passageiro.id] });
+    qc.invalidateQueries({ queryKey: ["passageiros", excursaoId] });
+    qc.invalidateQueries({ queryKey: ["pagamentos", excursaoId] });
+  }
+
+  async function removePagamento(pid: string) {
+    if (!confirm("Remover este pagamento?")) return;
+    const { error } = await supabase.from("pagamentos").delete().eq("id", pid);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Pagamento removido");
+    qc.invalidateQueries({ queryKey: ["pagamentos-pax", passageiro.id] });
+    qc.invalidateQueries({ queryKey: ["passageiro-fin", passageiro.id] });
+    qc.invalidateQueries({ queryKey: ["passageiros", excursaoId] });
+  }
+
+  async function toggleStatus(p: PagamentoRow) {
+    const next = p.status === "pago" || p.status === "confirmado" ? "estornado" : "pago";
+    const { error } = await supabase
+      .from("pagamentos")
+      .update({ status: next, pago_em: next === "pago" ? new Date().toISOString() : null })
+      .eq("id", p.id);
+    if (error) { toast.error(error.message); return; }
+    qc.invalidateQueries({ queryKey: ["pagamentos-pax", passageiro.id] });
+    qc.invalidateQueries({ queryKey: ["passageiro-fin", passageiro.id] });
+    qc.invalidateQueries({ queryKey: ["passageiros", excursaoId] });
+  }
+
+  const metodoLabel: Record<string, string> = {
+    pix: "PIX", dinheiro: "Dinheiro", cartao: "Cartão", transferencia: "Transferência", manual: "Manual",
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur flex items-end sm:items-center justify-center p-4 overflow-y-auto" onClick={onClose}>
+      <div onClick={(e) => e.stopPropagation()} className="glass rounded-3xl p-5 w-full max-w-md border border-border my-4">
+        <div className="flex items-start justify-between gap-3 mb-4">
+          <div className="min-w-0">
+            <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">Financeiro</p>
+            <h2 className="font-display text-xl font-black truncate">{passageiro.nome}</h2>
+          </div>
+          <button type="button" onClick={onClose} className="h-9 w-9 rounded-xl bg-secondary grid place-items-center shrink-0">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        <div className="grid grid-cols-3 gap-2 mb-4">
+          <div className="rounded-2xl bg-background/40 border border-border p-3">
+            <p className="text-[9px] uppercase tracking-wider text-muted-foreground font-bold">Total</p>
+            <p className="font-display font-black text-base mt-0.5">R$ {total.toFixed(2)}</p>
+          </div>
+          <div className="rounded-2xl bg-neon-green/10 border border-neon-green/30 p-3">
+            <p className="text-[9px] uppercase tracking-wider text-neon-green font-bold">Pago</p>
+            <p className="font-display font-black text-base mt-0.5 text-neon-green">R$ {pago.toFixed(2)}</p>
+          </div>
+          <div className="rounded-2xl bg-neon-pink/10 border border-neon-pink/30 p-3">
+            <p className="text-[9px] uppercase tracking-wider text-neon-pink font-bold">Restante</p>
+            <p className="font-display font-black text-base mt-0.5 text-neon-pink">R$ {restante.toFixed(2)}</p>
+          </div>
+        </div>
+
+        <form onSubmit={addPagamento} className="rounded-2xl border border-border bg-background/40 p-3 space-y-2 mb-4">
+          <p className="text-[10px] uppercase tracking-wider font-bold text-muted-foreground flex items-center gap-1.5">
+            <Plus className="h-3 w-3" /> Adicionar pagamento
+          </p>
+          <div className="grid grid-cols-2 gap-2">
+            <input
+              type="number"
+              step="0.01"
+              required
+              placeholder="Valor"
+              value={valor}
+              onChange={(e) => setValor(e.target.value)}
+              className="h-10 px-3 rounded-xl bg-input border border-border text-sm"
+            />
+            <select
+              value={metodo}
+              onChange={(e) => setMetodo(e.target.value as any)}
+              className="h-10 px-3 rounded-xl bg-input border border-border text-sm"
+            >
+              <option value="pix">PIX</option>
+              <option value="dinheiro">Dinheiro</option>
+              <option value="cartao">Cartão</option>
+              <option value="transferencia">Transferência</option>
+              <option value="manual">Manual</option>
+            </select>
+          </div>
+          <input
+            placeholder="Observação (opcional)"
+            value={observacao}
+            onChange={(e) => setObservacao(e.target.value)}
+            className="w-full h-10 px-3 rounded-xl bg-input border border-border text-sm"
+          />
+          <button
+            type="submit"
+            disabled={saving}
+            className="w-full h-10 rounded-xl bg-gradient-to-r from-neon-pink to-neon-purple text-primary-foreground font-bold text-sm disabled:opacity-50 inline-flex items-center justify-center gap-1.5"
+          >
+            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wallet className="h-4 w-4" />}
+            Registrar pagamento
+          </button>
+        </form>
+
+        <div>
+          <p className="text-[10px] uppercase tracking-wider font-bold text-muted-foreground mb-2">Histórico</p>
+          {isLoading ? (
+            <div className="flex justify-center py-4"><Loader2 className="h-4 w-4 animate-spin text-primary" /></div>
+          ) : pagamentos.length === 0 ? (
+            <p className="text-xs text-muted-foreground italic py-4 text-center">Nenhum pagamento registrado.</p>
+          ) : (
+            <ul className="space-y-1.5 max-h-60 overflow-y-auto pr-1">
+              {pagamentos.map((p) => {
+                const isPaid = p.status === "pago" || p.status === "confirmado";
+                return (
+                  <li key={p.id} className="rounded-xl bg-background/40 border border-border p-2.5 flex items-center gap-2">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className={`text-sm font-display font-black ${isPaid ? "text-neon-green" : "text-muted-foreground line-through"}`}>
+                          R$ {Number(p.valor).toFixed(2)}
+                        </span>
+                        <span className="text-[10px] uppercase font-bold text-muted-foreground">{metodoLabel[p.metodo] ?? p.metodo}</span>
+                      </div>
+                      {p.observacao && <p className="text-[10px] text-muted-foreground truncate mt-0.5">{p.observacao}</p>}
+                      <p className="text-[9px] text-muted-foreground/70 mt-0.5">
+                        {new Date(p.pago_em ?? p.created_at).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" })}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => toggleStatus(p)}
+                      title={isPaid ? "Estornar" : "Marcar como pago"}
+                      className={`text-[9px] uppercase font-bold px-2 py-1 rounded-full ${
+                        isPaid ? "bg-neon-green/20 text-neon-green" : "bg-secondary text-muted-foreground"
+                      }`}
+                    >
+                      {isPaid ? "pago" : p.status}
+                    </button>
+                    <button
+                      onClick={() => removePagamento(p.id)}
+                      className="h-7 w-7 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 flex items-center justify-center"
+                    >
+                      <Trash className="h-3.5 w-3.5" />
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
