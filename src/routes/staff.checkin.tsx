@@ -99,6 +99,10 @@ function CheckinStaff() {
       showFeedback(false, "Passageiro não encontrado.");
       return;
     }
+    if (onibusId && (pax as any).onibus_id && (pax as any).onibus_id !== onibusId) {
+      showFeedback(false, `${pax.nome} é de outro ônibus.`);
+      return;
+    }
     if (pax.embarcado_em) {
       showFeedback(false, `${pax.nome} já embarcou — QR Code já utilizado.`);
       toast.message(`${pax.nome} já embarcou.`);
@@ -113,17 +117,20 @@ function CheckinStaff() {
       showFeedback(false, e1.message);
       return;
     }
-    const { error: e2 } = await supabase
-      .from("checkins")
-      .insert({ excursao_id: excursao.id, passageiro_id: passageiroId, feito_por: user.id });
+    const { error: e2 } = await supabase.from("checkins").insert({
+      excursao_id: excursao.id,
+      passageiro_id: passageiroId,
+      feito_por: user.id,
+      onibus_id: (pax as any).onibus_id ?? onibusId ?? null,
+    });
     if (e2) {
       showFeedback(false, e2.message);
       return;
     }
     showFeedback(true, `${pax.nome} embarcou! ${viaQr ? "(QR)" : ""}`);
     toast.success(`Check-in: ${pax.nome}`);
-    qc.invalidateQueries({ queryKey: ["staff-checkin-pax", excursao.id] });
-    qc.invalidateQueries({ queryKey: ["staff-checkins", excursao.id] });
+    qc.invalidateQueries({ queryKey: ["staff-checkin-pax", excursao.id, onibusId] });
+    qc.invalidateQueries({ queryKey: ["staff-checkins", excursao.id, onibusId] });
   }
 
   async function handleQrResult(decoded: string) {
