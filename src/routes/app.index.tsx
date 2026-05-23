@@ -120,10 +120,15 @@ function ExcursaoCard({ ex }: { ex: Excursao }) {
       className="group glass rounded-2xl overflow-hidden hover:border-primary/50 transition"
     >
       <div
-        className="h-20 relative"
-        style={{ background: `linear-gradient(135deg, ${ex.cor ?? "#a855f7"}, #ec4899)` }}
+        className="h-24 relative"
+        style={
+          ex.banner_url
+            ? { backgroundImage: `url(${ex.banner_url})`, backgroundSize: "cover", backgroundPosition: "center" }
+            : { background: `linear-gradient(135deg, ${ex.cor ?? "#a855f7"}, #ec4899)` }
+        }
       >
-        <div className="absolute inset-0 grid-bg opacity-40" />
+        {!ex.banner_url && <div className="absolute inset-0 grid-bg opacity-40" />}
+        <div className="absolute inset-0 bg-gradient-to-t from-background/40 to-transparent" />
       </div>
       <div className="p-4">
         <div className="flex items-start justify-between gap-2 mb-2">
