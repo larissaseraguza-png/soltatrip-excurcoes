@@ -59,8 +59,12 @@ function AuthPage() {
     );
   }
 
-  // Já autenticado: vai pra área do papel, mas nunca interrompe uma tentativa de login/cadastro em andamento.
-  if (!busy && user && role) return <Navigate to={roleHome[role]} />;
+  // Já autenticado: retoma convite pendente ou vai para a área do papel.
+  if (!busy && user && role) {
+    const pending = typeof window !== "undefined" ? localStorage.getItem("pending_staff_invite") : null;
+    if (pending) return <Navigate to="/invite/staff/$token" params={{ token: pending }} />;
+    return <Navigate to={roleHome[role]} />;
+  }
 
   function pickRole(r: AppRole) {
     setError(null);
@@ -101,7 +105,12 @@ function AuthPage() {
         if (roleErr) throw roleErr;
 
         if (data.session) {
-          navigate({ to: roleHome[selectedRole], replace: true });
+          const pending = localStorage.getItem("pending_staff_invite");
+          if (pending) {
+            navigate({ to: "/invite/staff/$token", params: { token: pending }, replace: true });
+          } else {
+            navigate({ to: roleHome[selectedRole], replace: true });
+          }
           return;
         }
         setInfo("Conta criada! Faça login para continuar.");
@@ -125,7 +134,12 @@ function AuthPage() {
           await supabase.auth.signOut();
           throw new Error("Você não tem acesso a este tipo de perfil");
         }
-        navigate({ to: roleHome[userRole], replace: true });
+        const pending = localStorage.getItem("pending_staff_invite");
+        if (pending) {
+          navigate({ to: "/invite/staff/$token", params: { token: pending }, replace: true });
+        } else {
+          navigate({ to: roleHome[userRole], replace: true });
+        }
       }
     } catch (err: any) {
       setError(err.message ?? "Erro inesperado");
