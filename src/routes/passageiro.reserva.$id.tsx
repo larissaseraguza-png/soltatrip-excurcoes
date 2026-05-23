@@ -153,6 +153,10 @@ function ReservaDetalhes() {
     qrPayload
   )}`;
 
+  const pontoEscolhido = reserva.ponto_embarque_id
+    ? (pontos as any[]).find((p: any) => p.id === reserva.ponto_embarque_id)
+    : null;
+
   return (
     <Shell back="/passageiro" title="Detalhes da reserva" subtitle={ex?.titulo}>
       {/* Banner */}
@@ -175,6 +179,63 @@ function ReservaDetalhes() {
           </div>
         </div>
       </div>
+
+      {/* Painel de embarque consolidado — só quando quitado */}
+      {status === "paid" && (
+        <div className="rounded-3xl overflow-hidden mb-5 border border-neon-green/40 bg-gradient-to-br from-neon-green/10 via-background to-neon-purple/10 glow-primary">
+          <div className="px-5 py-3 bg-neon-green/15 border-b border-neon-green/30 flex items-center justify-between">
+            <span className="text-xs font-bold uppercase tracking-widest text-neon-green">
+              ✓ Pagamento confirmado
+            </span>
+            <span className="text-[10px] text-muted-foreground font-mono">
+              #{(reserva.qr_code || reserva.id).slice(0, 8).toUpperCase()}
+            </span>
+          </div>
+
+          <div className="p-5 text-center">
+            <div className="mx-auto w-56 h-56 rounded-2xl bg-white p-3 grid place-items-center">
+              <img src={qrUrl} alt="QR Code de embarque" className="w-full h-full" />
+            </div>
+            <p className="mt-3 text-[11px] text-muted-foreground tracking-widest font-mono break-all">
+              {qrPayload}
+            </p>
+            <p className="mt-1 text-xs font-bold text-neon-green">
+              {reserva.nome}
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-px bg-border/60">
+            <Field label="Poltrona" value={seatLabel ?? "—"} big />
+            <Field
+              label="Saída"
+              value={ex?.horario_saida ?? "—"}
+              hint={ex?.data_evento ? new Date(ex.data_evento).toLocaleDateString("pt-BR") : ""}
+            />
+            <Field
+              label="Embarque"
+              value={pontoEscolhido?.nome ?? ex?.ponto_embarque ?? "A definir"}
+              hint={pontoEscolhido?.referencia ?? ""}
+              full
+            />
+            <Field
+              label="Endereço"
+              value={pontoEscolhido?.endereco ?? "—"}
+              full
+            />
+            <Field
+              label="Horário do embarque"
+              value={pontoEscolhido?.horario ?? ex?.horario_saida ?? "—"}
+              full
+            />
+          </div>
+
+          {reserva.embarcado_em && (
+            <div className="px-5 py-3 bg-neon-green/10 text-center text-xs text-neon-green border-t border-neon-green/30">
+              ✓ Embarcado em {new Date(reserva.embarcado_em).toLocaleString("pt-BR")}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Resumo */}
       <div className="grid grid-cols-2 gap-3 mb-5">
