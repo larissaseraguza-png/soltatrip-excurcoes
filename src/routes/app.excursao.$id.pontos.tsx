@@ -1,29 +1,36 @@
-import { createFileRoute, Link, useParams } from "@tanstack/react-router";
+import { createFileRoute, Link, useParams, useSearch } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft, Plus, Loader2, Trash2, MapPin, Clock, Users } from "lucide-react";
 import { useState } from "react";
 import { useRealtimeSync } from "@/hooks/use-realtime-sync";
+import { OnibusFilterBadge } from "@/components/OnibusFilterBadge";
 
 export const Route = createFileRoute("/app/excursao/$id/pontos")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    onibus: typeof search.onibus === "string" ? search.onibus : undefined,
+  }),
   component: PontosPage,
 });
 
-type Ponto = { id: string; nome: string; endereco: string | null; referencia: string | null; horario: string | null; ordem: number };
+type Ponto = { id: string; nome: string; endereco: string | null; referencia: string | null; horario: string | null; ordem: number; onibus_id: string | null };
 
 function PontosPage() {
   const { id } = useParams({ from: "/app/excursao/$id/pontos" });
+  const { onibus: onibusId } = useSearch({ from: "/app/excursao/$id/pontos" });
   const qc = useQueryClient();
   const [form, setForm] = useState({ nome: "", endereco: "", referencia: "", horario: "" });
   const [saving, setSaving] = useState(false);
 
   const { data: pontos = [], isLoading } = useQuery({
-    queryKey: ["pontos", id],
+    queryKey: ["pontos", id, onibusId ?? "all"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let q = supabase
         .from("pontos_embarque")
         .select("*")
-        .eq("excursao_id", id)
+        .eq("excursao_id", id);
+      if (onibusId) q = q.eq("onibus_id", onibusId);
+      const { data, error } = await q
         .order("ordem", { ascending: true })
         .order("created_at", { ascending: true });
       if (error) throw error;
@@ -32,12 +39,14 @@ function PontosPage() {
   });
 
   const { data: counts = {} } = useQuery({
-    queryKey: ["pontos-counts", id],
+    queryKey: ["pontos-counts", id, onibusId ?? "all"],
     queryFn: async () => {
-      const { data } = await supabase
+      let q = supabase
         .from("passageiros")
         .select("ponto_embarque_id")
         .eq("excursao_id", id);
+      if (onibusId) q = q.eq("onibus_id", onibusId);
+      const { data } = await q;
       const map: Record<string, number> = {};
       (data ?? []).forEach((p: any) => {
         if (p.ponto_embarque_id) map[p.ponto_embarque_id] = (map[p.ponto_embarque_id] ?? 0) + 1;
@@ -47,12 +56,12 @@ function PontosPage() {
   });
 
   useRealtimeSync(
-    `pontos-${id}`,
+    `pontos-${id}-${onibusId ?? "all"}`,
     [
       { table: "pontos_embarque", filter: `excursao_id=eq.${id}` },
       { table: "passageiros", filter: `excursao_id=eq.${id}` },
     ],
-    [["pontos", id], ["pontos-counts", id]],
+    [["pontos", id, onibusId ?? "all"], ["pontos-counts", id, onibusId ?? "all"]],
   );
 
   const removeMut = useMutation({
@@ -60,8 +69,8 @@ function PontosPage() {
       await supabase.from("pontos_embarque").delete().eq("id", pid);
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["pontos", id] });
-      qc.invalidateQueries({ queryKey: ["pontos-counts", id] });
+      qc.invalidateQueries({ queryKey: ["pontos", id, onibusId ?? "all"] });
+      qc.invalidateQueries({ queryKey: ["pontos-counts", id, onibusId ?? "all"] });
     },
   });
 
@@ -71,6 +80,7 @@ function PontosPage() {
     setSaving(true);
     const { error } = await supabase.from("pontos_embarque").insert({
       excursao_id: id,
+      onibus_id: onibusId ?? null,
       nome: form.nome.trim(),
       endereco: form.endereco.trim() || null,
       referencia: form.referencia.trim() || null,
@@ -80,7 +90,7 @@ function PontosPage() {
     setSaving(false);
     if (error) { alert(error.message); return; }
     setForm({ nome: "", endereco: "", referencia: "", horario: "" });
-    qc.invalidateQueries({ queryKey: ["pontos", id] });
+    qc.invalidateQueries({ queryKey: ["pontos", id, onibusId ?? "all"] });
   }
 
   return (
@@ -90,7 +100,13 @@ function PontosPage() {
       </Link>
 
       <h1 className="font-display text-2xl font-black mb-1">Pontos de embarque</h1>
-      <p className="text-sm text-muted-foreground mb-5">Cadastre múltiplos locais. O passageiro escolhe onde irá embarcar.</p>
+      <p className="text-sm text-muted-foreground mb-5">
+        {onibusId
+          ? "Pontos vinculados a este ônibus. Passageiros deste ônibus escolherão entre eles."
+          : "Cadastre múltiplos locais. O passageiro escolhe onde irá embarcar."}
+      </p>
+
+      <OnibusFilterBadge excursaoId={id} onibusId={onibusId} />
 
       <form onSubmit={add} className="glass rounded-2xl p-4 mb-5 space-y-3">
         <div className="grid grid-cols-[1fr_120px] gap-2">
@@ -160,6 +176,9 @@ function PontosPage() {
                 <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1">
                   {p.horario && <span className="inline-flex items-center gap-1"><Clock className="h-3 w-3" />{p.horario}</span>}
                   <span className="inline-flex items-center gap-1"><Users className="h-3 w-3" />{counts[p.id] ?? 0} pax</span>
+                  {!onibusId && !p.onibus_id && (
+                    <span className="text-[10px] uppercase tracking-wider font-bold text-muted-foreground">geral</span>
+                  )}
                 </div>
               </div>
               <button

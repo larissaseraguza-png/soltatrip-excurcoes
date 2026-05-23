@@ -1,10 +1,15 @@
-import { createFileRoute, Link, useParams } from "@tanstack/react-router";
+import { createFileRoute, Link, useParams, useSearch } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, Plus, Loader2, CheckCircle2, Clock, TrendingUp, Bus, Wallet, Save } from "lucide-react";
+import { ArrowLeft, Plus, Loader2, CheckCircle2, Clock, TrendingUp, Bus, Save } from "lucide-react";
 import { useState, useEffect } from "react";
+import { useRealtimeSync } from "@/hooks/use-realtime-sync";
+import { OnibusFilterBadge } from "@/components/OnibusFilterBadge";
 
 export const Route = createFileRoute("/app/excursao/$id/financeiro")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    onibus: typeof search.onibus === "string" ? search.onibus : undefined,
+  }),
   component: FinanceiroPage,
 });
 
@@ -15,14 +20,16 @@ type Pagamento = {
   status: string;
   observacao: string | null;
   passageiro_id: string;
+  onibus_id: string | null;
   pago_em: string | null;
   created_at: string;
 };
 
-type PassageiroLite = { id: string; nome: string };
+type PassageiroLite = { id: string; nome: string; onibus_id: string | null };
 
 function FinanceiroPage() {
   const { id } = useParams({ from: "/app/excursao/$id/financeiro" });
+  const { onibus: onibusId } = useSearch({ from: "/app/excursao/$id/financeiro" });
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
 
@@ -32,25 +39,34 @@ function FinanceiroPage() {
   });
 
   const { data: passageiros = [] } = useQuery({
-    queryKey: ["passageiros-lite", id],
+    queryKey: ["passageiros-lite", id, onibusId ?? "all"],
     queryFn: async () => {
-      const { data } = await supabase.from("passageiros").select("id,nome").eq("excursao_id", id).order("nome");
+      let q = supabase.from("passageiros").select("id,nome,onibus_id").eq("excursao_id", id);
+      if (onibusId) q = q.eq("onibus_id", onibusId);
+      const { data } = await q.order("nome");
       return (data ?? []) as PassageiroLite[];
     },
   });
 
   const { data: pagamentos = [], isLoading } = useQuery({
-    queryKey: ["pagamentos", id],
+    queryKey: ["pagamentos", id, onibusId ?? "all"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("pagamentos")
-        .select("*")
-        .eq("excursao_id", id)
-        .order("created_at", { ascending: false });
+      let q = supabase.from("pagamentos").select("*").eq("excursao_id", id);
+      if (onibusId) q = q.eq("onibus_id", onibusId);
+      const { data, error } = await q.order("created_at", { ascending: false });
       if (error) throw error;
       return data as Pagamento[];
     },
   });
+
+  useRealtimeSync(
+    `financeiro-${id}-${onibusId ?? "all"}`,
+    [
+      { table: "pagamentos", filter: `excursao_id=eq.${id}` },
+      { table: "passageiros", filter: `excursao_id=eq.${id}` },
+    ],
+    [["pagamentos", id, onibusId ?? "all"], ["passageiros-lite", id, onibusId ?? "all"]],
+  );
 
   const updateStatus = useMutation({
     mutationFn: async ({ pid, status }: { pid: string; status: string }) => {
@@ -59,7 +75,7 @@ function FinanceiroPage() {
         .update({ status, pago_em: status === "pago" ? new Date().toISOString() : null })
         .eq("id", pid);
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["pagamentos", id] }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["pagamentos", id, onibusId ?? "all"] }),
   });
 
   const total = pagamentos.reduce((s, p) => (p.status === "pago" ? s + Number(p.valor) : s), 0);
@@ -87,6 +103,8 @@ function FinanceiroPage() {
         </button>
       </div>
 
+      <OnibusFilterBadge excursaoId={id} onibusId={onibusId} />
+
       <div className="grid grid-cols-3 gap-2 mb-3">
         <Stat icon={CheckCircle2} label="Receita" value={`R$ ${total.toFixed(0)}`} color="text-neon-green" />
         <Stat icon={Bus} label="Despesas" value={`R$ ${custoOnibus.toFixed(0)}`} color="text-red-400" />
@@ -99,8 +117,7 @@ function FinanceiroPage() {
         <span className="text-sm font-bold ml-auto">R$ {pendente.toFixed(2)}</span>
       </div>
 
-      <CustoOnibusEditor excursaoId={id} valorAtual={custoOnibus} />
-
+      {!onibusId && <CustoOnibusEditor excursaoId={id} valorAtual={custoOnibus} />}
 
       {isLoading ? (
         <div className="flex justify-center py-10"><Loader2 className="h-5 w-5 animate-spin text-primary" /></div>
@@ -136,6 +153,7 @@ function FinanceiroPage() {
       {open && (
         <NewPagamentoModal
           excursaoId={id}
+          onibusId={onibusId ?? null}
           passageiros={passageiros}
           precoSugerido={Number(excursao?.preco ?? 0)}
           onClose={() => setOpen(false)}
@@ -157,11 +175,13 @@ function Stat({ icon: Icon, label, value, color }: { icon: any; label: string; v
 
 function NewPagamentoModal({
   excursaoId,
+  onibusId,
   passageiros,
   precoSugerido,
   onClose,
 }: {
   excursaoId: string;
+  onibusId: string | null;
   passageiros: PassageiroLite[];
   precoSugerido: number;
   onClose: () => void;
@@ -180,8 +200,12 @@ function NewPagamentoModal({
     e.preventDefault();
     if (!form.passageiro_id) { alert("Cadastre um passageiro primeiro."); return; }
     setSaving(true);
+    // Resolve onibus_id from the selected passenger if not enforced by URL filter
+    const selected = passageiros.find((p) => p.id === form.passageiro_id);
+    const targetOnibus = onibusId ?? selected?.onibus_id ?? null;
     const { error } = await supabase.from("pagamentos").insert({
       excursao_id: excursaoId,
+      onibus_id: targetOnibus,
       passageiro_id: form.passageiro_id,
       valor: Number(form.valor),
       metodo: form.metodo,
@@ -191,7 +215,7 @@ function NewPagamentoModal({
     });
     setSaving(false);
     if (error) { alert(error.message); return; }
-    qc.invalidateQueries({ queryKey: ["pagamentos", excursaoId] });
+    qc.invalidateQueries({ queryKey: ["pagamentos", excursaoId, onibusId ?? "all"] });
     onClose();
   }
 

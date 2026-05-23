@@ -1,15 +1,20 @@
-import { createFileRoute, Link, useParams } from "@tanstack/react-router";
+import { createFileRoute, Link, useParams, useSearch } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft, QrCode, Camera, CheckCircle2, X, Loader2, Search } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { OnibusFilterBadge } from "@/components/OnibusFilterBadge";
 
 export const Route = createFileRoute("/app/excursao/$id/checkin")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    onibus: typeof search.onibus === "string" ? search.onibus : undefined,
+  }),
   component: CheckinPage,
 });
 
 function CheckinPage() {
   const { id } = useParams({ from: "/app/excursao/$id/checkin" });
+  const { onibus: onibusId } = useSearch({ from: "/app/excursao/$id/checkin" });
   const qc = useQueryClient();
   const [scanning, setScanning] = useState(false);
   const [feedback, setFeedback] = useState<{ ok: boolean; msg: string } | null>(null);
@@ -21,13 +26,14 @@ function CheckinPage() {
   });
 
   const { data: passageiros = [], isLoading } = useQuery({
-    queryKey: ["passageiros-checkin", id],
+    queryKey: ["passageiros-checkin", id, onibusId ?? "all"],
     queryFn: async () => {
-      const { data } = await supabase
+      let q = supabase
         .from("passageiros")
-        .select("id,nome,assento,status,qr_code")
-        .eq("excursao_id", id)
-        .order("nome");
+        .select("id,nome,assento,status,qr_code,onibus_id")
+        .eq("excursao_id", id);
+      if (onibusId) q = q.eq("onibus_id", onibusId);
+      const { data } = await q.order("nome");
       return data ?? [];
     },
   });
@@ -35,16 +41,17 @@ function CheckinPage() {
   async function processarQr(code: string) {
     const p = passageiros.find((x) => x.qr_code === code.trim());
     if (!p) {
-      setFeedback({ ok: false, msg: "Código não reconhecido" });
+      setFeedback({ ok: false, msg: onibusId ? "QR não pertence a este ônibus" : "Código não reconhecido" });
       return;
     }
-    await embarcar(p.id, p.nome);
+    await embarcar(p.id, p.nome, (p as any).onibus_id ?? null);
   }
 
-  async function embarcar(pid: string, nome: string) {
+  async function embarcar(pid: string, nome: string, paxOnibusId: string | null) {
     const { data: userData } = await supabase.auth.getUser();
     const { error } = await supabase.from("checkins").insert({
       excursao_id: id,
+      onibus_id: onibusId ?? paxOnibusId,
       passageiro_id: pid,
       feito_por: userData.user?.id ?? null,
     });
@@ -54,7 +61,7 @@ function CheckinPage() {
       .update({ status: "embarcado", embarcado_em: new Date().toISOString() })
       .eq("id", pid);
     setFeedback({ ok: true, msg: `${nome} embarcou!` });
-    qc.invalidateQueries({ queryKey: ["passageiros-checkin", id] });
+    qc.invalidateQueries({ queryKey: ["passageiros-checkin", id, onibusId ?? "all"] });
     setTimeout(() => setFeedback(null), 2500);
   }
 
@@ -74,6 +81,8 @@ function CheckinPage() {
           {embarcados} de {passageiros.length} embarcados
         </p>
       </div>
+
+      <OnibusFilterBadge excursaoId={id} onibusId={onibusId} />
 
       {!scanning ? (
         <button
@@ -107,7 +116,7 @@ function CheckinPage() {
         <div className="flex justify-center py-10"><Loader2 className="h-5 w-5 animate-spin text-primary" /></div>
       ) : (
         <ul className="space-y-2">
-          {filtered.map((p) => (
+          {filtered.map((p: any) => (
             <li key={p.id} className="glass rounded-2xl p-3 flex items-center gap-3">
               <div className={`h-10 w-10 rounded-xl flex items-center justify-center ${p.status === "embarcado" ? "bg-neon-green/20 text-neon-green" : "bg-secondary"}`}>
                 {p.status === "embarcado" ? <CheckCircle2 className="h-5 w-5" /> : <QrCode className="h-5 w-5" />}
@@ -120,7 +129,7 @@ function CheckinPage() {
                 <span className="text-[10px] uppercase tracking-wider font-bold text-neon-green">ok</span>
               ) : (
                 <button
-                  onClick={() => embarcar(p.id, p.nome)}
+                  onClick={() => embarcar(p.id, p.nome, p.onibus_id ?? null)}
                   className="h-9 px-3 rounded-lg bg-gradient-to-r from-neon-pink to-neon-purple text-primary-foreground text-xs font-bold"
                 >
                   Embarcar
