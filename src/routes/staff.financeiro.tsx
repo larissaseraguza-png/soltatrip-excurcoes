@@ -126,6 +126,15 @@ function FinanceiroStaff() {
         </div>
       ) : (
         <>
+          {onibus && (
+            <div className="glass rounded-2xl p-3 mb-3 flex items-center gap-2 border border-neon-green/30 bg-neon-green/5">
+              <Bus className="size-4 text-neon-green shrink-0" />
+              <div className="text-xs">
+                <span className="text-muted-foreground">Financeiro do ônibus:</span>{" "}
+                <span className="font-semibold">{onibus.nome}</span>
+              </div>
+            </div>
+          )}
           <div className="glass rounded-2xl p-3 mb-4 flex items-center gap-3 border border-yellow-400/30 bg-yellow-400/5">
             <Lock className="size-4 text-yellow-300 shrink-0" />
             <div className="text-[11px] text-yellow-200">
