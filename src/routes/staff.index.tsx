@@ -35,6 +35,7 @@ function StaffDashboard() {
       const { data, error } = await supabase
         .from("equipe_excursoes")
         .select("id, status, papel, staff_user_id, convite_email, excursao:excursoes(id,titulo,destino,data_evento,cor)")
+        .eq("staff_user_id", user!.id)
         .order("created_at", { ascending: false });
       if (error) throw error;
       return (data ?? []) as unknown as Vinculo[];
