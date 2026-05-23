@@ -629,6 +629,14 @@ export type Database = {
         Args: { _excursao_id: string; _user_id: string }
         Returns: boolean
       }
+      is_reserva_comprador: {
+        Args: { _reserva_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_reserva_passageiro: {
+        Args: { _reserva_id: string; _user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role: "excursionista" | "staff" | "passageiro"
