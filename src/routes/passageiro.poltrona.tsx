@@ -33,7 +33,9 @@ function Poltrona() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("passageiros")
-        .select("id, seat_id, assento, ponto_embarque_id, payment_status, amount_paid, excursao_id, reserva_id, excursao:excursoes(id, titulo)")
+        .select(
+          "id, seat_id, assento, ponto_embarque_id, payment_status, amount_paid, excursao_id, reserva_id, excursao:excursoes(id, titulo)",
+        )
         .eq("id", paxId!)
         .single();
       if (error) throw error;
@@ -91,9 +93,16 @@ function Poltrona() {
     return (
       <Shell title="Escolher poltrona">
         <div className="glass rounded-3xl p-10 text-center">
-          <p className="text-sm text-muted-foreground">Faça pelo menos um pagamento para liberar a escolha de poltrona.</p>
+          <p className="text-sm text-muted-foreground">
+            Faça pelo menos um pagamento para liberar a escolha de poltrona.
+          </p>
           <button
-            onClick={() => navigate({ to: "/passageiro/pagamentos", search: { reserva: (reserva as any).reserva_id ?? reserva.id } as any })}
+            onClick={() =>
+              navigate({
+                to: "/passageiro/pagamentos",
+                search: { reserva: (reserva as any).reserva_id ?? reserva.id } as any,
+              })
+            }
             className="mt-4 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"
           >
             Ir para pagamento
@@ -104,7 +113,11 @@ function Poltrona() {
   }
 
   const selectedSeatId = selectedSeat?.id ?? reserva.seat_id;
-  const selectedSeatLabel = selectedSeat?.seat_number ?? (seats as any[]).find((s) => s.id === selectedSeatId)?.seat_number ?? reserva.assento ?? "—";
+  const selectedSeatLabel =
+    selectedSeat?.seat_number ??
+    (seats as any[]).find((s) => s.id === selectedSeatId)?.seat_number ??
+    reserva.assento ??
+    "—";
   const currentPontoId = selectedPontoId ?? reserva.ponto_embarque_id;
   const currentPonto = (pontos as any[]).find((p) => p.id === currentPontoId);
 
@@ -132,8 +145,12 @@ function Poltrona() {
             <div className="bg-neon-green/10 border border-neon-green/30 rounded-2xl p-4 mb-4">
               <p className="text-xs font-bold text-neon-green mb-1">✓ Embarque confirmado</p>
               <p className="font-bold">{currentPonto.nome}</p>
-              {currentPonto.endereco && <p className="text-xs text-muted-foreground">{currentPonto.endereco}</p>}
-              {currentPonto.horario && <p className="text-xs text-neon-green mt-1">⏰ {currentPonto.horario}</p>}
+              {currentPonto.endereco && (
+                <p className="text-xs text-muted-foreground">{currentPonto.endereco}</p>
+              )}
+              {currentPonto.horario && (
+                <p className="text-xs text-neon-green mt-1">⏰ {currentPonto.horario}</p>
+              )}
             </div>
           ) : null}
 
@@ -148,16 +165,24 @@ function Poltrona() {
                   disabled={!!savingPonto}
                   onClick={() => escolherPonto(pt.id)}
                   className={`w-full text-left rounded-2xl p-3 border transition disabled:opacity-60 ${
-                    selected ? "bg-neon-pink/10 border-neon-pink/60" : "bg-background/40 border-border hover:border-neon-pink/40"
+                    selected
+                      ? "bg-neon-pink/10 border-neon-pink/60"
+                      : "bg-background/40 border-border hover:border-neon-pink/40"
                   }`}
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <p className="font-bold text-sm">{pt.nome}</p>
-                      {pt.endereco && <p className="text-xs text-muted-foreground">{pt.endereco}</p>}
+                      {pt.endereco && (
+                        <p className="text-xs text-muted-foreground">{pt.endereco}</p>
+                      )}
                       {pt.horario && <p className="text-[11px] text-neon-pink">⏰ {pt.horario}</p>}
                     </div>
-                    {isSaving ? <Loader2 className="size-4 animate-spin text-neon-pink" /> : selected ? <Check className="size-4 text-neon-green" /> : null}
+                    {isSaving ? (
+                      <Loader2 className="size-4 animate-spin text-neon-pink" />
+                    ) : selected ? (
+                      <Check className="size-4 text-neon-green" />
+                    ) : null}
                   </div>
                 </button>
               );
@@ -165,12 +190,19 @@ function Poltrona() {
           </div>
 
           {pontos.length === 0 && (
-            <p className="text-center text-sm text-muted-foreground py-6">Nenhum ponto de embarque cadastrado.</p>
+            <p className="text-center text-sm text-muted-foreground py-6">
+              Nenhum ponto de embarque cadastrado.
+            </p>
           )}
 
           <button
             disabled={!currentPontoId}
-            onClick={() => navigate({ to: "/passageiro/reserva/$id", params: { id: (reserva as any).reserva_id ?? reserva.id } })}
+            onClick={() =>
+              navigate({
+                to: "/passageiro/reserva/$id",
+                params: { id: (reserva as any).reserva_id ?? reserva.id },
+              })
+            }
             className="mt-5 w-full h-12 rounded-2xl font-bold bg-primary text-primary-foreground glow-primary disabled:opacity-40 disabled:cursor-not-allowed"
           >
             Continuar para a reserva
@@ -241,9 +273,15 @@ function Poltrona() {
     <Shell title="Escolher poltrona" subtitle={(reserva as any).excursao?.titulo}>
       <div className="glass rounded-3xl p-5 mb-5">
         <div className="flex items-center gap-4 text-xs">
-          <span className="flex items-center gap-1.5"><span className="size-3 rounded bg-neon-green" /> Disponível</span>
-          <span className="flex items-center gap-1.5"><span className="size-3 rounded bg-neon-pink" /> Sua</span>
-          <span className="flex items-center gap-1.5"><span className="size-3 rounded bg-muted" /> Ocupada</span>
+          <span className="flex items-center gap-1.5">
+            <span className="size-3 rounded bg-neon-green" /> Disponível
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="size-3 rounded bg-neon-pink" /> Sua
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="size-3 rounded bg-muted" /> Ocupada
+          </span>
         </div>
       </div>
 
@@ -261,8 +299,8 @@ function Poltrona() {
                 isMine
                   ? "bg-gradient-to-br from-neon-pink to-neon-purple text-primary-foreground glow-primary"
                   : isOccupied
-                  ? "bg-muted text-muted-foreground opacity-50 cursor-not-allowed"
-                  : "bg-neon-green/20 text-neon-green hover:bg-neon-green/30"
+                    ? "bg-muted text-muted-foreground opacity-50 cursor-not-allowed"
+                    : "bg-neon-green/20 text-neon-green hover:bg-neon-green/30"
               }`}
             >
               {isSaving ? (
@@ -281,7 +319,9 @@ function Poltrona() {
       </div>
 
       {seats.length === 0 && (
-        <p className="text-center text-sm text-muted-foreground py-10">Nenhuma poltrona disponível.</p>
+        <p className="text-center text-sm text-muted-foreground py-10">
+          Nenhuma poltrona disponível.
+        </p>
       )}
     </Shell>
   );
