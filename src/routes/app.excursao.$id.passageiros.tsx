@@ -1,13 +1,17 @@
-import { createFileRoute, Link, useParams } from "@tanstack/react-router";
+import { createFileRoute, Link, useParams, useSearch } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft, Plus, Loader2, Trash2, QrCode, UserCheck, Search, MapPin, Armchair, Edit3, X, DollarSign, Wallet, Trash } from "lucide-react";
 import { useState, useMemo } from "react";
 import { SeatMap } from "@/components/SeatMap";
+import { OnibusFilterBadge } from "@/components/OnibusFilterBadge";
 import { useRealtimeSync } from "@/hooks/use-realtime-sync";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/app/excursao/$id/passageiros")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    onibus: typeof search.onibus === "string" ? search.onibus : undefined,
+  }),
   component: PassageirosPage,
 });
 
@@ -32,6 +36,7 @@ type Seat = { id: string; seat_number: string; occupied: boolean; passageiro_id:
 
 function PassageirosPage() {
   const { id } = useParams({ from: "/app/excursao/$id/passageiros" });
+  const { onibus: onibusId } = useSearch({ from: "/app/excursao/$id/passageiros" });
   const qc = useQueryClient();
   const [search, setSearch] = useState("");
   const [pontoFilter, setPontoFilter] = useState<string>("todos");
@@ -48,54 +53,61 @@ function PassageirosPage() {
     },
   });
 
-  const { data: pagamentos = [] } = useQuery({
-    queryKey: ["pagamentos", id],
+  const { data: onibusInfo } = useQuery({
+    queryKey: ["onibus-info", onibusId],
+    enabled: !!onibusId,
     queryFn: async () => {
-      const { data } = await supabase.from("pagamentos").select("passageiro_id,status").eq("excursao_id", id);
+      const { data } = await supabase.from("onibus").select("id,nome,capacidade").eq("id", onibusId!).maybeSingle();
+      return data;
+    },
+  });
+
+  const capacidadeEfetiva = onibusId ? onibusInfo?.capacidade ?? 0 : excursao?.total_vagas ?? 0;
+
+  const { data: pagamentos = [] } = useQuery({
+    queryKey: ["pagamentos", id, onibusId ?? null],
+    queryFn: async () => {
+      let q = supabase.from("pagamentos").select("passageiro_id,status").eq("excursao_id", id);
+      if (onibusId) q = q.eq("onibus_id", onibusId);
+      const { data } = await q;
       return data ?? [];
     },
   });
 
   const { data: pontos = [] } = useQuery({
-    queryKey: ["pontos", id],
+    queryKey: ["pontos", id, onibusId ?? null],
     queryFn: async () => {
-      const { data } = await supabase
-        .from("pontos_embarque")
-        .select("id, nome, horario")
-        .eq("excursao_id", id)
-        .order("ordem", { ascending: true });
+      let q = supabase.from("pontos_embarque").select("id, nome, horario").eq("excursao_id", id);
+      if (onibusId) q = q.or(`onibus_id.eq.${onibusId},onibus_id.is.null`);
+      const { data } = await q.order("ordem", { ascending: true });
       return (data ?? []) as Ponto[];
     },
   });
 
   const { data: seats = [] } = useQuery({
-    queryKey: ["seats", id],
+    queryKey: ["seats", id, onibusId ?? null],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("seats")
-        .select("id, seat_number, occupied, passageiro_id")
-        .eq("excursao_id", id)
-        .order("seat_number");
+      let q = supabase.from("seats").select("id, seat_number, occupied, passageiro_id").eq("excursao_id", id);
+      if (onibusId) q = q.eq("onibus_id", onibusId);
+      const { data, error } = await q.order("seat_number");
       if (error) throw error;
       return (data ?? []).sort((a, b) => Number(a.seat_number) - Number(b.seat_number)) as Seat[];
     },
   });
 
   const { data: passageiros = [], isLoading } = useQuery({
-    queryKey: ["passageiros", id],
+    queryKey: ["passageiros", id, onibusId ?? null],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("passageiros")
-        .select("*")
-        .eq("excursao_id", id)
-        .order("created_at", { ascending: false });
+      let q = supabase.from("passageiros").select("*").eq("excursao_id", id);
+      if (onibusId) q = q.eq("onibus_id", onibusId);
+      const { data, error } = await q.order("created_at", { ascending: false });
       if (error) throw error;
       return data as Passageiro[];
     },
   });
 
   useRealtimeSync(
-    `excursao-${id}`,
+    `excursao-${id}-${onibusId ?? "all"}`,
     [
       { table: "passageiros", filter: `excursao_id=eq.${id}` },
       { table: "pagamentos", filter: `excursao_id=eq.${id}` },
@@ -104,10 +116,10 @@ function PassageirosPage() {
       { table: "reservas", filter: `excursao_id=eq.${id}` },
     ],
     [
-      ["passageiros", id],
-      ["pagamentos", id],
-      ["seats", id],
-      ["pontos", id],
+      ["passageiros", id, onibusId ?? null],
+      ["pagamentos", id, onibusId ?? null],
+      ["seats", id, onibusId ?? null],
+      ["pontos", id, onibusId ?? null],
       ["pontos-counts", id],
       ["excursao", id],
     ],
@@ -118,7 +130,7 @@ function PassageirosPage() {
       await supabase.from("passageiros").delete().eq("id", pid);
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["passageiros", id] });
+      qc.invalidateQueries({ queryKey: ["passageiros", id, onibusId ?? null] });
       qc.invalidateQueries({ queryKey: ["pontos-counts", id] });
     },
   });
@@ -127,7 +139,7 @@ function PassageirosPage() {
     mutationFn: async ({ pid, status }: { pid: string; status: string }) => {
       await supabase.from("passageiros").update({ status }).eq("id", pid);
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["passageiros", id] }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["passageiros", id, onibusId ?? null] }),
   });
 
   const tripChoicesMut = useMutation({
@@ -150,8 +162,8 @@ function PassageirosPage() {
       if (error) throw error;
     },
     onSuccess: (_data, variables) => {
-      qc.invalidateQueries({ queryKey: ["passageiros", id] });
-      qc.invalidateQueries({ queryKey: ["seats", id] });
+      qc.invalidateQueries({ queryKey: ["passageiros", id, onibusId ?? null] });
+      qc.invalidateQueries({ queryKey: ["seats", id, onibusId ?? null] });
       qc.invalidateQueries({ queryKey: ["pontos-counts", id] });
       setEditing(null);
       const seat = seats.find((s) => s.id === variables.seatId)?.seat_number;
@@ -197,16 +209,22 @@ function PassageirosPage() {
 
   return (
     <div>
-      <Link to="/app/excursao/$id" params={{ id }} className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4">
+      <Link
+        to={onibusId ? "/app/excursao/$id/onibus/$onibusId" : "/app/excursao/$id"}
+        params={onibusId ? { id, onibusId } : { id }}
+        className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4"
+      >
         <ArrowLeft className="h-4 w-4" /> Voltar
       </Link>
+
+      <OnibusFilterBadge excursaoId={id} onibusId={onibusId} />
 
       <div className="flex items-end justify-between mb-5">
         <div>
           <p className="text-xs uppercase tracking-wider text-muted-foreground font-bold">{excursao?.titulo ?? "Excursão"}</p>
           <h1 className="font-display text-2xl font-black">Passageiros</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            {passageiros.length} / {excursao?.total_vagas ?? 0} vagas
+            {passageiros.length} / {capacidadeEfetiva} vagas{onibusId ? " (deste ônibus)" : ""}
           </p>
         </div>
         <button
@@ -237,7 +255,7 @@ function PassageirosPage() {
 
       {showMap && (
         <div className="mb-4">
-          <SeatMap total={excursao?.total_vagas ?? 0} taken={taken} />
+          <SeatMap total={capacidadeEfetiva} taken={taken} />
         </div>
       )}
 
@@ -347,8 +365,9 @@ function PassageirosPage() {
       {open && (
         <NewPassageiroModal
           excursaoId={id}
+          onibusId={onibusId ?? null}
           pontos={pontos}
-          totalVagas={excursao?.total_vagas ?? 0}
+          totalVagas={capacidadeEfetiva}
           taken={taken}
           seats={seats}
           onClose={() => setOpen(false)}
@@ -359,7 +378,7 @@ function PassageirosPage() {
           passageiro={editing}
           pontos={pontos}
           seats={seats}
-          totalVagas={excursao?.total_vagas ?? 0}
+          totalVagas={capacidadeEfetiva}
           taken={taken}
           saving={tripChoicesMut.isPending}
           onClose={() => setEditing(null)}
@@ -495,6 +514,7 @@ function EditChoicesModal({
 
 function NewPassageiroModal({
   excursaoId,
+  onibusId,
   pontos,
   totalVagas,
   taken,
@@ -502,6 +522,7 @@ function NewPassageiroModal({
   onClose,
 }: {
   excursaoId: string;
+  onibusId: string | null;
   pontos: Ponto[];
   totalVagas: number;
   taken: Record<string, { pago: boolean; nome: string }>;
@@ -552,6 +573,7 @@ function NewPassageiroModal({
       p_payment_status: form.payment_status,
       p_status: form.status,
       p_observacao_interna: form.observacao_interna || null,
+      p_onibus_id: onibusId,
     });
     setSaving(false);
     if (error) {
@@ -559,8 +581,8 @@ function NewPassageiroModal({
       return;
     }
     toast.success("Passageiro manual adicionado");
-    qc.invalidateQueries({ queryKey: ["passageiros", excursaoId] });
-    qc.invalidateQueries({ queryKey: ["seats", excursaoId] });
+    qc.invalidateQueries({ queryKey: ["passageiros", excursaoId, onibusId ?? null] });
+    qc.invalidateQueries({ queryKey: ["seats", excursaoId, onibusId ?? null] });
     qc.invalidateQueries({ queryKey: ["pontos-counts", excursaoId] });
     onClose();
   }
