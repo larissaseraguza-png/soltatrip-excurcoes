@@ -59,8 +59,12 @@ function AuthPage() {
     );
   }
 
-  // Já autenticado: vai pra área do papel, mas nunca interrompe uma tentativa de login/cadastro em andamento.
-  if (!busy && user && role) return <Navigate to={roleHome[role]} />;
+  // Já autenticado: retoma convite pendente ou vai para a área do papel.
+  if (!busy && user && role) {
+    const pending = typeof window !== "undefined" ? localStorage.getItem("pending_staff_invite") : null;
+    if (pending) return <Navigate to="/invite/staff/$token" params={{ token: pending }} />;
+    return <Navigate to={roleHome[role]} />;
+  }
 
   function pickRole(r: AppRole) {
     setError(null);
