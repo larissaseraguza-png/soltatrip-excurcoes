@@ -22,18 +22,18 @@ function subscribe(l: () => void) {
   };
 }
 
-function loadRole(userId: string) {
+async function loadRole(userId: string) {
   if (inFlight.has(userId)) return inFlight.get(userId)!;
-  const p = supabase
-    .from("user_roles")
-    .select("role")
-    .eq("user_id", userId)
-    .maybeSingle()
-    .then(({ data }) => {
-      cache.set(userId, { role: (data?.role as AppRole) ?? null, loading: false });
-      inFlight.delete(userId);
-      notify();
-    });
+  const p = (async () => {
+    const { data } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", userId)
+      .maybeSingle();
+    cache.set(userId, { role: (data?.role as AppRole) ?? null, loading: false });
+    inFlight.delete(userId);
+    notify();
+  })();
   inFlight.set(userId, p);
   return p;
 }
