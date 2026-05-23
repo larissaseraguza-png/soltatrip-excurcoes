@@ -166,15 +166,21 @@ function Pagamentos() {
         </p>
       </div>
 
-      {/* Botão poltrona */}
-      {pago > 0 && status !== "cancelled" && (
+      {/* Botão poltrona — só aparece se ainda NÃO escolhida */}
+      {pago > 0 && status !== "cancelled" && !reservaAtiva.seat_id && (
         <button
           onClick={() => navigate({ to: "/passageiro/poltrona", search: { reserva: reservaAtiva.id } as any })}
           className="w-full mb-5 flex items-center justify-center gap-2 h-14 rounded-2xl font-display font-bold bg-gradient-to-r from-neon-green to-neon-purple text-primary-foreground glow-primary"
         >
           <Armchair className="size-5" />
-          {reservaAtiva.seat_id ? "Trocar poltrona" : "Escolher poltrona"}
+          Escolher poltrona
         </button>
+      )}
+      {reservaAtiva.seat_id && (
+        <div className="w-full mb-5 flex items-center justify-center gap-2 h-14 rounded-2xl font-display font-bold bg-neon-green/15 text-neon-green border border-neon-green/30">
+          <Armchair className="size-5" />
+          Poltrona confirmada · bloqueada
+        </div>
       )}
 
       {/* Form de pagamento */}
