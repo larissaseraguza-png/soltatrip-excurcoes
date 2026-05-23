@@ -139,9 +139,12 @@ function AuthPage() {
           await supabase.auth.signOut();
           throw new Error("Você não tem acesso a este tipo de perfil");
         }
-        const pending = localStorage.getItem("pending_staff_invite");
-        if (pending) {
-          navigate({ to: "/invite/staff/$token", params: { token: pending }, replace: true });
+        const pendingStaff = localStorage.getItem("pending_staff_invite");
+        const pendingPax = localStorage.getItem("pending_pax_invite");
+        if (pendingStaff) {
+          navigate({ to: "/invite/staff/$token", params: { token: pendingStaff }, replace: true });
+        } else if (pendingPax) {
+          navigate({ to: "/invite/passageiro/$token", params: { token: pendingPax }, replace: true });
         } else {
           navigate({ to: roleHome[userRole], replace: true });
         }
