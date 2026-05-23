@@ -300,8 +300,11 @@ export type Database = {
         Row: {
           amount_paid: number
           assento: string | null
+          comprador_id: string | null
+          convite_token: string | null
           created_at: string
           documento: string | null
+          email: string | null
           embarcado_em: string | null
           excursao_id: string
           id: string
@@ -319,8 +322,11 @@ export type Database = {
         Insert: {
           amount_paid?: number
           assento?: string | null
+          comprador_id?: string | null
+          convite_token?: string | null
           created_at?: string
           documento?: string | null
+          email?: string | null
           embarcado_em?: string | null
           excursao_id: string
           id?: string
@@ -338,8 +344,11 @@ export type Database = {
         Update: {
           amount_paid?: number
           assento?: string | null
+          comprador_id?: string | null
+          convite_token?: string | null
           created_at?: string
           documento?: string | null
+          email?: string | null
           embarcado_em?: string | null
           excursao_id?: string
           id?: string
@@ -507,9 +516,22 @@ export type Database = {
     }
     Functions: {
       accept_staff_invitation: { Args: { p_token: string }; Returns: string }
+      claim_passageiro_invite: { Args: { p_token: string }; Returns: string }
       get_my_role: {
         Args: never
         Returns: Database["public"]["Enums"]["app_role"]
+      }
+      get_passageiro_invite: {
+        Args: { p_token: string }
+        Returns: {
+          excursao_data: string
+          excursao_destino: string
+          excursao_id: string
+          excursao_titulo: string
+          ja_usado: boolean
+          nome: string
+          reserva_id: string
+        }[]
       }
       get_staff_invitation: {
         Args: { p_token: string }
