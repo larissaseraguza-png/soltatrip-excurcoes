@@ -96,6 +96,7 @@ function Stat({ label, value, tone }: { label: string; value: React.ReactNode; t
 function ExcursaoCard({ ex }: { ex: Excursao }) {
   const statusColor: Record<string, string> = {
     rascunho: "bg-muted text-muted-foreground",
+    publicada: "bg-neon-green/20 text-neon-green border-neon-green/30",
     ativa: "bg-neon-green/20 text-neon-green border-neon-green/30",
     encerrada: "bg-neon-purple/20 text-neon-purple border-neon-purple/30",
     cancelada: "bg-red-500/20 text-red-400 border-red-500/30",
