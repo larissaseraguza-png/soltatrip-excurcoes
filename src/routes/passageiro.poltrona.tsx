@@ -249,9 +249,15 @@ function Poltrona() {
       if (passageiroError) throw passageiroError;
 
       setSelectedSeat(seat);
-      await qc.invalidateQueries({ queryKey: ["seats"] });
-      await qc.invalidateQueries({ queryKey: ["pax-poltrona"] });
-      await qc.invalidateQueries({ queryKey: ["reserva-passageiros"] });
+      await Promise.all([
+        qc.invalidateQueries({ queryKey: ["seats"] }),
+        qc.invalidateQueries({ queryKey: ["pax-poltrona"] }),
+        qc.invalidateQueries({ queryKey: ["reserva-passageiros"] }),
+        qc.invalidateQueries({ queryKey: ["reserva-seats"] }),
+        qc.invalidateQueries({ queryKey: ["reserva-grupo"] }),
+        qc.invalidateQueries({ queryKey: ["pagto-passageiros"] }),
+        qc.invalidateQueries({ queryKey: ["reservas-pagto"] }),
+      ]);
     } catch (err: any) {
       alert(err.message ?? "Erro ao escolher poltrona");
     } finally {
