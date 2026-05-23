@@ -122,15 +122,35 @@ function MinhasViagens() {
           />
         ) : (
           <ul className="space-y-4">
-            {minhas.map((m) =>
-              m.excursao ? (
-                <ExcursaoCard
-                  key={m.id}
-                  ex={m.excursao}
-                  badge={<Pill tone={m.status === "confirmado" ? "green" : "yellow"}>{m.status}</Pill>}
-                />
-              ) : null,
-            )}
+            {minhas.map((m) => {
+              if (!m.excursao) return null;
+              const pago = Number(m.amount_paid) || 0;
+              const total = Number(m.total_price) || 0;
+              const pct = total > 0 ? Math.min(100, Math.round((pago / total) * 100)) : 0;
+              const tone =
+                m.payment_status === "paid"
+                  ? "green"
+                  : m.payment_status === "partial_payment"
+                    ? "purple"
+                    : "yellow";
+              const label =
+                m.payment_status === "paid"
+                  ? "Quitado"
+                  : m.payment_status === "partial_payment"
+                    ? `${pct}% pago`
+                    : "Aguardando pagamento";
+              return (
+                <li key={m.id}>
+                  <Link
+                    to="/passageiro/reserva/$id"
+                    params={{ id: m.id }}
+                    className="block"
+                  >
+                    <ExcursaoCard ex={m.excursao} badge={<Pill tone={tone}>{label}</Pill>} />
+                  </Link>
+                </li>
+              );
+            })}
           </ul>
         )
       ) : loadingDisp ? (
