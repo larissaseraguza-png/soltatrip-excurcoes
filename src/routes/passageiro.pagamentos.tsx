@@ -125,7 +125,7 @@ function Pagamentos() {
       alert(`Valor máximo: ${brl(restante)}`);
       return;
     }
-    if (pago > 0 && v >= restante - 0.001 && (faltamPoltronas || faltamEmbarques)) {
+    if (passageirosList.length > 0 && v >= restante - 0.001 && (faltamPoltronas || faltamEmbarques)) {
       alert("Confirme as poltronas e os pontos de embarque antes de finalizar o pagamento.");
       return;
     }
