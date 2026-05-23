@@ -241,18 +241,10 @@ function ReservaDetalhes() {
             <div>
               <p className="text-xs text-muted-foreground">Número</p>
               <p className="font-display font-black text-3xl">{seatLabel}</p>
+              <p className="text-[11px] text-muted-foreground mt-1">
+                Poltrona confirmada · só o excursionista pode alterar
+              </p>
             </div>
-            <button
-              onClick={() =>
-                navigate({
-                  to: "/passageiro/poltrona",
-                  search: { reserva: reserva.id } as any,
-                })
-              }
-              className="px-4 h-11 rounded-2xl text-sm font-bold glass"
-            >
-              Trocar
-            </button>
           </div>
         ) : (
           <>
