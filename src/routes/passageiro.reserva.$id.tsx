@@ -366,43 +366,15 @@ function ReservaDetalhes() {
                 </div>
 
                 {/* Embarque */}
-                <div>
-                  <div className="flex items-center justify-between gap-3 mb-2">
-                    <div className="flex items-center gap-2">
-                      <MapPinned className="size-4 text-neon-pink" />
-                      <span className="text-sm font-bold">Embarque</span>
-                    </div>
-                    {ponto ? (
-                      <span className="text-xs text-neon-green font-bold">✓ Confirmado</span>
-                    ) : podeEscolher && isVinculadoOuComprador ? (
-                      <span className="text-[11px] text-muted-foreground">Escolha abaixo</span>
-                    ) : (
-                      <span className="text-xs text-muted-foreground">{pago === 0 ? "Pague para liberar" : "—"}</span>
-                    )}
-                  </div>
-                  {ponto ? (
-                    <div className="bg-neon-green/10 border border-neon-green/30 rounded-2xl p-3 text-sm">
-                      <p className="font-bold">{ponto.nome}</p>
-                      {ponto.endereco && <p className="text-xs text-muted-foreground">{ponto.endereco}</p>}
-                      {ponto.horario && <p className="text-xs text-neon-green mt-1">⏰ {ponto.horario}</p>}
-                    </div>
-                  ) : podeEscolher && isVinculadoOuComprador && pontos.length > 0 ? (
-                    <ul className="space-y-2">
-                      {(pontos as any[]).map((pt) => (
-                        <li key={pt.id}>
-                          <button
-                            onClick={() => escolherPonto(p.id, pt.id)}
-                            className="w-full text-left rounded-2xl p-3 border border-border bg-background/40 hover:border-neon-pink/40 transition"
-                          >
-                            <p className="font-bold text-sm">{pt.nome}</p>
-                            {pt.endereco && <p className="text-xs text-muted-foreground">{pt.endereco}</p>}
-                            {pt.horario && <p className="text-[11px] text-neon-pink">⏰ {pt.horario}</p>}
-                          </button>
-                        </li>
-                      ))}
-                    </ul>
-                  ) : null}
-                </div>
+                <EmbarqueSection
+                  pax={p}
+                  ponto={ponto}
+                  pontos={pontos as any[]}
+                  podeEscolher={podeEscolher}
+                  isVinculadoOuComprador={isVinculadoOuComprador}
+                  pago={pago}
+                  onSelect={(pontoId) => escolherPonto(p.id, pontoId)}
+                />
 
                 {/* QR Code */}
                 <div className="pt-3 border-t border-border">
