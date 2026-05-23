@@ -172,15 +172,22 @@ function MinhasViagens() {
               const pago = Number(r.amount_paid) || 0;
               const total = Number(r.total_price) || 0;
               const pct = total > 0 ? Math.min(100, Math.round((pago / total) * 100)) : 0;
-              const tone = r.payment_status === "paid" ? "green" : r.payment_status === "partial_payment" ? "purple" : "yellow";
-              const label = r.payment_status === "paid" ? "Quitado" : r.payment_status === "partial_payment" ? `${pct}% pago` : "Aguardando";
+              const cancelada = r.excursao.status === "cancelada";
+              const tone = cancelada ? "yellow" : r.payment_status === "paid" ? "green" : r.payment_status === "partial_payment" ? "purple" : "yellow";
+              const label = cancelada
+                ? "Excursão cancelada"
+                : r.payment_status === "paid"
+                ? "Quitado"
+                : r.payment_status === "partial_payment"
+                ? `${pct}% pago`
+                : "Aguardando";
               return (
                 <li key={r.id}>
                   <Link to="/passageiro/reserva/$id" params={{ id: r.id }} className="block">
                     <ExcursaoCard
                       ex={r.excursao}
                       title={r.excursao.titulo}
-                      badge={<Pill tone={tone}>{label}</Pill>}
+                      badge={<Pill tone={tone as any}>{label}</Pill>}
                       tag={r.quantidade > 1 ? `${r.quantidade} passageiros` : null}
                     />
                   </Link>
