@@ -297,6 +297,13 @@ export type Database = {
             referencedRelation: "passageiros"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "pagamentos_reserva_id_fkey"
+            columns: ["reserva_id"]
+            isOneToOne: false
+            referencedRelation: "reservas"
+            referencedColumns: ["id"]
+          },
         ]
       }
       passageiros: {
@@ -382,6 +389,13 @@ export type Database = {
             columns: ["ponto_embarque_id"]
             isOneToOne: false
             referencedRelation: "pontos_embarque"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "passageiros_reserva_id_fkey"
+            columns: ["reserva_id"]
+            isOneToOne: false
+            referencedRelation: "reservas"
             referencedColumns: ["id"]
           },
         ]
@@ -488,7 +502,15 @@ export type Database = {
           total_price?: number
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "reservas_excursao_id_fkey"
+            columns: ["excursao_id"]
+            isOneToOne: false
+            referencedRelation: "excursoes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       seats: {
         Row: {
