@@ -3,8 +3,9 @@ import { useQuery } from "@tanstack/react-query";
 import { StaffShell, Pill } from "@/components/staff/Shell";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { useStaffExcursao } from "@/hooks/use-staff-excursao";
 import { useRealtimeSync } from "@/hooks/use-realtime-sync";
-import { Search, Loader2, MapPin, Armchair, Phone } from "lucide-react";
+import { Search, Loader2, MapPin, Armchair, Phone, Bus } from "lucide-react";
 import { useMemo, useState } from "react";
 
 export const Route = createFileRoute("/staff/passageiros")({
