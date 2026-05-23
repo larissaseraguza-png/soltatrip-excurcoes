@@ -1,39 +1,63 @@
-import { useEffect, useState } from "react";
+import { useEffect, useSyncExternalStore } from "react";
 import type { User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 
 export type AppRole = "excursionista" | "staff" | "passageiro";
 
-export function useRoleForUser(user: User | null, authLoading: boolean) {
-  const [role, setRole] = useState<AppRole | null>(null);
-  const [loading, setLoading] = useState(true);
+// Cache de role por user_id em escopo de módulo: a primeira resolução
+// fica em memória e novas montagens não voltam a exibir loading.
+type RoleEntry = { role: AppRole | null; loading: boolean };
+const cache = new Map<string, RoleEntry>();
+const inFlight = new Map<string, Promise<void>>();
+const listeners = new Set<() => void>();
 
-  useEffect(() => {
-    let mounted = true;
-    if (authLoading) return;
-    if (!user) {
-      setRole(null);
-      setLoading(false);
-      return;
-    }
-    setLoading(true);
-    supabase
+function notify() {
+  listeners.forEach((l) => l());
+}
+function subscribe(l: () => void) {
+  listeners.add(l);
+  return () => {
+    listeners.delete(l);
+  };
+}
+
+async function loadRole(userId: string) {
+  if (inFlight.has(userId)) return inFlight.get(userId)!;
+  const p = (async () => {
+    const { data } = await supabase
       .from("user_roles")
       .select("role")
-      .eq("user_id", user.id)
-      .maybeSingle()
-      .then(({ data }) => {
-        if (!mounted) return;
-        setRole((data?.role as AppRole) ?? null);
-        setLoading(false);
-      });
-    return () => {
-      mounted = false;
-    };
+      .eq("user_id", userId)
+      .maybeSingle();
+    cache.set(userId, { role: (data?.role as AppRole) ?? null, loading: false });
+    inFlight.delete(userId);
+    notify();
+  })();
+  inFlight.set(userId, p);
+  return p;
+}
+
+export function useRoleForUser(user: User | null, authLoading: boolean) {
+  useEffect(() => {
+    if (authLoading || !user) return;
+    if (!cache.has(user.id)) {
+      cache.set(user.id, { role: null, loading: true });
+      loadRole(user.id);
+    }
   }, [user, authLoading]);
 
-  return { role, loading: authLoading || loading };
+  const snapshot = useSyncExternalStore(
+    subscribe,
+    () => {
+      if (authLoading) return { role: null, loading: true } as RoleEntry;
+      if (!user) return { role: null, loading: false } as RoleEntry;
+      return cache.get(user.id) ?? { role: null, loading: true };
+    },
+    () => ({ role: null, loading: true } as RoleEntry),
+  );
+
+  return snapshot;
 }
 
 export function useRole() {
