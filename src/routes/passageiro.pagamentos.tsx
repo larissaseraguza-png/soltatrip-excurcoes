@@ -82,6 +82,22 @@ function Pagamentos() {
     },
   });
 
+  useRealtimeSync(
+    `pagto-${user?.id ?? "anon"}-${reservaAtiva?.id ?? "none"}`,
+    reservaAtiva?.id
+      ? [
+          { table: "reservas", filter: `id=eq.${reservaAtiva.id}` },
+          { table: "passageiros", filter: `reserva_id=eq.${reservaAtiva.id}` },
+          { table: "pagamentos", filter: `reserva_id=eq.${reservaAtiva.id}` },
+        ]
+      : [],
+    [
+      ["reservas-pagto", user?.id, reservaParam],
+      ["pagto-passageiros", reservaAtiva?.id],
+      ["pagamentos", reservaAtiva?.id],
+    ],
+  );
+
   if (authLoading || isLoading) {
     return (
       <Shell title="Pagamentos">
