@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Shell, Pill } from "@/components/passageiro/Shell";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
-import { Calendar, MapPin, Loader2, Sparkles, Ticket, Compass, X, Plus, Minus } from "lucide-react";
+import { Calendar, MapPin, Loader2, Sparkles, Ticket, Compass, X, Plus, Minus, Users } from "lucide-react";
 
 export const Route = createFileRoute("/passageiro/")({
   component: MinhasViagens,
@@ -21,20 +21,16 @@ type Excursao = {
   total_vagas: number;
 };
 
-type MinhaInscricao = {
+type MinhaReserva = {
   id: string;
-  status: string;
-  payment_status: string;
-  amount_paid: number;
+  quantidade: number;
   total_price: number;
-  nome: string;
-  user_id: string | null;
-  comprador_id: string | null;
-  convite_token: string | null;
+  amount_paid: number;
+  payment_status: string;
   excursao: Excursao | null;
 };
 
-type ExtraPax = { nome: string; email: string };
+type Pax = { nome: string; email: string; titular: boolean };
 
 function MinhasViagens() {
   const { user } = useAuth();
@@ -43,20 +39,20 @@ function MinhasViagens() {
   const [tab, setTab] = useState<"minhas" | "disponiveis">("minhas");
   const [reservando, setReservando] = useState(false);
   const [modalEx, setModalEx] = useState<Excursao | null>(null);
+  const [step, setStep] = useState<"qtd" | "pax">("qtd");
   const [qtd, setQtd] = useState(1);
-  const [extras, setExtras] = useState<ExtraPax[]>([]);
+  const [paxs, setPaxs] = useState<Pax[]>([]);
 
-  const { data: minhas = [], isLoading: loadingMinhas } = useQuery({
-    queryKey: ["minhas-inscricoes", user?.id],
+  const { data: reservas = [], isLoading: loadingMinhas } = useQuery({
+    queryKey: ["minhas-reservas", user?.id],
     enabled: !!user,
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("passageiros")
-        .select("id, status, payment_status, amount_paid, total_price, nome, user_id, comprador_id, convite_token, excursao:excursoes(id,titulo,destino,data_evento,preco,cor,status,total_vagas)")
-        .or(`user_id.eq.${user!.id},comprador_id.eq.${user!.id}`)
+        .from("reservas")
+        .select("id, quantidade, total_price, amount_paid, payment_status, excursao:excursoes(id,titulo,destino,data_evento,preco,cor,status,total_vagas)")
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return (data ?? []) as unknown as MinhaInscricao[];
+      return (data ?? []) as unknown as MinhaReserva[];
     },
   });
 
@@ -75,70 +71,54 @@ function MinhasViagens() {
 
   function openReserva(ex: Excursao) {
     setModalEx(ex);
+    setStep("qtd");
     setQtd(1);
-    setExtras([]);
+    setPaxs([
+      {
+        nome: user?.user_metadata?.full_name || user?.email || "",
+        email: user?.email || "",
+        titular: true,
+      },
+    ]);
   }
 
-  function setQuantidade(n: number) {
-    const clamped = Math.max(1, Math.min(10, n));
-    setQtd(clamped);
-    const adicionais = clamped - 1;
-    setExtras((prev) => {
-      const next = [...prev];
-      while (next.length < adicionais) next.push({ nome: "", email: "" });
-      next.length = adicionais;
-      return next;
-    });
+  function avancarDaQtd() {
+    const next: Pax[] = [];
+    for (let i = 0; i < qtd; i++) {
+      if (i === 0) {
+        next.push(paxs[0] || { nome: user?.user_metadata?.full_name || user?.email || "", email: user?.email || "", titular: true });
+      } else {
+        next.push(paxs[i] || { nome: "", email: "", titular: false });
+      }
+    }
+    setPaxs(next);
+    setStep("pax");
   }
 
-  async function confirmarReserva() {
+  async function confirmar() {
     if (!user || !modalEx) return;
-    // Validar extras
-    for (let i = 0; i < extras.length; i++) {
-      const e = extras[i];
-      if (!e.nome.trim() || !e.email.trim()) {
-        alert(`Preencha nome e email do passageiro ${i + 2}.`);
+    for (let i = 0; i < paxs.length; i++) {
+      const p = paxs[i];
+      if (!p.nome.trim() || !p.email.trim()) {
+        alert(`Preencha nome e email do passageiro ${i + 1}.`);
         return;
       }
     }
     setReservando(true);
     try {
-      const titularNome = user.user_metadata?.full_name || user.email || "Passageiro";
-      const rows: any[] = [
-        {
-          excursao_id: modalEx.id,
-          user_id: user.id,
-          comprador_id: user.id,
-          nome: titularNome,
-          email: user.email,
-          status: "pendente",
-          total_price: Number(modalEx.preco) || 0,
-          payment_status: "pending_payment",
-        },
-        ...extras.map((e) => ({
-          excursao_id: modalEx.id,
-          user_id: null,
-          comprador_id: user.id,
-          nome: e.nome.trim(),
-          email: e.email.trim(),
-          status: "pendente",
-          total_price: Number(modalEx.preco) || 0,
-          payment_status: "pending_payment",
-          convite_token: crypto.randomUUID().replace(/-/g, ""),
+      const { data, error } = await supabase.rpc("criar_reserva_grupo", {
+        p_excursao_id: modalEx.id,
+        p_passageiros: paxs.map((p) => ({
+          nome: p.nome.trim(),
+          email: p.email.trim(),
+          titular: p.titular,
         })),
-      ];
-      const { data, error } = await supabase
-        .from("passageiros")
-        .insert(rows)
-        .select("id");
+      });
       if (error) throw error;
-      qc.invalidateQueries({ queryKey: ["minhas-inscricoes"] });
+      qc.invalidateQueries({ queryKey: ["minhas-reservas"] });
       setModalEx(null);
-      // Vai para a primeira reserva (titular) para iniciar pagamento
-      const firstId = data?.[0]?.id;
-      if (firstId) {
-        navigate({ to: "/passageiro/pagamentos", search: { reserva: firstId } as any });
-      }
+      const reservaId = data as unknown as string;
+      navigate({ to: "/passageiro/reserva/$id", params: { id: reservaId } });
     } catch (err: any) {
       alert(err.message ?? "Erro ao reservar");
     } finally {
@@ -146,7 +126,7 @@ function MinhasViagens() {
     }
   }
 
-  const idsMinhas = new Set(minhas.map((m) => m.excursao?.id).filter(Boolean));
+  const idsMinhas = new Set(reservas.map((r) => r.excursao?.id).filter(Boolean));
 
   return (
     <Shell title="Suas viagens" subtitle="Excursões SoltaTrip">
@@ -162,47 +142,32 @@ function MinhasViagens() {
       </div>
 
       <div className="flex gap-2 mb-5 glass rounded-2xl p-1">
-        <TabBtn active={tab === "minhas"} onClick={() => setTab("minhas")} icon={Ticket} label={`Minhas (${minhas.length})`} />
+        <TabBtn active={tab === "minhas"} onClick={() => setTab("minhas")} icon={Ticket} label={`Minhas (${reservas.length})`} />
         <TabBtn active={tab === "disponiveis"} onClick={() => setTab("disponiveis")} icon={Compass} label={`Disponíveis (${disponiveis.length})`} />
       </div>
 
       {tab === "minhas" ? (
         loadingMinhas ? (
           <Loading />
-        ) : minhas.length === 0 ? (
-          <Empty
-            title="Você ainda não reservou nenhuma viagem"
-            cta="Ver excursões disponíveis"
-            onCta={() => setTab("disponiveis")}
-          />
+        ) : reservas.length === 0 ? (
+          <Empty title="Você ainda não reservou nenhuma viagem" cta="Ver excursões disponíveis" onCta={() => setTab("disponiveis")} />
         ) : (
           <ul className="space-y-4">
-            {minhas.map((m) => {
-              if (!m.excursao) return null;
-              const pago = Number(m.amount_paid) || 0;
-              const total = Number(m.total_price) || 0;
+            {reservas.map((r) => {
+              if (!r.excursao) return null;
+              const pago = Number(r.amount_paid) || 0;
+              const total = Number(r.total_price) || 0;
               const pct = total > 0 ? Math.min(100, Math.round((pago / total) * 100)) : 0;
-              const tone =
-                m.payment_status === "paid"
-                  ? "green"
-                  : m.payment_status === "partial_payment"
-                    ? "purple"
-                    : "yellow";
-              const label =
-                m.payment_status === "paid"
-                  ? "Quitado"
-                  : m.payment_status === "partial_payment"
-                    ? `${pct}% pago`
-                    : "Aguardando pagamento";
-              const isConvidado = m.comprador_id === user?.id && m.user_id !== user?.id;
+              const tone = r.payment_status === "paid" ? "green" : r.payment_status === "partial_payment" ? "purple" : "yellow";
+              const label = r.payment_status === "paid" ? "Quitado" : r.payment_status === "partial_payment" ? `${pct}% pago` : "Aguardando";
               return (
-                <li key={m.id}>
-                  <Link to="/passageiro/reserva/$id" params={{ id: m.id }} className="block">
+                <li key={r.id}>
+                  <Link to="/passageiro/reserva/$id" params={{ id: r.id }} className="block">
                     <ExcursaoCard
-                      ex={m.excursao}
-                      title={isConvidado ? `${m.excursao.titulo} · ${m.nome}` : m.excursao.titulo}
+                      ex={r.excursao}
+                      title={r.excursao.titulo}
                       badge={<Pill tone={tone}>{label}</Pill>}
-                      tag={isConvidado ? "Convidado" : null}
+                      tag={r.quantidade > 1 ? `${r.quantidade} passageiros` : null}
                     />
                   </Link>
                 </li>
@@ -243,78 +208,104 @@ function MinhasViagens() {
           <div className="glass w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl max-h-[92vh] overflow-y-auto">
             <div className="sticky top-0 bg-background/95 backdrop-blur p-5 flex items-center justify-between border-b border-border">
               <div>
-                <p className="text-xs text-muted-foreground">Reservar</p>
+                <p className="text-xs text-muted-foreground">{step === "qtd" ? "Reservar" : "Dados dos passageiros"}</p>
                 <h3 className="font-display font-bold text-lg leading-tight">{modalEx.titulo}</h3>
               </div>
               <button onClick={() => setModalEx(null)} className="p-2 rounded-full hover:bg-muted">
                 <X className="size-5" />
               </button>
             </div>
-            <div className="p-5 space-y-5">
-              <div>
-                <p className="text-xs text-muted-foreground mb-2">Quantas vagas?</p>
+
+            {step === "qtd" ? (
+              <div className="p-5 space-y-5">
+                <p className="text-xs text-muted-foreground">Quantas passagens?</p>
                 <div className="flex items-center justify-between bg-background/40 rounded-2xl p-3">
-                  <button onClick={() => setQuantidade(qtd - 1)} className="size-10 grid place-items-center rounded-xl bg-muted">
+                  <button onClick={() => setQtd(Math.max(1, qtd - 1))} className="size-10 grid place-items-center rounded-xl bg-muted">
                     <Minus className="size-4" />
                   </button>
                   <div className="text-center">
-                    <p className="font-display font-black text-3xl">{qtd}</p>
+                    <p className="font-display font-black text-4xl">{qtd}</p>
                     <p className="text-[10px] text-muted-foreground">
                       Total: R$ {(Number(modalEx.preco) * qtd).toFixed(2)}
                     </p>
                   </div>
-                  <button onClick={() => setQuantidade(qtd + 1)} className="size-10 grid place-items-center rounded-xl bg-primary text-primary-foreground">
+                  <button onClick={() => setQtd(Math.min(10, qtd + 1))} className="size-10 grid place-items-center rounded-xl bg-primary text-primary-foreground">
                     <Plus className="size-4" />
                   </button>
                 </div>
-                <p className="text-[11px] text-muted-foreground mt-2">
-                  Você é o titular da 1ª vaga. Cada vaga gera passageiro, poltrona e QR Code individuais.
-                </p>
-              </div>
-
-              {extras.length > 0 && (
-                <div className="space-y-3">
-                  <p className="text-xs font-bold uppercase tracking-wider text-neon-pink">
-                    Passageiros adicionais
-                  </p>
-                  {extras.map((e, i) => (
-                    <div key={i} className="bg-background/40 rounded-2xl p-3 space-y-2">
-                      <p className="text-xs font-bold">Passageiro {i + 2}</p>
-                      <input
-                        value={e.nome}
-                        onChange={(ev) => {
-                          const next = [...extras];
-                          next[i] = { ...e, nome: ev.target.value };
-                          setExtras(next);
-                        }}
-                        placeholder="Nome completo"
-                        className="w-full h-10 px-3 rounded-xl bg-background border border-border text-sm"
-                      />
-                      <input
-                        value={e.email}
-                        onChange={(ev) => {
-                          const next = [...extras];
-                          next[i] = { ...e, email: ev.target.value };
-                          setExtras(next);
-                        }}
-                        type="email"
-                        placeholder="Email (para enviar acesso)"
-                        className="w-full h-10 px-3 rounded-xl bg-background border border-border text-sm"
-                      />
-                    </div>
+                <div className="grid grid-cols-4 gap-2">
+                  {[1, 2, 3, 4].map((n) => (
+                    <button
+                      key={n}
+                      onClick={() => setQtd(n)}
+                      className={`py-2 rounded-xl text-sm font-bold ${qtd === n ? "bg-neon-pink text-primary-foreground" : "bg-background/40 text-muted-foreground"}`}
+                    >
+                      {n}
+                    </button>
                   ))}
                 </div>
-              )}
-
-              <button
-                onClick={confirmarReserva}
-                disabled={reservando}
-                className="w-full h-12 rounded-2xl font-bold bg-primary text-primary-foreground glow-primary disabled:opacity-50 inline-flex items-center justify-center gap-2"
-              >
-                {reservando && <Loader2 className="size-4 animate-spin" />}
-                Confirmar e ir para pagamento
-              </button>
-            </div>
+                <p className="text-[11px] text-muted-foreground">
+                  Você é o titular. Uma única reserva é criada com pagamento consolidado e poltrona/embarque/QR Code individuais por passageiro.
+                </p>
+                <button
+                  onClick={avancarDaQtd}
+                  className="w-full h-12 rounded-2xl font-bold bg-primary text-primary-foreground glow-primary"
+                >
+                  Continuar
+                </button>
+              </div>
+            ) : (
+              <div className="p-5 space-y-4">
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <Users className="size-4" /> {qtd} passageiro{qtd > 1 ? "s" : ""} · Total R$ {(Number(modalEx.preco) * qtd).toFixed(2)}
+                </div>
+                {paxs.map((p, i) => (
+                  <div key={i} className="bg-background/40 rounded-2xl p-3 space-y-2">
+                    <p className="text-xs font-bold uppercase tracking-wider text-neon-pink">
+                      Passageiro {i + 1} {p.titular && <span className="text-neon-green normal-case">· você (titular)</span>}
+                    </p>
+                    <input
+                      value={p.nome}
+                      onChange={(ev) => {
+                        const next = [...paxs];
+                        next[i] = { ...p, nome: ev.target.value };
+                        setPaxs(next);
+                      }}
+                      placeholder="Nome completo"
+                      className="w-full h-10 px-3 rounded-xl bg-background border border-border text-sm"
+                    />
+                    <input
+                      value={p.email}
+                      onChange={(ev) => {
+                        const next = [...paxs];
+                        next[i] = { ...p, email: ev.target.value };
+                        setPaxs(next);
+                      }}
+                      type="email"
+                      placeholder={p.titular ? "Seu email" : "Email (para enviar acesso)"}
+                      className="w-full h-10 px-3 rounded-xl bg-background border border-border text-sm"
+                      disabled={p.titular}
+                    />
+                  </div>
+                ))}
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setStep("qtd")}
+                    className="flex-1 h-12 rounded-2xl font-bold bg-background/40 text-muted-foreground"
+                  >
+                    Voltar
+                  </button>
+                  <button
+                    onClick={confirmar}
+                    disabled={reservando}
+                    className="flex-1 h-12 rounded-2xl font-bold bg-primary text-primary-foreground glow-primary disabled:opacity-50 inline-flex items-center justify-center gap-2"
+                  >
+                    {reservando && <Loader2 className="size-4 animate-spin" />}
+                    Criar reserva
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
