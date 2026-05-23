@@ -75,6 +75,33 @@ function ReservaDetalhes() {
     },
   });
 
+  const { data: pontos = [] } = useQuery({
+    queryKey: ["reserva-pontos", reserva?.excursao?.id],
+    enabled: !!reserva?.excursao?.id,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("pontos_embarque")
+        .select("id, nome, endereco, referencia, horario, ordem")
+        .eq("excursao_id", reserva!.excursao.id)
+        .order("ordem", { ascending: true });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  async function escolherPonto(pontoId: string) {
+    if (!reserva) return;
+    const { error } = await supabase
+      .from("passageiros")
+      .update({ ponto_embarque_id: pontoId })
+      .eq("id", reserva.id);
+    if (error) {
+      alert(error.message);
+      return;
+    }
+    qc.invalidateQueries({ queryKey: ["reserva-detalhe", id] });
+  }
+
   if (isLoading) {
     return (
       <Shell back="/passageiro" title="Detalhes da reserva">
