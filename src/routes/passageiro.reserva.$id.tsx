@@ -33,7 +33,7 @@ function ReservaDetalhes() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("reservas")
-        .select("id, quantidade, total_price, amount_paid, payment_status, comprador_id, excursao:excursoes(id,titulo,destino,data_evento,horario_saida,horario_retorno,cor,banner_url,preco)")
+        .select("id, quantidade, total_price, amount_paid, payment_status, comprador_id, excursao:excursoes!reservas_excursao_id_fkey(id,titulo,destino,data_evento,horario_saida,horario_retorno,cor,banner_url,preco)")
         .eq("id", id)
         .maybeSingle();
       if (error) throw error;
