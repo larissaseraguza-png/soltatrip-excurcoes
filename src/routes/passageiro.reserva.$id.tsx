@@ -36,7 +36,7 @@ function ReservaDetalhes() {
       const { data, error } = await supabase
         .from("passageiros")
         .select(
-          "id, nome, status, qr_code, total_price, amount_paid, payment_status, seat_id, assento, embarcado_em, excursao:excursoes(id,titulo,destino,data_evento,horario_saida,horario_retorno,ponto_embarque,descricao,cor,banner_url,preco)"
+          "id, nome, status, qr_code, total_price, amount_paid, payment_status, seat_id, assento, embarcado_em, ponto_embarque_id, excursao:excursoes(id,titulo,destino,data_evento,horario_saida,horario_retorno,ponto_embarque,descricao,cor,banner_url,preco)"
         )
         .eq("id", id)
         .eq("user_id", user!.id)
