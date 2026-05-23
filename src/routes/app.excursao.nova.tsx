@@ -34,6 +34,15 @@ function NovaExcursao() {
   const [pontos, setPontos] = useState<Ponto[]>([
     { nome: "", endereco: "", horario: "", referencia: "" },
   ]);
+  const [bannerFile, setBannerFile] = useState<File | null>(null);
+  const [bannerPreview, setBannerPreview] = useState<string | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  function handleBannerChange(f: File | null) {
+    setBannerFile(f);
+    if (bannerPreview) URL.revokeObjectURL(bannerPreview);
+    setBannerPreview(f ? URL.createObjectURL(f) : null);
+  }
 
   function set<K extends keyof typeof form>(k: K, v: string) {
     setForm((f) => ({ ...f, [k]: v }));
