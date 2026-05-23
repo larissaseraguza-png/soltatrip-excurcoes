@@ -1,58 +1,55 @@
 ## Objetivo
-Transformar o fluxo do passageiro em: Reservar → Pagamento real (parcial ou total via Pix/cartão) → Escolha de poltrona → Confirmação. Remover todos os dados mockados da tela de pagamentos.
+Transformar o sistema para que cada vaga comprada represente um passageiro individual com sua própria poltrona, ponto de embarque e QR Code.
 
-## 1. Banco de dados (migração)
+## Banco de dados (migração)
 
-**Alterar `passageiros`** (usado como reserva):
-- Adicionar `total_price numeric not null default 0`
-- Adicionar `amount_paid numeric not null default 0`
-- Adicionar `payment_status text not null default 'pending_payment'` (`pending_payment | partial_payment | paid | cancelled`)
-- Adicionar `seat_id uuid` (referência à poltrona)
-- Coluna gerada `remaining_amount` = `total_price - amount_paid`
+**`passageiros`** — novos campos:
+- `comprador_id uuid` — referência ao usuário que pagou (o "titular" da compra)
+- `email text` — email do passageiro (para convidar)
+- `convite_token text` — token único para passageiro adicional reivindicar acesso
+- Manter `user_id` como dono efetivo da reserva (nullable até o convidado fazer login)
 
-**Atualizar `pagamentos`**:
-- Garantir `metodo` aceita: `pix`, `pix_parcelado`, `debito`, `credito`
-- Adicionar `parcelas int default 1` (para crédito)
-- Política: passageiro pode inserir/ver pagamentos da própria reserva
+**Trigger ajustado**:
+- Quando um passageiro paga, libera escolha de poltrona/ponto (já existe).
+- Trigger de "lock" continua valendo: depois de escolher poltrona/ponto, só o organizador altera.
 
-**Nova tabela `seats`**:
-- `id`, `excursao_id`, `seat_number text`, `occupied boolean default false`, `reserved_by uuid` (user_id), `passageiro_id uuid`
-- Único `(excursao_id, seat_number)`
-- RLS: qualquer um vê poltronas de excursões publicadas; passageiro atualiza poltrona livre vinculando a si
+**Política RLS**:
+- Comprador pode visualizar todas as reservas que ele criou (via `comprador_id = auth.uid()`).
+- Passageiro convidado, após aceitar o convite, vê apenas a própria (via `user_id = auth.uid()`).
+- Comprador pode inserir múltiplas reservas (uma por vaga) na mesma excursão.
 
-**Trigger automático**:
-- Ao inserir em `pagamentos` com status `confirmado`: somar em `passageiros.amount_paid`; se `>= total_price` marcar `paid`, senão `partial_payment`.
-- Ao criar excursão: gerar `seats` 1..total_vagas automaticamente.
+**Função RPC `claim_passageiro_invite(token)`**:
+- Vincula `user_id = auth.uid()` à reserva, atribui papel passageiro, marca convite como usado.
 
-## 2. Frontend — Passageiro
+## Frontend
 
-**`passageiro.index.tsx`**: ao clicar "Reservar":
-- criar `passageiros` com `user_id`, `excursao_id`, `nome`, `total_price = excursao.preco`, `payment_status = 'pending_payment'`
-- navegar para `/passageiro/pagamentos?reserva={id}`
+**`passageiro.index.tsx`** — botão "Reservar":
+- Abre modal/tela perguntando **quantidade de vagas** (1..N respeitando vagas disponíveis).
+- Se >1: formulário para preencher nome/telefone/email de cada passageiro adicional (titular usa próprio cadastro).
+- Cria N registros em `passageiros` com `comprador_id = user.id`, `total_price = preco`, `payment_status = pending_payment`.
+- Para passageiros adicionais: gera `convite_token`, deixa `user_id = null`.
+- Redireciona para nova tela de gerenciamento da compra.
 
-**`passageiro.pagamentos.tsx`** (reescrita completa, sem mock):
-- Carregar reserva real + excursão + lista de pagamentos
-- Mostrar: total, pago, restante, status
-- Form: escolher método (Pix total, Pix parcial, Débito, Crédito com nº parcelas) + valor
-- Submit: insere em `pagamentos` (status `confirmado` — mock de aprovação local até integração real)
-- Quando `payment_status` mudar para `paid` (ou `partial_payment` com valor pago > 0), botão "Escolher poltrona" → `/passageiro/poltrona?reserva={id}`
+**Nova rota `passageiro.compra.$id.tsx`** (opcional, simplificação: mostrar lista no `passageiro.index`):
+- Lista as N reservas da compra; cada uma com botão "Abrir reserva" → `/passageiro/reserva/{id}`.
+- Botão "Copiar link de convite" para os passageiros adicionais.
 
-**Nova rota `passageiro.poltrona.tsx`**:
-- Grid de poltronas da excursão
-- Marca ocupadas (cinza), disponíveis (clicável), da própria reserva (destaque)
-- Ao selecionar: update `seats` (occupied, reserved_by, passageiro_id) + update `passageiros.seat_id` e `assento`
-- Bloqueia seleção dupla via constraint
+**`passageiro.reserva.$id.tsx`** — sem mudança estrutural (já funciona por reserva individual):
+- Cada reserva tem seu próprio pagamento/poltrona/ponto/QR Code.
+- Comprador pode pagar/escolher pelas reservas de quem ele convidou (RLS permite via `comprador_id`).
+- Convidado, após `claim`, acessa a própria.
 
-## 3. Detalhes técnicos
+**Nova rota `invite.passageiro.$token.tsx`**:
+- Convidado faz login (ou cria conta) → chama `claim_passageiro_invite` → redireciona para `/passageiro/reserva/{id}`.
 
-- Pagamento "aprovado" via inserção direta com `status=confirmado` (sem gateway real ainda — apenas registro)
-- "Pix parcelado" = múltiplos pagamentos Pix até quitar (não é parcelamento bancário)
-- Crédito: registra 1 pagamento com `parcelas = N` (informativo)
-- Cancelamento de reserva libera poltrona (trigger ao update `payment_status='cancelled'`)
+**QR Code**: já condicionado a `status === "paid"` (mantém).
 
-## 4. Arquivos
-- `supabase/migrations/...` — alterações de schema, triggers, RLS, geração de seats
-- `src/routes/passageiro.index.tsx` — reserva + navegação
-- `src/routes/passageiro.pagamentos.tsx` — reescrita real
-- `src/routes/passageiro.poltrona.tsx` — nova rota
-- `src/routeTree.gen.ts` — regenerado automaticamente
+**Poltrona/ponto**: já liberados após `amount_paid > 0` e bloqueados após escolha (triggers existentes).
+
+## Arquivos
+- `supabase/migrations/...` — campos novos em `passageiros`, RLS ajustada, RPC `claim_passageiro_invite`
+- `src/routes/passageiro.index.tsx` — fluxo de quantidade + dados dos adicionais
+- `src/routes/invite.passageiro.$token.tsx` — nova rota
+- `src/routes/passageiro.reserva.$id.tsx` — exibir botão "compartilhar link" se for reserva de convidado
+- `src/integrations/supabase/types.ts` — regenerado
+- `src/routeTree.gen.ts` — auto
