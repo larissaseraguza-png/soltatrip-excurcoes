@@ -82,7 +82,7 @@ function MinhasViagens() {
         .single();
       if (error) throw error;
       qc.invalidateQueries({ queryKey: ["minhas-inscricoes"] });
-      navigate({ to: "/passageiro/pagamentos", search: { reserva: data.id } as any });
+      navigate({ to: "/passageiro/reserva/$id", params: { id: data.id } });
     } catch (err: any) {
       alert(err.message ?? "Erro ao reservar");
     } finally {
