@@ -97,6 +97,23 @@ function NovaExcursao() {
         .single();
       if (error) throw error;
 
+      // Upload do banner (se houver) e update da excursão
+      if (bannerFile) {
+        try {
+          const ext = bannerFile.name.split(".").pop() || "jpg";
+          const path = `${user.id}/${data.id}-${Date.now()}.${ext}`;
+          const { error: upErr } = await supabase.storage
+            .from("excursao-banners")
+            .upload(path, bannerFile, { upsert: true, cacheControl: "3600" });
+          if (!upErr) {
+            const { data: pub } = supabase.storage.from("excursao-banners").getPublicUrl(path);
+            await supabase.from("excursoes").update({ banner_url: pub.publicUrl }).eq("id", data.id);
+          }
+        } catch {
+          // ignora falha de upload, excursão já foi criada
+        }
+      }
+
       const rows = validPontos.map((p, i) => ({
         excursao_id: data.id,
         nome: p.nome,
