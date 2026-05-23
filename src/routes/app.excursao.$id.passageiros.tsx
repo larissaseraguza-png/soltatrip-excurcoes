@@ -38,6 +38,7 @@ function PassageirosPage() {
   const [open, setOpen] = useState(false);
   const [showMap, setShowMap] = useState(false);
   const [editing, setEditing] = useState<Passageiro | null>(null);
+  const [financeiroPax, setFinanceiroPax] = useState<Passageiro | null>(null);
 
   const { data: excursao } = useQuery({
     queryKey: ["excursao", id],
