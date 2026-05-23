@@ -33,7 +33,7 @@ type MinhaReserva = {
 type Pax = { nome: string; email: string; titular: boolean };
 
 function MinhasViagens() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const qc = useQueryClient();
   const navigate = useNavigate();
   const [tab, setTab] = useState<"minhas" | "disponiveis">("minhas");
@@ -118,7 +118,7 @@ function MinhasViagens() {
       qc.invalidateQueries({ queryKey: ["minhas-reservas"] });
       setModalEx(null);
       const reservaId = data as unknown as string;
-      navigate({ to: "/passageiro/reserva/$id", params: { id: reservaId } });
+      navigate({ to: "/passageiro/pagamentos", search: { reserva: reservaId } as any });
     } catch (err: any) {
       alert(err.message ?? "Erro ao reservar");
     } finally {
@@ -147,7 +147,7 @@ function MinhasViagens() {
       </div>
 
       {tab === "minhas" ? (
-        loadingMinhas ? (
+        authLoading || loadingMinhas ? (
           <Loading />
         ) : reservas.length === 0 ? (
           <Empty title="Você ainda não reservou nenhuma viagem" cta="Ver excursões disponíveis" onCta={() => setTab("disponiveis")} />

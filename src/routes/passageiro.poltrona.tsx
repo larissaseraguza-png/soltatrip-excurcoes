@@ -76,7 +76,7 @@ function Poltrona() {
         <div className="glass rounded-3xl p-10 text-center">
           <p className="text-sm text-muted-foreground">Faça pelo menos um pagamento para liberar a escolha de poltrona.</p>
           <button
-            onClick={() => navigate({ to: "/passageiro/pagamentos", search: { reserva: reserva.id } as any })}
+            onClick={() => navigate({ to: "/passageiro/pagamentos", search: { reserva: (reserva as any).reserva_id ?? reserva.id } as any })}
             className="mt-4 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"
           >
             Ir para pagamento
