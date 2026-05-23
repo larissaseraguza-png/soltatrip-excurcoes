@@ -1,10 +1,11 @@
 import { createFileRoute, Link, useParams } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, Plus, Loader2, Trash2, QrCode, UserCheck, Search, MapPin, Armchair } from "lucide-react";
+import { ArrowLeft, Plus, Loader2, Trash2, QrCode, UserCheck, Search, MapPin, Armchair, Edit3, X } from "lucide-react";
 import { useState, useMemo } from "react";
 import { SeatMap } from "@/components/SeatMap";
 import { useRealtimeSync } from "@/hooks/use-realtime-sync";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/app/excursao/$id/passageiros")({
   component: PassageirosPage,
@@ -16,12 +17,14 @@ type Passageiro = {
   telefone: string | null;
   documento: string | null;
   assento: string | null;
+  seat_id: string | null;
   status: string;
   qr_code: string;
   ponto_embarque_id: string | null;
 };
 
 type Ponto = { id: string; nome: string; horario: string | null };
+type Seat = { id: string; seat_number: string; occupied: boolean; passageiro_id: string | null };
 
 function PassageirosPage() {
   const { id } = useParams({ from: "/app/excursao/$id/passageiros" });
@@ -30,6 +33,7 @@ function PassageirosPage() {
   const [pontoFilter, setPontoFilter] = useState<string>("todos");
   const [open, setOpen] = useState(false);
   const [showMap, setShowMap] = useState(false);
+  const [editing, setEditing] = useState<Passageiro | null>(null);
 
   const { data: excursao } = useQuery({
     queryKey: ["excursao", id],
@@ -59,6 +63,19 @@ function PassageirosPage() {
     },
   });
 
+  const { data: seats = [] } = useQuery({
+    queryKey: ["seats", id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("seats")
+        .select("id, seat_number, occupied, passageiro_id")
+        .eq("excursao_id", id)
+        .order("seat_number");
+      if (error) throw error;
+      return (data ?? []).sort((a, b) => Number(a.seat_number) - Number(b.seat_number)) as Seat[];
+    },
+  });
+
   const { data: passageiros = [], isLoading } = useQuery({
     queryKey: ["passageiros", id],
     queryFn: async () => {
@@ -84,6 +101,7 @@ function PassageirosPage() {
     [
       ["passageiros", id],
       ["pagamentos", id],
+      ["seats", id],
       ["pontos", id],
       ["pontos-counts", id],
       ["excursao", id],
@@ -109,7 +127,8 @@ function PassageirosPage() {
 
   const pontoMut = useMutation({
     mutationFn: async ({ pid, ponto_embarque_id }: { pid: string; ponto_embarque_id: string | null }) => {
-      await supabase.from("passageiros").update({ ponto_embarque_id }).eq("id", pid);
+      const { error } = await supabase.from("passageiros").update({ ponto_embarque_id }).eq("id", pid);
+      if (error) throw error;
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["passageiros", id] });
@@ -117,7 +136,43 @@ function PassageirosPage() {
     },
   });
 
+  const tripChoicesMut = useMutation({
+    mutationFn: async ({
+      passageiro,
+      seatId,
+      pontoId,
+    }: {
+      passageiro: Passageiro;
+      seatId: string | null;
+      pontoId: string | null;
+    }) => {
+      const { error } = await (supabase as any).rpc("organizer_update_passageiro_trip_choices", {
+        p_passageiro_id: passageiro.id,
+        p_seat_id: seatId,
+        p_update_seat: true,
+        p_ponto_embarque_id: pontoId,
+        p_update_ponto: true,
+      });
+      if (error) throw error;
+    },
+    onSuccess: (_data, variables) => {
+      qc.invalidateQueries({ queryKey: ["passageiros", id] });
+      qc.invalidateQueries({ queryKey: ["seats", id] });
+      qc.invalidateQueries({ queryKey: ["pontos-counts", id] });
+      setEditing(null);
+      const seat = seats.find((s) => s.id === variables.seatId)?.seat_number;
+      const ponto = pontos.find((p) => p.id === variables.pontoId);
+      toast.success(
+        [seat ? `Poltrona alterada para ${seat}` : null, ponto ? `Embarque: ${ponto.nome}${ponto.horario ? ` - ${ponto.horario}` : ""}` : null]
+          .filter(Boolean)
+          .join(" · "),
+      );
+    },
+    onError: (err: any) => alert(err.message ?? "Erro ao salvar alterações"),
+  });
+
   const pontoNome = (pid: string | null) => pontos.find((p) => p.id === pid)?.nome ?? null;
+  const seatById = useMemo(() => new Map(seats.map((s) => [s.id, s])), [seats]);
 
   const pagoMap = useMemo(() => {
     const m = new Map<string, boolean>();
@@ -130,10 +185,11 @@ function PassageirosPage() {
   const taken = useMemo(() => {
     const t: Record<string, { pago: boolean; nome: string }> = {};
     for (const p of passageiros) {
-      if (p.assento) t[p.assento] = { pago: !!pagoMap.get(p.id), nome: p.nome };
+      const seatNumber = p.assento ?? (p.seat_id ? seatById.get(p.seat_id)?.seat_number : null);
+      if (seatNumber) t[seatNumber] = { pago: !!pagoMap.get(p.id), nome: p.nome };
     }
     return t;
-  }, [passageiros, pagoMap]);
+  }, [passageiros, pagoMap, seatById]);
 
   const filtered = passageiros.filter((p) => {
     const matchSearch =
