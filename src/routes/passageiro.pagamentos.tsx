@@ -125,7 +125,7 @@ function Pagamentos() {
     setSubmitting(true);
     try {
       const { error } = await supabase.from("pagamentos").insert({
-        passageiro_id: reservaAtiva.id,
+        reserva_id: reservaAtiva.id,
         excursao_id: reservaAtiva.excursao.id,
         valor: v,
         metodo,
@@ -137,6 +137,7 @@ function Pagamentos() {
       setValor("");
       qc.invalidateQueries({ queryKey: ["pagamentos"] });
       qc.invalidateQueries({ queryKey: ["reservas-pagto"] });
+      qc.invalidateQueries({ queryKey: ["pagto-passageiros"] });
     } catch (err: any) {
       alert(err.message ?? "Erro ao registrar pagamento");
     } finally {
@@ -178,20 +179,20 @@ function Pagamentos() {
         </p>
       </div>
 
-      {/* Botão poltrona — só aparece se ainda NÃO escolhida */}
-      {pago > 0 && status !== "cancelled" && !reservaAtiva.seat_id && (
+      {/* Botão poltrona — abre a reserva centralizada com todos os passageiros */}
+      {pago > 0 && status !== "cancelled" && (passageiros as any[]).some((p) => !p.seat_id) && (
         <button
-          onClick={() => navigate({ to: "/passageiro/poltrona", search: { reserva: reservaAtiva.id } as any })}
+          onClick={() => navigate({ to: "/passageiro/reserva/$id", params: { id: reservaAtiva.id } })}
           className="w-full mb-5 flex items-center justify-center gap-2 h-14 rounded-2xl font-display font-bold bg-gradient-to-r from-neon-green to-neon-purple text-primary-foreground glow-primary"
         >
           <Armchair className="size-5" />
-          Escolher poltrona
+          Escolher poltronas e embarques
         </button>
       )}
-      {reservaAtiva.seat_id && (
+      {passageiros.length > 0 && (passageiros as any[]).every((p) => p.seat_id) && (
         <div className="w-full mb-5 flex items-center justify-center gap-2 h-14 rounded-2xl font-display font-bold bg-neon-green/15 text-neon-green border border-neon-green/30">
           <Armchair className="size-5" />
-          Poltrona confirmada · bloqueada
+          Poltronas confirmadas · bloqueadas
         </div>
       )}
 
