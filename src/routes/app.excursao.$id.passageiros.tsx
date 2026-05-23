@@ -162,8 +162,8 @@ function PassageirosPage() {
       if (error) throw error;
     },
     onSuccess: (_data, variables) => {
-      qc.invalidateQueries({ queryKey: ["passageiros", id] });
-      qc.invalidateQueries({ queryKey: ["seats", id] });
+      qc.invalidateQueries({ queryKey: ["passageiros", id, onibusId ?? null] });
+      qc.invalidateQueries({ queryKey: ["seats", id, onibusId ?? null] });
       qc.invalidateQueries({ queryKey: ["pontos-counts", id] });
       setEditing(null);
       const seat = seats.find((s) => s.id === variables.seatId)?.seat_number;
