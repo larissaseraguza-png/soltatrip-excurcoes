@@ -34,7 +34,7 @@ type MinhaInscricao = {
   excursao: Excursao | null;
 };
 
-type ExtraPax = { nome: string; email: string; telefone: string };
+type ExtraPax = { nome: string; email: string };
 
 function MinhasViagens() {
   const { user } = useAuth();
@@ -85,7 +85,7 @@ function MinhasViagens() {
     const adicionais = clamped - 1;
     setExtras((prev) => {
       const next = [...prev];
-      while (next.length < adicionais) next.push({ nome: "", email: "", telefone: "" });
+      while (next.length < adicionais) next.push({ nome: "", email: "" });
       next.length = adicionais;
       return next;
     });
@@ -121,7 +121,6 @@ function MinhasViagens() {
           comprador_id: user.id,
           nome: e.nome.trim(),
           email: e.email.trim(),
-          telefone: e.telefone.trim() || null,
           status: "pendente",
           total_price: Number(modalEx.preco) || 0,
           payment_status: "pending_payment",
@@ -300,16 +299,6 @@ function MinhasViagens() {
                         }}
                         type="email"
                         placeholder="Email (para enviar acesso)"
-                        className="w-full h-10 px-3 rounded-xl bg-background border border-border text-sm"
-                      />
-                      <input
-                        value={e.telefone}
-                        onChange={(ev) => {
-                          const next = [...extras];
-                          next[i] = { ...e, telefone: ev.target.value };
-                          setExtras(next);
-                        }}
-                        placeholder="Telefone (opcional)"
                         className="w-full h-10 px-3 rounded-xl bg-background border border-border text-sm"
                       />
                     </div>
