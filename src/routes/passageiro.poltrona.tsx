@@ -6,10 +6,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Loader2, Armchair, Check } from "lucide-react";
 
-type Search = { reserva?: string };
+type Search = { pax?: string; reserva?: string };
 
 export const Route = createFileRoute("/passageiro/poltrona")({
   validateSearch: (s: Record<string, unknown>): Search => ({
+    pax: typeof s.pax === "string" ? s.pax : undefined,
     reserva: typeof s.reserva === "string" ? s.reserva : undefined,
   }),
   component: Poltrona,
@@ -17,19 +18,20 @@ export const Route = createFileRoute("/passageiro/poltrona")({
 
 function Poltrona() {
   const { user } = useAuth();
-  const { reserva: reservaId } = Route.useSearch();
+  const { pax, reserva: reservaLegacy } = Route.useSearch();
+  const paxId = pax ?? reservaLegacy;
   const navigate = useNavigate();
   const qc = useQueryClient();
   const [saving, setSaving] = useState<string | null>(null);
 
   const { data: reserva, isLoading: l1 } = useQuery({
-    queryKey: ["reserva-poltrona", reservaId],
-    enabled: !!reservaId && !!user,
+    queryKey: ["pax-poltrona", paxId],
+    enabled: !!paxId && !!user,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("passageiros")
-        .select("id, seat_id, payment_status, amount_paid, excursao_id, excursao:excursoes(id, titulo)")
-        .eq("id", reservaId!)
+        .select("id, seat_id, payment_status, amount_paid, excursao_id, reserva_id, excursao:excursoes(id, titulo)")
+        .eq("id", paxId!)
         .single();
       if (error) throw error;
       return data;
