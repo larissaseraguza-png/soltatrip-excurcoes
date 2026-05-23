@@ -102,12 +102,13 @@ function ReservaDetalhes() {
         .select("id, nome, endereco, referencia, horario, ordem, onibus_id")
         .eq("excursao_id", reserva!.excursao.id)
         .order("ordem", { ascending: true });
-      if (onibusId) q = q.eq("onibus_id", onibusId);
+      if (onibusId) q = q.or(`onibus_id.is.null,onibus_id.eq.${onibusId}`);
       const { data, error } = await q;
       if (error) throw error;
       return data ?? [];
     },
   });
+
 
 
   const { data: pagamentos = [] } = useQuery({
