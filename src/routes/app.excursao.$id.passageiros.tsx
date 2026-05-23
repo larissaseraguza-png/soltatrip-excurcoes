@@ -209,16 +209,22 @@ function PassageirosPage() {
 
   return (
     <div>
-      <Link to="/app/excursao/$id" params={{ id }} className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4">
+      <Link
+        to={onibusId ? "/app/excursao/$id/onibus/$onibusId" : "/app/excursao/$id"}
+        params={onibusId ? { id, onibusId } : { id }}
+        className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4"
+      >
         <ArrowLeft className="h-4 w-4" /> Voltar
       </Link>
+
+      <OnibusFilterBadge excursaoId={id} onibusId={onibusId} />
 
       <div className="flex items-end justify-between mb-5">
         <div>
           <p className="text-xs uppercase tracking-wider text-muted-foreground font-bold">{excursao?.titulo ?? "Excursão"}</p>
           <h1 className="font-display text-2xl font-black">Passageiros</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            {passageiros.length} / {excursao?.total_vagas ?? 0} vagas
+            {passageiros.length} / {capacidadeEfetiva} vagas{onibusId ? " (deste ônibus)" : ""}
           </p>
         </div>
         <button
@@ -249,7 +255,7 @@ function PassageirosPage() {
 
       {showMap && (
         <div className="mb-4">
-          <SeatMap total={excursao?.total_vagas ?? 0} taken={taken} />
+          <SeatMap total={capacidadeEfetiva} taken={taken} />
         </div>
       )}
 
