@@ -5,7 +5,7 @@ import { StaffShell, Pill } from "@/components/staff/Shell";
 import { supabase } from "@/integrations/supabase/client";
 import { useStaffExcursao } from "@/hooks/use-staff-excursao";
 import { useRealtimeSync } from "@/hooks/use-realtime-sync";
-import { Wallet, Loader2, Lock } from "lucide-react";
+import { Wallet, Loader2, Lock, Bus } from "lucide-react";
 
 export const Route = createFileRoute("/staff/financeiro")({
   component: FinanceiroStaff,
