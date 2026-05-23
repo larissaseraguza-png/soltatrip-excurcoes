@@ -277,7 +277,7 @@ function OnibusFormModal({
               value={nome}
               onChange={(e) => setNome(e.target.value)}
               placeholder="Ex.: Ônibus A — Manhã"
-              className="input-base"
+              className="w-full h-10 px-3 rounded-xl bg-secondary/40 border border-border text-sm focus:border-primary focus:outline-none"
               required
             />
           </Field>
@@ -287,7 +287,7 @@ function OnibusFormModal({
               min={1}
               value={capacidade}
               onChange={(e) => setCapacidade(e.target.value)}
-              className="input-base"
+              className="w-full h-10 px-3 rounded-xl bg-secondary/40 border border-border text-sm focus:border-primary focus:outline-none"
               required
               disabled={isEdit}
             />
@@ -303,7 +303,7 @@ function OnibusFormModal({
                 type="time"
                 value={horarioSaida}
                 onChange={(e) => setHorarioSaida(e.target.value)}
-                className="input-base"
+                className="w-full h-10 px-3 rounded-xl bg-secondary/40 border border-border text-sm focus:border-primary focus:outline-none"
               />
             </Field>
             <Field label="Retorno">
@@ -311,7 +311,7 @@ function OnibusFormModal({
                 type="time"
                 value={horarioRetorno}
                 onChange={(e) => setHorarioRetorno(e.target.value)}
-                className="input-base"
+                className="w-full h-10 px-3 rounded-xl bg-secondary/40 border border-border text-sm focus:border-primary focus:outline-none"
               />
             </Field>
           </div>
@@ -320,7 +320,7 @@ function OnibusFormModal({
               value={pontoPartida}
               onChange={(e) => setPontoPartida(e.target.value)}
               placeholder="Ex.: Terminal Central"
-              className="input-base"
+              className="w-full h-10 px-3 rounded-xl bg-secondary/40 border border-border text-sm focus:border-primary focus:outline-none"
             />
           </Field>
           <label className="flex items-center gap-2 text-sm">
