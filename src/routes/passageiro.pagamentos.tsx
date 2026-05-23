@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { Shell, Pill } from "@/components/passageiro/Shell";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { useRealtimeSync } from "@/hooks/use-realtime-sync";
 import { Copy, Loader2, CheckCircle2, Armchair } from "lucide-react";
 
 type Search = { reserva?: string };
