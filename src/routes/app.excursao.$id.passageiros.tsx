@@ -281,6 +281,8 @@ function PassageirosPage() {
                     <span className="text-xs text-muted-foreground truncate">
                       {displayedPonto ?? "sem ponto"}
                     </span>
+                  </div>
+                )}
                 {p.observacao_interna && (
                   <p className="mt-1.5 text-[11px] text-amber-300 bg-amber-500/10 border border-amber-500/30 rounded-lg px-2 py-1 truncate" title={p.observacao_interna}>
                     📝 {p.observacao_interna}
