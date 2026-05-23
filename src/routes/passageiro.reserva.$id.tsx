@@ -230,6 +230,26 @@ function ReservaDetalhes() {
         )}
       </div>
 
+      {/* Convite (passageiro adicional ainda não vinculado) */}
+      {reserva.convite_token && reserva.comprador_id === user?.id && reserva.user_id !== user?.id && (
+        <div className="glass rounded-3xl p-5 mb-5 border-l-4 border-neon-purple">
+          <h3 className="font-display font-bold mb-1">Link para {reserva.nome}</h3>
+          <p className="text-xs text-muted-foreground mb-3">
+            Compartilhe para que o passageiro acesse a própria reserva e QR Code.
+          </p>
+          <button
+            onClick={() => {
+              const url = `${window.location.origin}/invite/passageiro/${reserva.convite_token}`;
+              navigator.clipboard.writeText(url);
+              alert("Link copiado!");
+            }}
+            className="w-full h-11 rounded-2xl font-semibold bg-neon-purple/20 text-neon-purple border border-neon-purple/40"
+          >
+            Copiar link de convite
+          </button>
+        </div>
+      )}
+
       {/* Poltrona */}
       <div className="glass rounded-3xl p-5 mb-5">
         <div className="flex items-center gap-2 mb-3">
