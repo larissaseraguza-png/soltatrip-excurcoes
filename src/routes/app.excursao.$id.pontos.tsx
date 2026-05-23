@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft, Plus, Loader2, Trash2, MapPin, Clock, Users } from "lucide-react";
 import { useState } from "react";
+import { useRealtimeSync } from "@/hooks/use-realtime-sync";
 
 export const Route = createFileRoute("/app/excursao/$id/pontos")({
   component: PontosPage,
@@ -44,6 +45,15 @@ function PontosPage() {
       return map;
     },
   });
+
+  useRealtimeSync(
+    `pontos-${id}`,
+    [
+      { table: "pontos_embarque", filter: `excursao_id=eq.${id}` },
+      { table: "passageiros", filter: `excursao_id=eq.${id}` },
+    ],
+    [["pontos", id], ["pontos-counts", id]],
+  );
 
   const removeMut = useMutation({
     mutationFn: async (pid: string) => {
