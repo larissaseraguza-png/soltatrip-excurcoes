@@ -1,8 +1,8 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useState, type FormEvent } from "react";
+import { useRef, useState, type FormEvent } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
-import { ArrowLeft, Loader2, AlertCircle, Plus, Trash2, MapPin } from "lucide-react";
+import { ArrowLeft, Loader2, AlertCircle, Plus, Trash2, MapPin, ImagePlus, X } from "lucide-react";
 
 export const Route = createFileRoute("/app/excursao/nova")({
   component: NovaExcursao,
