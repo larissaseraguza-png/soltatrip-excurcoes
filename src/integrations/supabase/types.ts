@@ -695,6 +695,14 @@ export type Database = {
     Functions: {
       accept_staff_invitation: { Args: { p_token: string }; Returns: string }
       claim_passageiro_invite: { Args: { p_token: string }; Returns: string }
+      complete_signup_profile: {
+        Args: {
+          p_full_name?: string
+          p_phone?: string
+          p_role?: Database["public"]["Enums"]["app_role"]
+        }
+        Returns: Database["public"]["Enums"]["app_role"]
+      }
       criar_reserva_grupo:
         | {
             Args: { p_excursao_id: string; p_passageiros: Json }
