@@ -288,12 +288,12 @@ function PassageirosPage() {
                     📝 {p.observacao_interna}
                   </p>
                 )}
-                {(p.payment_status === "partial_payment" || p.payment_status === "paid") && p.total_price > 0 && (
+                {((p.payment_status === "partial_payment" || p.payment_status === "paid") && Number(p.total_price) > 0) ? (
                   <p className="text-[10px] text-muted-foreground mt-1">
-                    R$ {Number(p.amount_paid).toFixed(2)} / R$ {Number(p.total_price).toFixed(2)}
+                    {`R$ ${Number(p.amount_paid).toFixed(2)} / R$ ${Number(p.total_price).toFixed(2)}`}
                     {p.payment_status === "paid" ? " · pago" : " · parcial"}
                   </p>
-                )}
+                ) : null}
               </div>
               <div className="flex items-center gap-1 shrink-0">
                 <button
