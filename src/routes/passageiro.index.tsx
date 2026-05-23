@@ -362,8 +362,16 @@ function ExcursaoCard({
 }) {
   return (
     <article className="glass rounded-3xl overflow-hidden">
-      <div className="relative h-32" style={{ background: `linear-gradient(135deg, ${ex.cor ?? "#a855f7"}, #ec4899)` }}>
-        <div className="absolute inset-0 grid-bg opacity-40" />
+      <div
+        className="relative h-36"
+        style={
+          ex.banner_url
+            ? { backgroundImage: `url(${ex.banner_url})`, backgroundSize: "cover", backgroundPosition: "center" }
+            : { background: `linear-gradient(135deg, ${ex.cor ?? "#a855f7"}, #ec4899)` }
+        }
+      >
+        {!ex.banner_url && <div className="absolute inset-0 grid-bg opacity-40" />}
+        <div className="absolute inset-0 bg-gradient-to-t from-background/70 via-transparent to-transparent" />
         {tag && (
           <div className="absolute top-3 left-3">
             <Pill tone="purple">{tag}</Pill>
