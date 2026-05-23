@@ -143,12 +143,11 @@ function Stat({ icon: Icon, label, value }: { icon: any; label: string; value: R
   );
 }
 
-function NavCard({ to, params, search, icon: Icon, title, desc }: any) {
+function NavCard({ to, params, icon: Icon, title, desc }: any) {
   return (
     <Link
       to={to}
       params={params}
-      search={search}
       className="glass rounded-2xl p-4 flex items-center gap-3 hover:border-neon-pink/40 transition border border-transparent"
     >
       <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-neon-purple to-neon-pink flex items-center justify-center">
