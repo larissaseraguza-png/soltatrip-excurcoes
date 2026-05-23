@@ -470,32 +470,69 @@ function NewPassageiroModal({
   pontos,
   totalVagas,
   taken,
+  seats,
   onClose,
 }: {
   excursaoId: string;
   pontos: Ponto[];
   totalVagas: number;
   taken: Record<string, { pago: boolean; nome: string }>;
+  seats: Seat[];
   onClose: () => void;
 }) {
   const qc = useQueryClient();
-  const [form, setForm] = useState({ nome: "", telefone: "", documento: "", assento: "", ponto_embarque_id: "" });
+  const [form, setForm] = useState({
+    nome: "",
+    telefone: "",
+    documento: "",
+    email: "",
+    assento: "",
+    ponto_embarque_id: "",
+    total_price: "",
+    amount_paid: "",
+    payment_status: "pending_payment" as "paid" | "partial_payment" | "pending_payment",
+    status: "pendente" as "pendente" | "confirmado",
+    observacao_interna: "",
+  });
   const [saving, setSaving] = useState(false);
+
+  const selectedSeat = seats.find((s) => s.seat_number === form.assento);
+  const total = Number(form.total_price || 0);
+  const paid = Number(form.amount_paid || 0);
+  const restante = Math.max(0, total - paid);
+
+  function autoPaymentStatus(t: number, p: number): "paid" | "partial_payment" | "pending_payment" {
+    if (t > 0 && p >= t) return "paid";
+    if (p > 0) return "partial_payment";
+    return "pending_payment";
+  }
 
   async function save(e: React.FormEvent) {
     e.preventDefault();
+    if (!form.nome.trim()) return;
     setSaving(true);
-    const { error } = await supabase.from("passageiros").insert({
-      excursao_id: excursaoId,
-      nome: form.nome,
-      telefone: form.telefone || null,
-      documento: form.documento || null,
-      assento: form.assento || null,
-      ponto_embarque_id: form.ponto_embarque_id || null,
+    const { error } = await (supabase as any).rpc("organizer_create_manual_passageiro", {
+      p_excursao_id: excursaoId,
+      p_nome: form.nome.trim(),
+      p_telefone: form.telefone || null,
+      p_documento: form.documento || null,
+      p_email: form.email || null,
+      p_seat_id: selectedSeat?.id ?? null,
+      p_ponto_embarque_id: form.ponto_embarque_id || null,
+      p_total_price: total,
+      p_amount_paid: paid,
+      p_payment_status: form.payment_status,
+      p_status: form.status,
+      p_observacao_interna: form.observacao_interna || null,
     });
     setSaving(false);
-    if (error) { alert(error.message); return; }
+    if (error) {
+      toast.error(error.message ?? "Erro ao adicionar passageiro");
+      return;
+    }
+    toast.success("Passageiro manual adicionado");
     qc.invalidateQueries({ queryKey: ["passageiros", excursaoId] });
+    qc.invalidateQueries({ queryKey: ["seats", excursaoId] });
     qc.invalidateQueries({ queryKey: ["pontos-counts", excursaoId] });
     onClose();
   }
@@ -507,16 +544,26 @@ function NewPassageiroModal({
         onClick={(e) => e.stopPropagation()}
         className="glass rounded-3xl p-6 w-full max-w-md border border-border my-4"
       >
-        <h2 className="font-display text-xl font-black mb-4">Novo passageiro</h2>
-        <div className="space-y-3">
+        <div className="mb-4">
+          <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">Reserva manual</p>
+          <h2 className="font-display text-xl font-black">Adicionar passageiro manualmente</h2>
+          <p className="text-[11px] text-muted-foreground mt-1">
+            Use para acordos diretos, convidados ou pagamentos combinados fora do app.
+          </p>
+        </div>
+
+        <div className="space-y-3 max-h-[65vh] overflow-y-auto pr-1">
           <Field label="Nome" required value={form.nome} onChange={(v) => setForm({ ...form, nome: v })} />
-          <Field label="Telefone" value={form.telefone} onChange={(v) => setForm({ ...form, telefone: v })} />
-          <Field label="Documento" value={form.documento} onChange={(v) => setForm({ ...form, documento: v })} />
+          <div className="grid grid-cols-2 gap-2">
+            <Field label="Telefone" value={form.telefone} onChange={(v) => setForm({ ...form, telefone: v })} />
+            <Field label="Documento" value={form.documento} onChange={(v) => setForm({ ...form, documento: v })} />
+          </div>
+          <Field label="Email (opcional)" value={form.email} onChange={(v) => setForm({ ...form, email: v })} />
 
           {totalVagas > 0 && (
             <div>
               <span className="text-[10px] uppercase tracking-wider font-bold text-muted-foreground">
-                Escolha a poltrona {form.assento && <span className="text-neon-pink">— Selecionado: {form.assento}</span>}
+                Poltrona {form.assento && <span className="text-neon-pink">— {form.assento}</span>}
               </span>
               <div className="mt-1">
                 <SeatMap
@@ -532,9 +579,7 @@ function NewPassageiroModal({
           <label className="block">
             <span className="text-[10px] uppercase tracking-wider font-bold text-muted-foreground">Ponto de embarque</span>
             {pontos.length === 0 ? (
-              <p className="mt-1 text-xs text-muted-foreground italic">
-                Nenhum ponto cadastrado. Adicione em "Pontos de embarque".
-              </p>
+              <p className="mt-1 text-xs text-muted-foreground italic">Nenhum ponto cadastrado.</p>
             ) : (
               <select
                 value={form.ponto_embarque_id}
@@ -550,10 +595,74 @@ function NewPassageiroModal({
               </select>
             )}
           </label>
+
+          <div className="rounded-2xl border border-border bg-background/40 p-3 space-y-3">
+            <p className="text-[10px] uppercase tracking-wider font-bold text-muted-foreground">Pagamento</p>
+            <div className="grid grid-cols-2 gap-2">
+              <Field
+                label="Valor total (R$)"
+                value={form.total_price}
+                onChange={(v) => {
+                  const t = Number(v || 0);
+                  setForm({ ...form, total_price: v, payment_status: autoPaymentStatus(t, paid) });
+                }}
+              />
+              <Field
+                label="Valor pago (R$)"
+                value={form.amount_paid}
+                onChange={(v) => {
+                  const p = Number(v || 0);
+                  setForm({ ...form, amount_paid: v, payment_status: autoPaymentStatus(total, p) });
+                }}
+              />
+            </div>
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-muted-foreground">Restante</span>
+              <span className="font-bold text-neon-pink">R$ {restante.toFixed(2)}</span>
+            </div>
+            <label className="block">
+              <span className="text-[10px] uppercase tracking-wider font-bold text-muted-foreground">Status do pagamento</span>
+              <select
+                value={form.payment_status}
+                onChange={(e) => setForm({ ...form, payment_status: e.target.value as any })}
+                className="mt-1 w-full h-10 px-3 rounded-xl bg-input border border-border text-sm"
+              >
+                <option value="pending_payment">Pendente</option>
+                <option value="partial_payment">Parcial</option>
+                <option value="paid">Pago</option>
+              </select>
+            </label>
+            <label className="flex items-center gap-2 text-xs">
+              <input
+                type="checkbox"
+                checked={form.status === "confirmado"}
+                onChange={(e) => setForm({ ...form, status: e.target.checked ? "confirmado" : "pendente" })}
+                className="h-4 w-4 accent-neon-pink"
+              />
+              <span className="text-muted-foreground">
+                Confirmar reserva manualmente (mesmo sem pagamento completo)
+              </span>
+            </label>
+          </div>
+
+          <label className="block">
+            <span className="text-[10px] uppercase tracking-wider font-bold text-muted-foreground">
+              Observação interna <span className="text-muted-foreground/70 normal-case">(não aparece para o passageiro)</span>
+            </span>
+            <textarea
+              value={form.observacao_interna}
+              onChange={(e) => setForm({ ...form, observacao_interna: e.target.value })}
+              rows={3}
+              placeholder="Ex.: combinado direto, pagar R$150 restantes no embarque."
+              className="mt-1 w-full px-3 py-2 rounded-xl bg-input border border-border text-sm"
+            />
+          </label>
         </div>
+
         <div className="flex gap-2 mt-5">
           <button type="button" onClick={onClose} className="flex-1 h-11 rounded-xl bg-secondary font-semibold">Cancelar</button>
-          <button disabled={saving || !form.nome} className="flex-1 h-11 rounded-xl bg-gradient-to-r from-neon-pink to-neon-purple text-primary-foreground font-bold disabled:opacity-50">
+          <button disabled={saving || !form.nome.trim()} className="flex-1 h-11 rounded-xl bg-gradient-to-r from-neon-pink to-neon-purple text-primary-foreground font-bold disabled:opacity-50 inline-flex items-center justify-center gap-2">
+            {saving && <Loader2 className="h-4 w-4 animate-spin" />}
             {saving ? "Salvando..." : "Adicionar"}
           </button>
         </div>
