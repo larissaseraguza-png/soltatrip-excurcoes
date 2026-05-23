@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { Shell, Pill } from "@/components/passageiro/Shell";
@@ -24,6 +24,9 @@ type Excursao = {
 type MinhaInscricao = {
   id: string;
   status: string;
+  payment_status: string;
+  amount_paid: number;
+  total_price: number;
   excursao: Excursao | null;
 };
 
@@ -40,7 +43,7 @@ function MinhasViagens() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("passageiros")
-        .select("id, status, excursao:excursoes(id,titulo,destino,data_evento,preco,cor,status,total_vagas)")
+        .select("id, status, payment_status, amount_paid, total_price, excursao:excursoes(id,titulo,destino,data_evento,preco,cor,status,total_vagas)")
         .eq("user_id", user!.id)
         .order("created_at", { ascending: false });
       if (error) throw error;
@@ -119,15 +122,35 @@ function MinhasViagens() {
           />
         ) : (
           <ul className="space-y-4">
-            {minhas.map((m) =>
-              m.excursao ? (
-                <ExcursaoCard
-                  key={m.id}
-                  ex={m.excursao}
-                  badge={<Pill tone={m.status === "confirmado" ? "green" : "yellow"}>{m.status}</Pill>}
-                />
-              ) : null,
-            )}
+            {minhas.map((m) => {
+              if (!m.excursao) return null;
+              const pago = Number(m.amount_paid) || 0;
+              const total = Number(m.total_price) || 0;
+              const pct = total > 0 ? Math.min(100, Math.round((pago / total) * 100)) : 0;
+              const tone =
+                m.payment_status === "paid"
+                  ? "green"
+                  : m.payment_status === "partial_payment"
+                    ? "purple"
+                    : "yellow";
+              const label =
+                m.payment_status === "paid"
+                  ? "Quitado"
+                  : m.payment_status === "partial_payment"
+                    ? `${pct}% pago`
+                    : "Aguardando pagamento";
+              return (
+                <li key={m.id}>
+                  <Link
+                    to="/passageiro/reserva/$id"
+                    params={{ id: m.id }}
+                    className="block"
+                  >
+                    <ExcursaoCard ex={m.excursao} badge={<Pill tone={tone}>{label}</Pill>} />
+                  </Link>
+                </li>
+              );
+            })}
           </ul>
         )
       ) : loadingDisp ? (
