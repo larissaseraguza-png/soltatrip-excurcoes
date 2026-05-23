@@ -49,7 +49,7 @@ function MinhasViagens() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("reservas")
-        .select("id, quantidade, total_price, amount_paid, payment_status, excursao:excursoes(id,titulo,destino,data_evento,preco,cor,status,total_vagas)")
+        .select("id, quantidade, total_price, amount_paid, payment_status, excursao:excursoes!reservas_excursao_id_fkey(id,titulo,destino,data_evento,preco,cor,status,total_vagas)")
         .order("created_at", { ascending: false });
       if (error) throw error;
       return (data ?? []) as unknown as MinhaReserva[];
