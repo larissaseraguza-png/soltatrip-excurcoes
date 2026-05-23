@@ -96,34 +96,10 @@ function OnibusDetail() {
       </div>
 
       <div className="space-y-2">
-        <NavCard
-          to="/app/excursao/$id/passageiros"
-          params={{ id }}
-          icon={Users}
-          title="Passageiros deste ônibus"
-          desc="Lista filtrada apenas deste ônibus"
-        />
-        <NavCard
-          to="/app/excursao/$id/pontos"
-          params={{ id }}
-          icon={MapPinned}
-          title="Pontos de embarque"
-          desc="Locais de embarque exclusivos deste ônibus"
-        />
-        <NavCard
-          to="/app/excursao/$id/financeiro"
-          params={{ id }}
-          icon={Wallet}
-          title="Financeiro"
-          desc="Pagamentos e entradas deste ônibus"
-        />
-        <NavCard
-          to="/app/excursao/$id/checkin"
-          params={{ id }}
-          icon={QrCode}
-          title="Check-in"
-          desc="Embarque por QR Code deste ônibus"
-        />
+        <NavCard to="/app/excursao/$id/passageiros" params={{ id }} search={{ onibus: onibusId }} icon={Users} title="Passageiros deste ônibus" desc="Lista filtrada apenas deste ônibus" />
+        <NavCard to="/app/excursao/$id/pontos" params={{ id }} search={{ onibus: onibusId }} icon={MapPinned} title="Pontos de embarque" desc="Locais de embarque exclusivos deste ônibus" />
+        <NavCard to="/app/excursao/$id/financeiro" params={{ id }} search={{ onibus: onibusId }} icon={Wallet} title="Financeiro" desc="Pagamentos e entradas deste ônibus" />
+        <NavCard to="/app/excursao/$id/checkin" params={{ id }} search={{ onibus: onibusId }} icon={QrCode} title="Check-in" desc="Embarque por QR Code deste ônibus" />
       </div>
 
       <p className="text-[11px] text-muted-foreground text-center mt-6">
@@ -143,11 +119,12 @@ function Stat({ icon: Icon, label, value }: { icon: any; label: string; value: R
   );
 }
 
-function NavCard({ to, params, icon: Icon, title, desc }: any) {
+function NavCard({ to, params, search, icon: Icon, title, desc }: any) {
   return (
     <Link
       to={to}
       params={params}
+      search={search}
       className="glass rounded-2xl p-4 flex items-center gap-3 hover:border-neon-pink/40 transition border border-transparent"
     >
       <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-neon-purple to-neon-pink flex items-center justify-center">
