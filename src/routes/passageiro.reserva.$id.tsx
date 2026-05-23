@@ -376,6 +376,7 @@ function ReservaDetalhes() {
                   pax={p}
                   ponto={ponto}
                   pontos={pontos as any[]}
+                  seatSelected={!!seatLabel}
                   podeEscolher={podeEscolher}
                   isVinculadoOuComprador={isVinculadoOuComprador}
                   pago={pago}
@@ -428,6 +429,7 @@ function Info4({ icon: Icon, label, value }: { icon: any; label: string; value: 
 function EmbarqueSection({
   ponto,
   pontos,
+  seatSelected,
   podeEscolher,
   isVinculadoOuComprador,
   pago,
@@ -436,13 +438,14 @@ function EmbarqueSection({
   pax: any;
   ponto: any;
   pontos: any[];
+  seatSelected: boolean;
   podeEscolher: boolean;
   isVinculadoOuComprador: boolean;
   pago: number;
   onSelect: (pontoId: string) => void;
 }) {
   const [editing, setEditing] = useState(false);
-  const canEdit = podeEscolher && isVinculadoOuComprador && pontos.length > 0;
+  const canEdit = seatSelected && podeEscolher && isVinculadoOuComprador && pontos.length > 0;
   const showList = canEdit && (!ponto || editing);
 
   return (
@@ -465,6 +468,8 @@ function EmbarqueSection({
               </button>
             )}
           </div>
+        ) : !seatSelected ? (
+          <span className="text-[11px] text-muted-foreground">Escolha a poltrona primeiro</span>
         ) : canEdit ? (
           <span className="text-[11px] text-muted-foreground">Escolha abaixo</span>
         ) : (
