@@ -301,16 +301,6 @@ function MinhasViagens() {
                         placeholder="Email (para enviar acesso)"
                         className="w-full h-10 px-3 rounded-xl bg-background border border-border text-sm"
                       />
-                      <input
-                        value={e.telefone}
-                        onChange={(ev) => {
-                          const next = [...extras];
-                          next[i] = { ...e, telefone: ev.target.value };
-                          setExtras(next);
-                        }}
-                        placeholder="Telefone (opcional)"
-                        className="w-full h-10 px-3 rounded-xl bg-background border border-border text-sm"
-                      />
                     </div>
                   ))}
                 </div>
