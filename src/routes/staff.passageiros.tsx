@@ -26,65 +26,56 @@ type Ponto = { id: string; nome: string; horario: string | null };
 
 function PassageirosStaff() {
   const { user } = useAuth();
+  const { excursao, onibusId, onibus, loading: loadingExc } = useStaffExcursao();
   const [search, setSearch] = useState("");
 
-  const { data: vinculos = [], isLoading: loadingVinculos } = useQuery({
-    queryKey: ["staff-vinculos", user?.id],
-    enabled: !!user,
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("equipe_excursoes")
-        .select("excursao:excursoes(id,titulo)")
-        .eq("staff_user_id", user!.id)
-        .eq("status", "ativo")
-        .order("created_at", { ascending: false });
-      if (error) throw error;
-      return (data ?? []) as unknown as Vinculo[];
-    },
-  });
-
-  const excursao = vinculos[0]?.excursao ?? null;
-
   const { data: passageiros = [], isLoading: loadingPax } = useQuery({
-    queryKey: ["staff-passageiros", excursao?.id],
+    queryKey: ["staff-passageiros", excursao?.id, onibusId],
     enabled: !!excursao?.id,
     queryFn: async () => {
-      const { data, error } = await supabase
+      let q = supabase
         .from("passageiros")
-        .select("id,nome,telefone,assento,seat_id,status,ponto_embarque_id")
+        .select("id,nome,telefone,assento,seat_id,status,ponto_embarque_id,onibus_id")
         .eq("excursao_id", excursao!.id)
         .order("created_at", { ascending: false });
+      if (onibusId) q = q.eq("onibus_id", onibusId);
+      const { data, error } = await q;
       if (error) throw error;
       return (data ?? []) as Passageiro[];
     },
   });
 
   const { data: pontos = [] } = useQuery({
-    queryKey: ["staff-pontos", excursao?.id],
+    queryKey: ["staff-pontos", excursao?.id, onibusId],
     enabled: !!excursao?.id,
     queryFn: async () => {
-      const { data, error } = await supabase
+      let q = supabase
         .from("pontos_embarque")
-        .select("id,nome,horario")
+        .select("id,nome,horario,onibus_id")
         .eq("excursao_id", excursao!.id)
         .order("ordem", { ascending: true });
+      if (onibusId) q = q.or(`onibus_id.eq.${onibusId},onibus_id.is.null`);
+      const { data, error } = await q;
       if (error) throw error;
       return (data ?? []) as Ponto[];
     },
   });
 
   const { data: seats = [] } = useQuery({
-    queryKey: ["staff-seats", excursao?.id],
+    queryKey: ["staff-seats", excursao?.id, onibusId],
     enabled: !!excursao?.id,
     queryFn: async () => {
-      const { data, error } = await supabase
+      let q = supabase
         .from("seats")
-        .select("id,seat_number")
+        .select("id,seat_number,onibus_id")
         .eq("excursao_id", excursao!.id);
+      if (onibusId) q = q.eq("onibus_id", onibusId);
+      const { data, error } = await q;
       if (error) throw error;
       return data ?? [];
     },
   });
+
 
   useRealtimeSync(
     `staff-passageiros-${excursao?.id ?? "none"}`,
