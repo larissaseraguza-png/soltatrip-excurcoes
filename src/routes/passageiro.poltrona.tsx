@@ -84,6 +84,31 @@ function Poltrona() {
     );
   }
 
+  // Poltrona já escolhida — bloqueada definitivamente
+  if (reserva.seat_id) {
+    const meuSeat = (seats as any[]).find((s) => s.id === reserva.seat_id);
+    return (
+      <Shell title="Sua poltrona" subtitle={(reserva as any).excursao?.titulo}>
+        <div className="glass rounded-3xl p-8 text-center">
+          <div className="mx-auto size-24 rounded-3xl bg-gradient-to-br from-neon-pink to-neon-purple grid place-items-center glow-primary mb-4">
+            <Armchair className="size-10 text-primary-foreground" />
+          </div>
+          <p className="text-xs text-muted-foreground">Poltrona confirmada</p>
+          <p className="font-display font-black text-5xl mt-1">{meuSeat?.seat_number ?? "—"}</p>
+          <p className="text-[12px] text-muted-foreground mt-3">
+            Sua escolha está salva. Apenas o excursionista pode alterar.
+          </p>
+          <button
+            onClick={() => navigate({ to: "/passageiro/reserva/$id", params: { id: reserva.id } })}
+            className="mt-5 w-full h-12 rounded-2xl font-bold bg-primary text-primary-foreground glow-primary"
+          >
+            Voltar para a reserva
+          </button>
+        </div>
+      </Shell>
+    );
+  }
+
   async function escolher(seat: any) {
     if (!user || !reserva) return;
     if (seat.occupied && seat.reserved_by !== user.id) return;
