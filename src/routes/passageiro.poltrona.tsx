@@ -233,10 +233,11 @@ function Poltrona() {
         .eq("occupied", false);
       if (error) throw error;
 
-      await supabase
+      const { error: passageiroError } = await supabase
         .from("passageiros")
         .update({ seat_id: seat.id, assento: seat.seat_number })
         .eq("id", reserva.id);
+      if (passageiroError) throw passageiroError;
 
       setSelectedSeat(seat);
       await qc.invalidateQueries({ queryKey: ["seats"] });
