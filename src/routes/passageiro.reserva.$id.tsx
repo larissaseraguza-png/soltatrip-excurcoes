@@ -513,3 +513,25 @@ function Info4({
     </div>
   );
 }
+
+function Field({
+  label,
+  value,
+  hint,
+  big,
+  full,
+}: {
+  label: string;
+  value: string;
+  hint?: string;
+  big?: boolean;
+  full?: boolean;
+}) {
+  return (
+    <div className={`bg-background/60 p-4 ${full ? "col-span-2" : ""}`}>
+      <p className="text-[10px] uppercase tracking-widest text-muted-foreground">{label}</p>
+      <p className={`font-display font-bold mt-1 ${big ? "text-3xl" : "text-base"}`}>{value}</p>
+      {hint && <p className="text-[11px] text-muted-foreground mt-0.5">{hint}</p>}
+    </div>
+  );
+}
