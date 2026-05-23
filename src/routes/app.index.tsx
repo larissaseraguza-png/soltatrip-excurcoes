@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { useRealtimeSync } from "@/hooks/use-realtime-sync";
 import { Plus, Calendar, MapPin, Users, Loader2, Sparkles } from "lucide-react";
 
 export const Route = createFileRoute("/app/")({
@@ -17,6 +18,7 @@ type Excursao = {
   preco: number;
   total_vagas: number;
   cor: string | null;
+  banner_url: string | null;
 };
 
 function Dashboard() {
@@ -27,13 +29,19 @@ function Dashboard() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("excursoes")
-        .select("id,titulo,destino,data_evento,status,preco,total_vagas,cor")
+        .select("id,titulo,destino,data_evento,status,preco,total_vagas,cor,banner_url")
         .eq("organizer_id", user!.id)
         .order("data_evento", { ascending: true });
       if (error) throw error;
       return data as Excursao[];
     },
   });
+
+  useRealtimeSync(
+    `excursoes-org-${user?.id ?? "anon"}`,
+    user ? [{ table: "excursoes", filter: `organizer_id=eq.${user.id}` }] : [],
+    [["excursoes", user?.id]],
+  );
 
   const total = data?.length ?? 0;
   const ativas = data?.filter((e) => e.status !== "cancelada").length ?? 0;
