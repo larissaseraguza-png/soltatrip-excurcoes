@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/use-auth";
 import { Plus, Calendar, MapPin, Users, Loader2, Sparkles } from "lucide-react";
 
 export const Route = createFileRoute("/app/")({
@@ -19,12 +20,15 @@ type Excursao = {
 };
 
 function Dashboard() {
+  const { user } = useAuth();
   const { data, isLoading } = useQuery({
-    queryKey: ["excursoes"],
+    queryKey: ["excursoes", user?.id],
+    enabled: !!user,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("excursoes")
         .select("id,titulo,destino,data_evento,status,preco,total_vagas,cor")
+        .eq("organizer_id", user!.id)
         .order("data_evento", { ascending: true });
       if (error) throw error;
       return data as Excursao[];
