@@ -268,7 +268,11 @@ function PassageirosPage() {
         </div>
       ) : (
         <ul className="space-y-2">
-          {filtered.map((p) => (
+          {filtered.map((p) => {
+            const displayedSeat = p.assento ?? (p.seat_id ? seatById.get(p.seat_id)?.seat_number : null);
+            const displayedPonto = pontoNome(p.ponto_embarque_id);
+
+            return (
             <li key={p.id} className="glass rounded-2xl p-4 flex items-center gap-3">
               <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-neon-purple to-neon-pink flex items-center justify-center font-black text-sm shrink-0">
                 {p.nome.charAt(0).toUpperCase()}
@@ -276,21 +280,14 @@ function PassageirosPage() {
               <div className="flex-1 min-w-0">
                 <p className="font-semibold truncate">{p.nome}</p>
                 <p className="text-xs text-muted-foreground truncate">
-                  {p.telefone ?? "sem telefone"} • {p.assento ? `Assento ${p.assento}` : "sem assento"}
+                  {p.telefone ?? "sem telefone"} • {displayedSeat ? `Assento ${displayedSeat}` : "sem assento"}
                 </p>
                 {pontos.length > 0 && (
                   <div className="flex items-center gap-1 mt-1.5">
                     <MapPin className="h-3 w-3 text-neon-pink" />
-                    <select
-                      value={p.ponto_embarque_id ?? ""}
-                      onChange={(e) => pontoMut.mutate({ pid: p.id, ponto_embarque_id: e.target.value || null })}
-                      className="text-xs bg-secondary/50 border border-border rounded-md px-1.5 py-0.5 max-w-[160px] truncate"
-                    >
-                      <option value="">Sem ponto</option>
-                      {pontos.map((pt) => (
-                        <option key={pt.id} value={pt.id}>{pt.nome}</option>
-                      ))}
-                    </select>
+                    <span className="text-xs text-muted-foreground truncate">
+                      {displayedPonto ?? "sem ponto"}
+                    </span>
                   </div>
                 )}
                 {pontos.length === 0 && p.ponto_embarque_id && (
@@ -298,6 +295,13 @@ function PassageirosPage() {
                 )}
               </div>
               <div className="flex items-center gap-1 shrink-0">
+                <button
+                  title="Editar poltrona e embarque"
+                  onClick={() => setEditing(p)}
+                  className="h-8 w-8 rounded-lg bg-neon-purple/10 text-neon-purple hover:bg-neon-purple/20 flex items-center justify-center"
+                >
+                  <Edit3 className="h-4 w-4" />
+                </button>
                 {p.status !== "confirmado" && (
                   <button
                     title="Confirmar"
@@ -326,7 +330,8 @@ function PassageirosPage() {
                 </button>
               </div>
             </li>
-          ))}
+            );
+          })}
         </ul>
       )}
 
@@ -337,6 +342,18 @@ function PassageirosPage() {
           totalVagas={excursao?.total_vagas ?? 0}
           taken={taken}
           onClose={() => setOpen(false)}
+        />
+      )}
+      {editing && (
+        <EditChoicesModal
+          passageiro={editing}
+          pontos={pontos}
+          seats={seats}
+          totalVagas={excursao?.total_vagas ?? 0}
+          taken={taken}
+          saving={tripChoicesMut.isPending}
+          onClose={() => setEditing(null)}
+          onSave={(seatId, pontoId) => tripChoicesMut.mutate({ passageiro: editing, seatId, pontoId })}
         />
       )}
     </div>
