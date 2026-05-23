@@ -90,11 +90,13 @@ function AuthPage() {
     setBusy(true);
     try {
       if (mode === "signup") {
+        const cleanPhone = phone.replace(/\D/g, "");
+        if (cleanPhone.length < 10) throw new Error("Telefone inválido. Inclua DDD.");
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
           options: {
-            data: { full_name: fullName },
+            data: { full_name: fullName, phone: cleanPhone },
             emailRedirectTo: `${window.location.origin}/auth`,
           },
         });
@@ -106,6 +108,13 @@ function AuthPage() {
           .from("user_roles")
           .insert({ user_id: data.user.id, role: selectedRole });
         if (roleErr) throw roleErr;
+
+        // Garante telefone no profile (caso trigger não tenha rodado)
+        await supabase.from("profiles").upsert({
+          id: data.user.id,
+          full_name: fullName,
+          phone: cleanPhone,
+        }, { onConflict: "id" });
 
         if (data.session) {
           const pendingStaff = localStorage.getItem("pending_staff_invite");
