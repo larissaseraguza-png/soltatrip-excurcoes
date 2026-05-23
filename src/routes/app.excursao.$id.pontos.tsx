@@ -13,7 +13,7 @@ type Ponto = { id: string; nome: string; endereco: string | null; referencia: st
 function PontosPage() {
   const { id } = useParams({ from: "/app/excursao/$id/pontos" });
   const qc = useQueryClient();
-  const [form, setForm] = useState({ nome: "", horario: "" });
+  const [form, setForm] = useState({ nome: "", endereco: "", referencia: "", horario: "" });
   const [saving, setSaving] = useState(false);
 
   const { data: pontos = [], isLoading } = useQuery({
