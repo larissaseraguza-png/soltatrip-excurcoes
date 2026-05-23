@@ -1,13 +1,17 @@
-import { createFileRoute, Link, useParams } from "@tanstack/react-router";
+import { createFileRoute, Link, useParams, useSearch } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft, Plus, Loader2, Trash2, QrCode, UserCheck, Search, MapPin, Armchair, Edit3, X, DollarSign, Wallet, Trash } from "lucide-react";
 import { useState, useMemo } from "react";
 import { SeatMap } from "@/components/SeatMap";
+import { OnibusFilterBadge } from "@/components/OnibusFilterBadge";
 import { useRealtimeSync } from "@/hooks/use-realtime-sync";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/app/excursao/$id/passageiros")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    onibus: typeof search.onibus === "string" ? search.onibus : undefined,
+  }),
   component: PassageirosPage,
 });
 
