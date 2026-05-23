@@ -1,117 +1,125 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { StaffShell, Pill } from "@/components/staff/Shell";
-import { Bus, MapPin, User, Plus, Shuffle } from "lucide-react";
-import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useStaffExcursao } from "@/hooks/use-staff-excursao";
+import { useRealtimeSync } from "@/hooks/use-realtime-sync";
+import { SeatMap } from "@/components/SeatMap";
+import { Bus, Loader2 } from "lucide-react";
 
 export const Route = createFileRoute("/staff/onibus")({
   component: OnibusStaff,
 });
 
-const ONIBUS = [
-  { n: "#01", pax: 42, total: 45, motorista: "Sr. Antônio", loc: "Av. Paulista", s: "green", label: "em rota" },
-  { n: "#02", pax: 38, total: 45, motorista: "Sr. Carlos", loc: "Rod. Anhanguera", s: "green", label: "em rota" },
-  { n: "#03", pax: 12, total: 45, motorista: "Sr. Joaquim", loc: "Garagem SP", s: "yellow", label: "preparando" },
-  { n: "#04", pax: 0, total: 45, motorista: "—", loc: "Standby", s: "muted", label: "standby" },
-];
-
 function OnibusStaff() {
-  const [sel, setSel] = useState("#01");
-  const onibus = ONIBUS.find((o) => o.n === sel)!;
-  const seats = Array.from({ length: 45 }, (_, i) => i + 1);
+  const { excursao, loading } = useStaffExcursao();
+
+  const { data: passageiros = [] } = useQuery({
+    queryKey: ["staff-onibus-pax", excursao?.id],
+    enabled: !!excursao?.id,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("passageiros")
+        .select("id,nome,assento,seat_id,payment_status")
+        .eq("excursao_id", excursao!.id);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const { data: seats = [] } = useQuery({
+    queryKey: ["staff-onibus-seats", excursao?.id],
+    enabled: !!excursao?.id,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("seats")
+        .select("id,seat_number,occupied,passageiro_id")
+        .eq("excursao_id", excursao!.id);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  useRealtimeSync(
+    `staff-onibus-${excursao?.id ?? "none"}`,
+    excursao?.id
+      ? [
+          { table: "passageiros", filter: `excursao_id=eq.${excursao.id}` },
+          { table: "seats", filter: `excursao_id=eq.${excursao.id}` },
+        ]
+      : [],
+    [
+      ["staff-onibus-pax", excursao?.id],
+      ["staff-onibus-seats", excursao?.id],
+    ],
+  );
+
+  const taken = useMemo(() => {
+    const map: Record<string, { pago: boolean; nome: string }> = {};
+    const paxBySeatId = new Map((passageiros as any[]).map((p) => [p.seat_id, p]));
+    (seats as any[]).forEach((s) => {
+      const p = paxBySeatId.get(s.id) ?? (passageiros as any[]).find((x) => x.assento === s.seat_number);
+      if (p) map[s.seat_number] = { pago: p.payment_status === "paid", nome: p.nome };
+    });
+    return map;
+  }, [seats, passageiros]);
+
+  const ocupadas = Object.keys(taken).length;
+  const total = excursao?.total_vagas ?? 0;
+  const livres = Math.max(0, total - ocupadas);
 
   return (
-    <StaffShell title="Controle de Ônibus" subtitle="6 frotas ativas">
-      <div className="flex gap-2 overflow-x-auto pb-3 -mx-1 px-1 mb-4">
-        {ONIBUS.map((o) => (
-          <button
-            key={o.n}
-            onClick={() => setSel(o.n)}
-            className={`min-w-[160px] glass rounded-2xl p-3 text-left transition ${
-              sel === o.n ? "ring-2 ring-neon-green glow-primary" : ""
-            }`}
-          >
-            <div className="flex items-center justify-between mb-2">
-              <Bus className="size-5 text-neon-green" />
-              <Pill tone={o.s as never}>{o.label}</Pill>
+    <StaffShell title="Mapa de Poltronas" subtitle={excursao?.titulo ?? "Sem excursão vinculada"}>
+      {loading ? (
+        <div className="flex justify-center py-16"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
+      ) : !excursao ? (
+        <div className="glass rounded-2xl p-8 text-center text-sm text-muted-foreground">
+          Nenhuma excursão ativa vinculada.
+        </div>
+      ) : (
+        <>
+          <div className="glass rounded-2xl p-4 mb-5 flex items-center gap-3">
+            <div className="size-12 rounded-2xl bg-gradient-to-br from-neon-green to-neon-purple grid place-items-center glow-primary">
+              <Bus className="size-5 text-primary-foreground" />
             </div>
-            <div className="font-display font-black text-lg">Ônibus {o.n}</div>
-            <div className="text-[10px] text-muted-foreground">{o.pax}/{o.total} passageiros</div>
-          </button>
-        ))}
-        <button className="min-w-[120px] glass rounded-2xl p-3 flex items-center justify-center gap-2 text-xs font-bold border-2 border-dashed border-border/60">
-          <Plus className="size-4" /> Novo
-        </button>
-      </div>
+            <div className="flex-1">
+              <div className="font-display font-bold">{excursao.titulo}</div>
+              <div className="text-[11px] text-muted-foreground">{excursao.destino ?? "—"}</div>
+            </div>
+            <Pill tone="green">visualização</Pill>
+          </div>
 
-      <div className="glass rounded-2xl p-4 mb-5">
-        <div className="flex justify-between mb-3">
-          <div>
-            <h3 className="font-display font-bold">Ônibus {onibus.n}</h3>
-            <p className="text-xs text-muted-foreground flex items-center gap-1"><MapPin className="size-3" /> {onibus.loc}</p>
+          <div className="grid grid-cols-3 gap-2 mb-5 text-center">
+            <div className="glass rounded-2xl p-3">
+              <div className="text-xl font-display font-black text-neon-green">{ocupadas}</div>
+              <div className="text-[10px] text-muted-foreground uppercase">Ocupadas</div>
+            </div>
+            <div className="glass rounded-2xl p-3">
+              <div className="text-xl font-display font-black text-neon-pink">{livres}</div>
+              <div className="text-[10px] text-muted-foreground uppercase">Livres</div>
+            </div>
+            <div className="glass rounded-2xl p-3">
+              <div className="text-xl font-display font-black text-neon-purple">
+                {total > 0 ? Math.round((ocupadas / total) * 100) : 0}%
+              </div>
+              <div className="text-[10px] text-muted-foreground uppercase">Ocupação</div>
+            </div>
           </div>
-          <Pill tone={onibus.s as never}>{onibus.label}</Pill>
-        </div>
-        <div className="grid grid-cols-3 gap-2 text-center">
-          <div className="bg-background/40 rounded-xl p-2">
-            <div className="text-lg font-bold text-neon-green">{onibus.pax}</div>
-            <div className="text-[10px] text-muted-foreground">Pax</div>
-          </div>
-          <div className="bg-background/40 rounded-xl p-2">
-            <div className="text-lg font-bold text-neon-pink">{onibus.total - onibus.pax}</div>
-            <div className="text-[10px] text-muted-foreground">Vagas</div>
-          </div>
-          <div className="bg-background/40 rounded-xl p-2">
-            <div className="text-lg font-bold text-neon-purple">{Math.round((onibus.pax / onibus.total) * 100)}%</div>
-            <div className="text-[10px] text-muted-foreground">Ocupação</div>
-          </div>
-        </div>
-        <div className="mt-3 flex items-center gap-2 p-2 rounded-xl bg-background/40">
-          <User className="size-4 text-neon-green" />
-          <div className="text-xs flex-1">Motorista</div>
-          <div className="text-sm font-semibold">{onibus.motorista}</div>
-        </div>
-      </div>
 
-      <section className="mb-5">
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="text-xs uppercase tracking-widest text-muted-foreground">Mapa de assentos</h3>
-          <button className="text-xs flex items-center gap-1 text-neon-green font-bold">
-            <Shuffle className="size-3.5" /> Reorganizar
-          </button>
-        </div>
-        <div className="glass rounded-2xl p-4">
-          <div className="bg-background/40 rounded-xl p-3 mb-3 text-center text-[10px] text-muted-foreground">
-            🚗 FRENTE — Motorista
-          </div>
-          <div className="grid grid-cols-5 gap-2">
-            {seats.map((s) => {
-              const occupied = s <= onibus.pax;
-              const isAisle = s % 5 === 3;
-              return (
-                <div key={s} className={isAisle ? "col-span-1 invisible" : ""}>
-                  {!isAisle && (
-                    <div className={`aspect-square rounded-lg grid place-items-center text-[10px] font-bold border ${
-                      occupied
-                        ? "bg-gradient-to-br from-neon-green/40 to-neon-purple/30 border-neon-green/60 text-neon-green glow-primary"
-                        : "bg-background/40 border-border/60 text-muted-foreground"
-                    }`}>
-                      {s}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-          <div className="flex justify-center gap-4 mt-3 text-[10px] text-muted-foreground">
-            <span className="flex items-center gap-1"><span className="size-2 rounded bg-neon-green" /> Ocupado</span>
-            <span className="flex items-center gap-1"><span className="size-2 rounded bg-muted" /> Livre</span>
-          </div>
-        </div>
-      </section>
+          {total > 0 ? (
+            <SeatMap total={total} taken={taken} />
+          ) : (
+            <div className="glass rounded-2xl p-6 text-center text-xs text-muted-foreground">
+              Nenhuma poltrona configurada para esta excursão.
+            </div>
+          )}
 
-      <button className="w-full h-12 rounded-2xl bg-gradient-to-br from-neon-green to-neon-purple glow-primary text-primary-foreground font-bold flex items-center justify-center gap-2">
-        <Shuffle className="size-4" /> Divisão automática de passageiros
-      </button>
+          <p className="text-[11px] text-muted-foreground mt-4 text-center">
+            Apenas o organizador pode alterar poltronas. As mudanças aparecem aqui em tempo real.
+          </p>
+        </>
+      )}
     </StaffShell>
   );
 }
