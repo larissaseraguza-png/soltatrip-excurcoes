@@ -374,27 +374,33 @@ export type Database = {
       pontos_embarque: {
         Row: {
           created_at: string
+          endereco: string | null
           excursao_id: string
           horario: string | null
           id: string
           nome: string
           ordem: number
+          referencia: string | null
         }
         Insert: {
           created_at?: string
+          endereco?: string | null
           excursao_id: string
           horario?: string | null
           id?: string
           nome: string
           ordem?: number
+          referencia?: string | null
         }
         Update: {
           created_at?: string
+          endereco?: string | null
           excursao_id?: string
           horario?: string | null
           id?: string
           nome?: string
           ordem?: number
+          referencia?: string | null
         }
         Relationships: [
           {

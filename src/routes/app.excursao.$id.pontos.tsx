@@ -8,12 +8,12 @@ export const Route = createFileRoute("/app/excursao/$id/pontos")({
   component: PontosPage,
 });
 
-type Ponto = { id: string; nome: string; horario: string | null; ordem: number };
+type Ponto = { id: string; nome: string; endereco: string | null; referencia: string | null; horario: string | null; ordem: number };
 
 function PontosPage() {
   const { id } = useParams({ from: "/app/excursao/$id/pontos" });
   const qc = useQueryClient();
-  const [form, setForm] = useState({ nome: "", horario: "" });
+  const [form, setForm] = useState({ nome: "", endereco: "", referencia: "", horario: "" });
   const [saving, setSaving] = useState(false);
 
   const { data: pontos = [], isLoading } = useQuery({
@@ -62,12 +62,14 @@ function PontosPage() {
     const { error } = await supabase.from("pontos_embarque").insert({
       excursao_id: id,
       nome: form.nome.trim(),
+      endereco: form.endereco.trim() || null,
+      referencia: form.referencia.trim() || null,
       horario: form.horario.trim() || null,
       ordem: pontos.length,
     });
     setSaving(false);
     if (error) { alert(error.message); return; }
-    setForm({ nome: "", horario: "" });
+    setForm({ nome: "", endereco: "", referencia: "", horario: "" });
     qc.invalidateQueries({ queryKey: ["pontos", id] });
   }
 
@@ -78,7 +80,7 @@ function PontosPage() {
       </Link>
 
       <h1 className="font-display text-2xl font-black mb-1">Pontos de embarque</h1>
-      <p className="text-sm text-muted-foreground mb-5">Cadastre os locais onde os passageiros podem embarcar.</p>
+      <p className="text-sm text-muted-foreground mb-5">Cadastre múltiplos locais. O passageiro escolhe onde irá embarcar.</p>
 
       <form onSubmit={add} className="glass rounded-2xl p-4 mb-5 space-y-3">
         <div className="grid grid-cols-[1fr_120px] gap-2">
@@ -88,7 +90,7 @@ function PontosPage() {
               required
               value={form.nome}
               onChange={(e) => setForm({ ...form, nome: e.target.value })}
-              placeholder="Ex: Rodoviária"
+              placeholder="Ex: Aeroporto, Posto Shell"
               className="mt-1 w-full h-11 px-3 rounded-xl bg-input border border-border text-sm"
             />
           </label>
@@ -102,6 +104,24 @@ function PontosPage() {
             />
           </label>
         </div>
+        <label className="block">
+          <span className="text-[10px] uppercase tracking-wider font-bold text-muted-foreground">Endereço</span>
+          <input
+            value={form.endereco}
+            onChange={(e) => setForm({ ...form, endereco: e.target.value })}
+            placeholder="Av. Paulista, 1578"
+            className="mt-1 w-full h-11 px-3 rounded-xl bg-input border border-border text-sm"
+          />
+        </label>
+        <label className="block">
+          <span className="text-[10px] uppercase tracking-wider font-bold text-muted-foreground">Referência</span>
+          <input
+            value={form.referencia}
+            onChange={(e) => setForm({ ...form, referencia: e.target.value })}
+            placeholder="Próximo ao metrô (opcional)"
+            className="mt-1 w-full h-11 px-3 rounded-xl bg-input border border-border text-sm"
+          />
+        </label>
         <button
           disabled={saving || !form.nome.trim()}
           className="w-full h-11 rounded-xl bg-gradient-to-r from-neon-pink to-neon-purple text-primary-foreground font-bold text-sm flex items-center justify-center gap-1.5 disabled:opacity-50"
@@ -125,7 +145,9 @@ function PontosPage() {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="font-semibold truncate">{p.nome}</p>
-                <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5">
+                {p.endereco && <p className="text-xs text-muted-foreground truncate">{p.endereco}</p>}
+                {p.referencia && <p className="text-[11px] text-muted-foreground/80 truncate italic">{p.referencia}</p>}
+                <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1">
                   {p.horario && <span className="inline-flex items-center gap-1"><Clock className="h-3 w-3" />{p.horario}</span>}
                   <span className="inline-flex items-center gap-1"><Users className="h-3 w-3" />{counts[p.id] ?? 0} pax</span>
                 </div>
