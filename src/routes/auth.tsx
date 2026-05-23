@@ -100,22 +100,8 @@ function AuthPage() {
             emailRedirectTo: `${window.location.origin}/auth`,
           },
         });
-        if (error) {
-          const msg = (error.message || "").toLowerCase();
-          if (msg.includes("already registered") || msg.includes("already been registered") || msg.includes("user already")) {
-            throw new Error("Este e-mail já está cadastrado. Se ainda não confirmou, verifique sua caixa de entrada (e spam) ou clique em 'Entrar' para reenviar.");
-          }
-          if (msg.includes("rate limit") || msg.includes("after") && msg.includes("seconds")) {
-            throw new Error("Aguarde alguns segundos antes de tentar novamente.");
-          }
-          throw error;
-        }
-        // Supabase retorna user com identities=[] quando o e-mail já existe (sem erro)
-        const identities = (data.user as any)?.identities;
-        if (data.user && Array.isArray(identities) && identities.length === 0) {
-          throw new Error("Este e-mail já está cadastrado. Verifique sua caixa de entrada (e spam) para o link de confirmação, ou tente fazer login.");
-        }
-        if (!data.user) throw new Error("Não foi possível criar a conta. Tente novamente em alguns instantes.");
+        if (error) throw error;
+        if (!data.user) throw new Error("Falha ao criar conta.");
 
         // E-mail de confirmação é obrigatório: nunca haverá sessão aqui.
         setInfo("Conta criada! Enviamos um e-mail de confirmação para " + email + ". Clique no link recebido para ativar sua conta antes de fazer login.");
