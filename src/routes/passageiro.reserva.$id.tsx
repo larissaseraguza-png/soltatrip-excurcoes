@@ -418,3 +418,100 @@ function Info4({ icon: Icon, label, value }: { icon: any; label: string; value: 
     </div>
   );
 }
+
+function EmbarqueSection({
+  ponto,
+  pontos,
+  podeEscolher,
+  isVinculadoOuComprador,
+  pago,
+  onSelect,
+}: {
+  pax: any;
+  ponto: any;
+  pontos: any[];
+  podeEscolher: boolean;
+  isVinculadoOuComprador: boolean;
+  pago: number;
+  onSelect: (pontoId: string) => void;
+}) {
+  const [editing, setEditing] = useState(false);
+  const canEdit = podeEscolher && isVinculadoOuComprador && pontos.length > 0;
+  const showList = canEdit && (!ponto || editing);
+
+  return (
+    <div>
+      <div className="flex items-center justify-between gap-3 mb-2">
+        <div className="flex items-center gap-2">
+          <MapPinned className="size-4 text-neon-pink" />
+          <span className="text-sm font-bold">Embarque</span>
+        </div>
+        {ponto && !editing ? (
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-neon-green font-bold">✓ Confirmado</span>
+            {canEdit && (
+              <button
+                type="button"
+                onClick={() => setEditing(true)}
+                className="text-[11px] font-bold px-2 py-1 rounded-lg bg-background/60 border border-border hover:border-neon-pink/40"
+              >
+                Trocar
+              </button>
+            )}
+          </div>
+        ) : canEdit ? (
+          <span className="text-[11px] text-muted-foreground">Escolha abaixo</span>
+        ) : (
+          <span className="text-xs text-muted-foreground">{pago === 0 ? "Pague para liberar" : "—"}</span>
+        )}
+      </div>
+
+      {ponto && !editing && (
+        <div className="bg-neon-green/10 border border-neon-green/30 rounded-2xl p-3 text-sm">
+          <p className="font-bold">{ponto.nome}</p>
+          {ponto.endereco && <p className="text-xs text-muted-foreground">{ponto.endereco}</p>}
+          {ponto.horario && <p className="text-xs text-neon-green mt-1">⏰ {ponto.horario}</p>}
+        </div>
+      )}
+
+      {showList && (
+        <ul className="space-y-2">
+          {pontos.map((pt) => {
+            const selected = ponto?.id === pt.id;
+            return (
+              <li key={pt.id}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    onSelect(pt.id);
+                    setEditing(false);
+                  }}
+                  className={`w-full text-left rounded-2xl p-3 border transition ${
+                    selected
+                      ? "bg-neon-pink/10 border-neon-pink/60"
+                      : "bg-background/40 border-border hover:border-neon-pink/40"
+                  }`}
+                >
+                  <p className="font-bold text-sm">{pt.nome}</p>
+                  {pt.endereco && <p className="text-xs text-muted-foreground">{pt.endereco}</p>}
+                  {pt.horario && <p className="text-[11px] text-neon-pink">⏰ {pt.horario}</p>}
+                </button>
+              </li>
+            );
+          })}
+          {ponto && (
+            <li>
+              <button
+                type="button"
+                onClick={() => setEditing(false)}
+                className="w-full text-xs text-muted-foreground py-2"
+              >
+                Cancelar
+              </button>
+            </li>
+          )}
+        </ul>
+      )}
+    </div>
+  );
+}
