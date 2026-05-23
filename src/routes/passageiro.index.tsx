@@ -20,6 +20,7 @@ type Excursao = {
   cor: string | null;
   status: string;
   total_vagas: number;
+  banner_url: string | null;
 };
 
 type MinhaReserva = {
