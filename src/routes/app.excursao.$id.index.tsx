@@ -13,6 +13,11 @@ export const Route = createFileRoute("/app/excursao/$id/")({
 function ExcursaoDetalhe() {
   const { id } = useParams({ from: "/app/excursao/$id/" });
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const qc = useQueryClient();
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [busy, setBusy] = useState<null | "cancel" | "delete" | "upload">(null);
+
   const { data, isLoading } = useQuery({
     queryKey: ["excursao", id],
     queryFn: async () => {
@@ -26,10 +31,77 @@ function ExcursaoDetalhe() {
     },
   });
 
+  useRealtimeSync(
+    `excursao-detail-${id}`,
+    [{ table: "excursoes", filter: `id=eq.${id}` }],
+    [["excursao", id], ["excursoes"], ["excursoes-publicadas"], ["minhas-reservas"]],
+  );
+
+  async function handleCancel() {
+    if (!confirm("Cancelar essa excursão? Ela ficará marcada como 'cancelada' para todos os passageiros e não receberá novas reservas.")) return;
+    setBusy("cancel");
+    try {
+      const { error } = await supabase
+        .from("excursoes")
+        .update({ status: "cancelada" })
+        .eq("id", id);
+      if (error) throw error;
+      // Atualiza passageiros para 'cancelado'
+      await supabase.from("passageiros").update({ status: "cancelado" }).eq("excursao_id", id);
+      qc.invalidateQueries();
+      alert("Excursão cancelada.");
+    } catch (err: any) {
+      alert(err.message ?? "Erro ao cancelar.");
+    } finally {
+      setBusy(null);
+    }
+  }
+
   async function handleDelete() {
-    if (!confirm("Cancelar essa excursão?")) return;
-    await supabase.from("excursoes").delete().eq("id", id);
-    navigate({ to: "/app" });
+    if (!confirm("EXCLUIR definitivamente esta excursão? Todos os dados (passageiros, reservas, pagamentos) serão removidos. Esta ação não pode ser desfeita.")) return;
+    setBusy("delete");
+    try {
+      // Apaga dependentes (sem FK cascade)
+      await supabase.from("checkins").delete().eq("excursao_id", id);
+      await supabase.from("pagamentos").delete().eq("excursao_id", id);
+      await supabase.from("mensagens").delete().eq("excursao_id", id);
+      await supabase.from("seats").delete().eq("excursao_id", id);
+      await supabase.from("pontos_embarque").delete().eq("excursao_id", id);
+      await supabase.from("passageiros").delete().eq("excursao_id", id);
+      await supabase.from("reservas").delete().eq("excursao_id", id);
+      await supabase.from("equipe_excursoes").delete().eq("excursao_id", id);
+      const { error } = await supabase.from("excursoes").delete().eq("id", id);
+      if (error) throw error;
+      qc.invalidateQueries();
+      navigate({ to: "/app" });
+    } catch (err: any) {
+      alert(err.message ?? "Erro ao excluir.");
+      setBusy(null);
+    }
+  }
+
+  async function handleBannerUpload(file: File) {
+    if (!user) return;
+    setBusy("upload");
+    try {
+      const ext = file.name.split(".").pop() || "jpg";
+      const path = `${user.id}/${id}-${Date.now()}.${ext}`;
+      const { error: upErr } = await supabase.storage
+        .from("excursao-banners")
+        .upload(path, file, { upsert: true, cacheControl: "3600" });
+      if (upErr) throw upErr;
+      const { data: pub } = supabase.storage.from("excursao-banners").getPublicUrl(path);
+      const { error: updErr } = await supabase
+        .from("excursoes")
+        .update({ banner_url: pub.publicUrl })
+        .eq("id", id);
+      if (updErr) throw updErr;
+      qc.invalidateQueries({ queryKey: ["excursao", id] });
+    } catch (err: any) {
+      alert(err.message ?? "Erro ao enviar imagem.");
+    } finally {
+      setBusy(null);
+    }
   }
 
   if (isLoading) {
