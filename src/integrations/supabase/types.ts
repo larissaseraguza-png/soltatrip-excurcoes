@@ -48,6 +48,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "checkins_onibus_id_fkey"
+            columns: ["onibus_id"]
+            isOneToOne: false
+            referencedRelation: "onibus"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "checkins_passageiro_id_fkey"
             columns: ["passageiro_id"]
             isOneToOne: false
@@ -96,6 +103,13 @@ export type Database = {
             columns: ["excursao_id"]
             isOneToOne: false
             referencedRelation: "excursoes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "equipe_excursoes_onibus_id_fkey"
+            columns: ["onibus_id"]
+            isOneToOne: false
+            referencedRelation: "onibus"
             referencedColumns: ["id"]
           },
         ]
@@ -342,6 +356,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "pagamentos_onibus_id_fkey"
+            columns: ["onibus_id"]
+            isOneToOne: false
+            referencedRelation: "onibus"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "pagamentos_passageiro_id_fkey"
             columns: ["passageiro_id"]
             isOneToOne: false
@@ -442,6 +463,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "passageiros_onibus_id_fkey"
+            columns: ["onibus_id"]
+            isOneToOne: false
+            referencedRelation: "onibus"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "passageiros_ponto_embarque_id_fkey"
             columns: ["ponto_embarque_id"]
             isOneToOne: false
@@ -497,6 +525,13 @@ export type Database = {
             columns: ["excursao_id"]
             isOneToOne: false
             referencedRelation: "excursoes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pontos_embarque_onibus_id_fkey"
+            columns: ["onibus_id"]
+            isOneToOne: false
+            referencedRelation: "onibus"
             referencedColumns: ["id"]
           },
         ]
@@ -621,6 +656,13 @@ export type Database = {
             columns: ["excursao_id"]
             isOneToOne: false
             referencedRelation: "excursoes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "seats_onibus_id_fkey"
+            columns: ["onibus_id"]
+            isOneToOne: false
+            referencedRelation: "onibus"
             referencedColumns: ["id"]
           },
         ]
