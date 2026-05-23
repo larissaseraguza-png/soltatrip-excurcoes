@@ -18,7 +18,7 @@ function brl(v: number) {
 
 function ReservaDetalhes() {
   const { id } = useParams({ from: "/passageiro/reserva/$id" });
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const qc = useQueryClient();
 
@@ -96,7 +96,7 @@ function ReservaDetalhes() {
     },
   });
 
-  if (isLoading) {
+  if (authLoading || isLoading) {
     return (
       <Shell back="/passageiro" title="Reserva">
         <div className="flex justify-center py-20"><Loader2 className="size-6 animate-spin text-primary" /></div>
