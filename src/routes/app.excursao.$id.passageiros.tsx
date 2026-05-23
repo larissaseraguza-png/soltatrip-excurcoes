@@ -103,7 +103,7 @@ function PassageirosPage() {
   const pagoMap = useMemo(() => {
     const m = new Map<string, boolean>();
     for (const pg of pagamentos) {
-      if (pg.status === "pago") m.set(pg.passageiro_id, true);
+      if (pg.status === "pago" && pg.passageiro_id) m.set(pg.passageiro_id, true);
     }
     return m;
   }, [pagamentos]);
