@@ -366,6 +366,13 @@ function PassageirosPage() {
           onSave={(seatId, pontoId) => tripChoicesMut.mutate({ passageiro: editing, seatId, pontoId })}
         />
       )}
+      {financeiroPax && (
+        <FinanceiroPaxModal
+          passageiro={financeiroPax}
+          excursaoId={id}
+          onClose={() => setFinanceiroPax(null)}
+        />
+      )}
     </div>
   );
 }
