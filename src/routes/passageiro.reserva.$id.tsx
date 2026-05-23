@@ -130,11 +130,17 @@ function ReservaDetalhes() {
     cancelled: { tone: "muted", label: "Cancelado" },
   };
   const s = statusMap[status] ?? statusMap.pending_payment;
+  const passageirosList = passageiros as any[];
+  const faltamPoltronas = passageirosList.some((p) => !p.seat_id);
+  const faltamEmbarques = passageirosList.some((p) => p.seat_id && !p.ponto_embarque_id);
 
   async function pagar() {
     const v = Number(valor.replace(",", "."));
     if (!v || v <= 0) return alert("Informe um valor válido");
     if (v > restante + 0.001) return alert(`Valor máximo: ${brl(restante)}`);
+    if (pago > 0 && v >= restante - 0.001 && (faltamPoltronas || faltamEmbarques)) {
+      return alert("Confirme as poltronas e os pontos de embarque antes de finalizar o pagamento.");
+    }
     setSubmitting(true);
     try {
       const { error } = await supabase.from("pagamentos").insert({
