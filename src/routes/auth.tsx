@@ -103,12 +103,10 @@ function AuthPage() {
         if (error) throw error;
         if (!data.user) throw new Error("Falha ao criar conta.");
 
-        let activeUser = data.user;
         if (!data.session) {
           const { data: loginData, error: loginError } = await supabase.auth.signInWithPassword({ email, password });
           if (loginError) throw loginError;
           if (!loginData.user) throw new Error("Conta criada, mas não foi possível entrar automaticamente.");
-          activeUser = loginData.user;
         }
 
         const { error: profileError } = await (supabase as any).rpc("complete_signup_profile", {
@@ -141,8 +139,18 @@ function AuthPage() {
           .maybeSingle();
         if (roleErr) throw roleErr;
 
-        const userRole = rRow?.role as AppRole | undefined;
-        if (!userRole || userRole !== selectedRole) {
+        let userRole = rRow?.role as AppRole | undefined;
+        if (!userRole) {
+          const { error: profileError } = await (supabase as any).rpc("complete_signup_profile", {
+            p_full_name: "",
+            p_phone: null,
+            p_role: selectedRole,
+          });
+          if (profileError) throw profileError;
+          userRole = selectedRole;
+        }
+
+        if (userRole !== selectedRole) {
           await supabase.auth.signOut();
           throw new Error("Você não tem acesso a este tipo de perfil");
         }
