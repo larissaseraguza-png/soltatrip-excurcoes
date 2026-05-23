@@ -28,7 +28,7 @@ type Passageiro = {
 
 function CheckinStaff() {
   const { user } = useAuth();
-  const { excursao, loading } = useStaffExcursao();
+  const { excursao, onibusId, onibus, loading } = useStaffExcursao();
   const qc = useQueryClient();
   const [code, setCode] = useState("");
   const [scanning, setScanning] = useState(false);
@@ -36,36 +36,40 @@ function CheckinStaff() {
   const lastScanRef = useRef<{ code: string; at: number }>({ code: "", at: 0 });
 
   const { data: passageiros = [] } = useQuery({
-    queryKey: ["staff-checkin-pax", excursao?.id],
+    queryKey: ["staff-checkin-pax", excursao?.id, onibusId],
     enabled: !!excursao?.id,
     queryFn: async () => {
-      const { data, error } = await supabase
+      let q = supabase
         .from("passageiros")
-        .select("id,nome,assento,seat_id,qr_code,embarcado_em,status,payment_status,ponto_embarque_id,ponto:pontos_embarque(nome,horario)")
+        .select("id,nome,assento,seat_id,qr_code,embarcado_em,status,payment_status,ponto_embarque_id,onibus_id,ponto:pontos_embarque(nome,horario)")
         .eq("excursao_id", excursao!.id)
         .order("embarcado_em", { ascending: false, nullsFirst: false });
+      if (onibusId) q = q.eq("onibus_id", onibusId);
+      const { data, error } = await q;
       if (error) throw error;
       return (data ?? []) as unknown as Passageiro[];
     },
   });
 
   const { data: checkins = [] } = useQuery({
-    queryKey: ["staff-checkins", excursao?.id],
+    queryKey: ["staff-checkins", excursao?.id, onibusId],
     enabled: !!excursao?.id,
     queryFn: async () => {
-      const { data, error } = await supabase
+      let q = supabase
         .from("checkins")
-        .select("id,passageiro_id,created_at")
+        .select("id,passageiro_id,created_at,onibus_id")
         .eq("excursao_id", excursao!.id)
         .order("created_at", { ascending: false })
         .limit(30);
+      if (onibusId) q = q.eq("onibus_id", onibusId);
+      const { data, error } = await q;
       if (error) throw error;
       return data ?? [];
     },
   });
 
   useRealtimeSync(
-    `staff-checkin-${excursao?.id ?? "none"}`,
+    `staff-checkin-${excursao?.id ?? "none"}-${onibusId ?? "all"}`,
     excursao?.id
       ? [
           { table: "passageiros", filter: `excursao_id=eq.${excursao.id}` },
@@ -73,10 +77,11 @@ function CheckinStaff() {
         ]
       : [],
     [
-      ["staff-checkin-pax", excursao?.id],
-      ["staff-checkins", excursao?.id],
+      ["staff-checkin-pax", excursao?.id, onibusId],
+      ["staff-checkins", excursao?.id, onibusId],
     ],
   );
+
 
   const paxById = useMemo(() => new Map(passageiros.map((p) => [p.id, p])), [passageiros]);
   const embarcados = passageiros.filter((p) => !!p.embarcado_em);
