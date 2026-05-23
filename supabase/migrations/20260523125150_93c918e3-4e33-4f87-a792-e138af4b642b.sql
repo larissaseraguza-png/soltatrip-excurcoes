@@ -1,0 +1,1 @@
+ALTER TABLE public.pagamentos ALTER COLUMN passageiro_id DROP NOT NULL;

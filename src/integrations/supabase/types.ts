@@ -246,7 +246,7 @@ export type Database = {
           observacao: string | null
           pago_em: string | null
           parcelas: number
-          passageiro_id: string
+          passageiro_id: string | null
           reserva_id: string | null
           status: string
           updated_at: string
@@ -261,7 +261,7 @@ export type Database = {
           observacao?: string | null
           pago_em?: string | null
           parcelas?: number
-          passageiro_id: string
+          passageiro_id?: string | null
           reserva_id?: string | null
           status?: string
           updated_at?: string
@@ -276,7 +276,7 @@ export type Database = {
           observacao?: string | null
           pago_em?: string | null
           parcelas?: number
-          passageiro_id?: string
+          passageiro_id?: string | null
           reserva_id?: string | null
           status?: string
           updated_at?: string
