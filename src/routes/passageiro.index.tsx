@@ -69,6 +69,17 @@ function MinhasViagens() {
       return (data ?? []) as Excursao[];
     },
   });
+  useRealtimeSync(
+    `minhas-reservas-${user?.id ?? "anon"}`,
+    user
+      ? [
+          { table: "reservas", filter: `comprador_id=eq.${user.id}` },
+          { table: "passageiros", filter: `user_id=eq.${user.id}` },
+        ]
+      : [],
+    [["minhas-reservas", user?.id]],
+  );
+
 
   function openReserva(ex: Excursao) {
     setModalEx(ex);
