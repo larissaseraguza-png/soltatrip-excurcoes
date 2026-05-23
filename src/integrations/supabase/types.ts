@@ -20,6 +20,7 @@ export type Database = {
           excursao_id: string
           feito_por: string | null
           id: string
+          onibus_id: string | null
           passageiro_id: string
         }
         Insert: {
@@ -27,6 +28,7 @@ export type Database = {
           excursao_id: string
           feito_por?: string | null
           id?: string
+          onibus_id?: string | null
           passageiro_id: string
         }
         Update: {
@@ -34,6 +36,7 @@ export type Database = {
           excursao_id?: string
           feito_por?: string | null
           id?: string
+          onibus_id?: string | null
           passageiro_id?: string
         }
         Relationships: [
@@ -59,6 +62,7 @@ export type Database = {
           created_at: string
           excursao_id: string
           id: string
+          onibus_id: string | null
           papel: string
           staff_user_id: string | null
           status: string
@@ -69,6 +73,7 @@ export type Database = {
           created_at?: string
           excursao_id: string
           id?: string
+          onibus_id?: string | null
           papel?: string
           staff_user_id?: string | null
           status?: string
@@ -79,6 +84,7 @@ export type Database = {
           created_at?: string
           excursao_id?: string
           id?: string
+          onibus_id?: string | null
           papel?: string
           staff_user_id?: string | null
           status?: string
@@ -236,6 +242,48 @@ export type Database = {
           },
         ]
       }
+      onibus: {
+        Row: {
+          ativo: boolean
+          capacidade: number
+          created_at: string
+          excursao_id: string
+          horario_retorno: string | null
+          horario_saida: string | null
+          id: string
+          nome: string
+          ordem: number
+          ponto_partida: string | null
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          capacidade?: number
+          created_at?: string
+          excursao_id: string
+          horario_retorno?: string | null
+          horario_saida?: string | null
+          id?: string
+          nome: string
+          ordem?: number
+          ponto_partida?: string | null
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          capacidade?: number
+          created_at?: string
+          excursao_id?: string
+          horario_retorno?: string | null
+          horario_saida?: string | null
+          id?: string
+          nome?: string
+          ordem?: number
+          ponto_partida?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       pagamentos: {
         Row: {
           comprovante_url: string | null
@@ -244,6 +292,7 @@ export type Database = {
           id: string
           metodo: string
           observacao: string | null
+          onibus_id: string | null
           pago_em: string | null
           parcelas: number
           passageiro_id: string | null
@@ -259,6 +308,7 @@ export type Database = {
           id?: string
           metodo?: string
           observacao?: string | null
+          onibus_id?: string | null
           pago_em?: string | null
           parcelas?: number
           passageiro_id?: string | null
@@ -274,6 +324,7 @@ export type Database = {
           id?: string
           metodo?: string
           observacao?: string | null
+          onibus_id?: string | null
           pago_em?: string | null
           parcelas?: number
           passageiro_id?: string | null
@@ -320,6 +371,7 @@ export type Database = {
           id: string
           nome: string
           observacao_interna: string | null
+          onibus_id: string | null
           payment_status: string
           ponto_embarque_id: string | null
           qr_code: string
@@ -344,6 +396,7 @@ export type Database = {
           id?: string
           nome: string
           observacao_interna?: string | null
+          onibus_id?: string | null
           payment_status?: string
           ponto_embarque_id?: string | null
           qr_code?: string
@@ -368,6 +421,7 @@ export type Database = {
           id?: string
           nome?: string
           observacao_interna?: string | null
+          onibus_id?: string | null
           payment_status?: string
           ponto_embarque_id?: string | null
           qr_code?: string
@@ -411,6 +465,7 @@ export type Database = {
           horario: string | null
           id: string
           nome: string
+          onibus_id: string | null
           ordem: number
           referencia: string | null
         }
@@ -421,6 +476,7 @@ export type Database = {
           horario?: string | null
           id?: string
           nome: string
+          onibus_id?: string | null
           ordem?: number
           referencia?: string | null
         }
@@ -431,6 +487,7 @@ export type Database = {
           horario?: string | null
           id?: string
           nome?: string
+          onibus_id?: string | null
           ordem?: number
           referencia?: string | null
         }
@@ -530,6 +587,7 @@ export type Database = {
           excursao_id: string
           id: string
           occupied: boolean
+          onibus_id: string | null
           passageiro_id: string | null
           reserved_by: string | null
           seat_number: string
@@ -540,6 +598,7 @@ export type Database = {
           excursao_id: string
           id?: string
           occupied?: boolean
+          onibus_id?: string | null
           passageiro_id?: string | null
           reserved_by?: string | null
           seat_number: string
@@ -550,6 +609,7 @@ export type Database = {
           excursao_id?: string
           id?: string
           occupied?: boolean
+          onibus_id?: string | null
           passageiro_id?: string | null
           reserved_by?: string | null
           seat_number?: string
@@ -593,10 +653,19 @@ export type Database = {
     Functions: {
       accept_staff_invitation: { Args: { p_token: string }; Returns: string }
       claim_passageiro_invite: { Args: { p_token: string }; Returns: string }
-      criar_reserva_grupo: {
-        Args: { p_excursao_id: string; p_passageiros: Json }
-        Returns: string
-      }
+      criar_reserva_grupo:
+        | {
+            Args: { p_excursao_id: string; p_passageiros: Json }
+            Returns: string
+          }
+        | {
+            Args: {
+              p_excursao_id: string
+              p_onibus_id?: string
+              p_passageiros: Json
+            }
+            Returns: string
+          }
       get_my_role: {
         Args: never
         Returns: Database["public"]["Enums"]["app_role"]
@@ -641,6 +710,10 @@ export type Database = {
         Args: { _excursao_id: string; _user_id: string }
         Returns: boolean
       }
+      is_active_staff_bus: {
+        Args: { _onibus_id: string; _user_id: string }
+        Returns: boolean
+      }
       is_reserva_comprador: {
         Args: { _reserva_id: string; _user_id: string }
         Returns: boolean
@@ -649,91 +722,192 @@ export type Database = {
         Args: { _reserva_id: string; _user_id: string }
         Returns: boolean
       }
-      organizer_create_manual_passageiro: {
-        Args: {
-          p_amount_paid?: number
-          p_documento?: string
-          p_email?: string
-          p_excursao_id: string
-          p_nome: string
-          p_observacao_interna?: string
-          p_payment_status?: string
-          p_ponto_embarque_id?: string
-          p_seat_id?: string
-          p_status?: string
-          p_telefone?: string
-          p_total_price?: number
-        }
+      list_my_staff_onibus: {
+        Args: never
         Returns: {
-          amount_paid: number
-          assento: string | null
-          comprador_id: string | null
-          convite_token: string | null
-          created_at: string
-          documento: string | null
-          email: string | null
-          embarcado_em: string | null
           excursao_id: string
-          id: string
-          nome: string
-          observacao_interna: string | null
-          payment_status: string
-          ponto_embarque_id: string | null
-          qr_code: string
-          reserva_id: string | null
-          seat_id: string | null
-          status: string
-          telefone: string | null
-          total_price: number
-          updated_at: string
-          user_id: string | null
-        }
-        SetofOptions: {
-          from: "*"
-          to: "passageiros"
-          isOneToOne: true
-          isSetofReturn: false
-        }
+          onibus_id: string
+        }[]
       }
-      organizer_update_passageiro_trip_choices: {
-        Args: {
-          p_passageiro_id: string
-          p_ponto_embarque_id?: string
-          p_seat_id?: string
-          p_update_ponto?: boolean
-          p_update_seat?: boolean
-        }
-        Returns: {
-          amount_paid: number
-          assento: string | null
-          comprador_id: string | null
-          convite_token: string | null
-          created_at: string
-          documento: string | null
-          email: string | null
-          embarcado_em: string | null
-          excursao_id: string
-          id: string
-          nome: string
-          observacao_interna: string | null
-          payment_status: string
-          ponto_embarque_id: string | null
-          qr_code: string
-          reserva_id: string | null
-          seat_id: string | null
-          status: string
-          telefone: string | null
-          total_price: number
-          updated_at: string
-          user_id: string | null
-        }
-        SetofOptions: {
-          from: "*"
-          to: "passageiros"
-          isOneToOne: true
-          isSetofReturn: false
-        }
-      }
+      organizer_create_manual_passageiro:
+        | {
+            Args: {
+              p_amount_paid?: number
+              p_documento?: string
+              p_email?: string
+              p_excursao_id: string
+              p_nome: string
+              p_observacao_interna?: string
+              p_payment_status?: string
+              p_ponto_embarque_id?: string
+              p_seat_id?: string
+              p_status?: string
+              p_telefone?: string
+              p_total_price?: number
+            }
+            Returns: {
+              amount_paid: number
+              assento: string | null
+              comprador_id: string | null
+              convite_token: string | null
+              created_at: string
+              documento: string | null
+              email: string | null
+              embarcado_em: string | null
+              excursao_id: string
+              id: string
+              nome: string
+              observacao_interna: string | null
+              onibus_id: string | null
+              payment_status: string
+              ponto_embarque_id: string | null
+              qr_code: string
+              reserva_id: string | null
+              seat_id: string | null
+              status: string
+              telefone: string | null
+              total_price: number
+              updated_at: string
+              user_id: string | null
+            }
+            SetofOptions: {
+              from: "*"
+              to: "passageiros"
+              isOneToOne: true
+              isSetofReturn: false
+            }
+          }
+        | {
+            Args: {
+              p_amount_paid?: number
+              p_documento?: string
+              p_email?: string
+              p_excursao_id: string
+              p_nome: string
+              p_observacao_interna?: string
+              p_onibus_id?: string
+              p_payment_status?: string
+              p_ponto_embarque_id?: string
+              p_seat_id?: string
+              p_status?: string
+              p_telefone?: string
+              p_total_price?: number
+            }
+            Returns: {
+              amount_paid: number
+              assento: string | null
+              comprador_id: string | null
+              convite_token: string | null
+              created_at: string
+              documento: string | null
+              email: string | null
+              embarcado_em: string | null
+              excursao_id: string
+              id: string
+              nome: string
+              observacao_interna: string | null
+              onibus_id: string | null
+              payment_status: string
+              ponto_embarque_id: string | null
+              qr_code: string
+              reserva_id: string | null
+              seat_id: string | null
+              status: string
+              telefone: string | null
+              total_price: number
+              updated_at: string
+              user_id: string | null
+            }
+            SetofOptions: {
+              from: "*"
+              to: "passageiros"
+              isOneToOne: true
+              isSetofReturn: false
+            }
+          }
+      organizer_update_passageiro_trip_choices:
+        | {
+            Args: {
+              p_passageiro_id: string
+              p_ponto_embarque_id?: string
+              p_seat_id?: string
+              p_update_ponto?: boolean
+              p_update_seat?: boolean
+            }
+            Returns: {
+              amount_paid: number
+              assento: string | null
+              comprador_id: string | null
+              convite_token: string | null
+              created_at: string
+              documento: string | null
+              email: string | null
+              embarcado_em: string | null
+              excursao_id: string
+              id: string
+              nome: string
+              observacao_interna: string | null
+              onibus_id: string | null
+              payment_status: string
+              ponto_embarque_id: string | null
+              qr_code: string
+              reserva_id: string | null
+              seat_id: string | null
+              status: string
+              telefone: string | null
+              total_price: number
+              updated_at: string
+              user_id: string | null
+            }
+            SetofOptions: {
+              from: "*"
+              to: "passageiros"
+              isOneToOne: true
+              isSetofReturn: false
+            }
+          }
+        | {
+            Args: {
+              p_onibus_id?: string
+              p_passageiro_id: string
+              p_ponto_embarque_id?: string
+              p_seat_id?: string
+              p_update_onibus?: boolean
+              p_update_ponto?: boolean
+              p_update_seat?: boolean
+            }
+            Returns: {
+              amount_paid: number
+              assento: string | null
+              comprador_id: string | null
+              convite_token: string | null
+              created_at: string
+              documento: string | null
+              email: string | null
+              embarcado_em: string | null
+              excursao_id: string
+              id: string
+              nome: string
+              observacao_interna: string | null
+              onibus_id: string | null
+              payment_status: string
+              ponto_embarque_id: string | null
+              qr_code: string
+              reserva_id: string | null
+              seat_id: string | null
+              status: string
+              telefone: string | null
+              total_price: number
+              updated_at: string
+              user_id: string | null
+            }
+            SetofOptions: {
+              from: "*"
+              to: "passageiros"
+              isOneToOne: true
+              isSetofReturn: false
+            }
+          }
       recalc_passageiro_payments: {
         Args: { _passageiro_id: string }
         Returns: undefined

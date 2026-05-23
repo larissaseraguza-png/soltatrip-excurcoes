@@ -1,99 +1,85 @@
-## Objetivo
+# Múltiplos ônibus por excursão
 
-Hoje cada vaga vira uma reserva separada com pagamento próprio — fluxo picotado. Vamos consolidar em **UMA reserva de grupo** por compra, com pagamento único, mas mantendo poltrona / embarque / QR Code individuais por passageiro.
+Hoje cada excursão funciona como se fosse 1 ônibus único. Vou introduzir uma entidade **Ônibus** filha da excursão, e fazer com que **poltronas, pontos de embarque, passageiros, staff e check-ins** sejam vinculados a um ônibus específico (não mais à excursão diretamente).
 
-## Modelo de dados
+## 1. Banco de dados (migração)
 
-Nova tabela **`reservas`** (a "compra" do grupo):
+Nova tabela `public.onibus`:
+- `excursao_id` (FK lógica)
+- `nome` (ex.: "Ônibus A — Manhã")
+- `horario_saida`, `horario_retorno`
+- `capacidade` (gera as poltronas automaticamente)
+- `ordem` para ordenar visualmente
+- `ativo`
 
-- `id`, `excursao_id`, `comprador_id`
-- `quantidade` (int)
-- `total_price` (soma das vagas)
-- `amount_paid`, `payment_status` (`pending_payment` | `partial_payment` | `paid` | `cancelled`)
-- `created_at`, `updated_at`
+Adicionar coluna `onibus_id` (nullable) em:
+- `seats`
+- `pontos_embarque`
+- `passageiros`
+- `equipe_excursoes` (staff fica restrito a 1 ônibus, conforme decisão anterior)
+- `checkins`
+- `pagamentos` (herda do passageiro, útil para relatório financeiro por ônibus)
 
-Alterações em **`passageiros`**:
+Migração de dados existente (regra escolhida: **1 ônibus padrão por excursão**):
+- Para cada excursão atual: criar um `onibus` "Ônibus 1" usando `total_vagas`, `horario_saida`, `horario_retorno` da excursão.
+- Atualizar todas as linhas filhas (`seats`, `pontos_embarque`, `passageiros`, `equipe_excursoes`, `checkins`, `pagamentos`) com esse `onibus_id`.
 
-- Adicionar `reserva_id` (FK → `reservas.id`, NOT NULL nas novas linhas)
-- Remover responsabilidade financeira: `total_price` / `amount_paid` / `payment_status` deixam de ser usados aqui (mantidos por compatibilidade, mas a verdade vai pra `reservas`)
-- Mantém `nome`, `email`, `user_id`, `comprador_id`, `convite_token`, `seat_id`, `ponto_embarque_id`, `qr_code`
-
-Alterações em **`pagamentos`**:
-
-- Adicionar `reserva_id` (FK → `reservas.id`) — passa a ser o vínculo principal
-- `passageiro_id` vira opcional (legado)
-
-Triggers:
-
-- `apply_pagamento_to_reserva` → atualiza `reservas.amount_paid` / `payment_status` (não mais por passageiro)
-- Quando `reservas.payment_status = 'paid'` → marca todos os passageiros do grupo como confirmados
-- Mantém `lock_passageiro_choices` (bloqueia troca de poltrona/embarque depois de definidos, exceto organizador)
+Triggers / funções a ajustar:
+- `ensure_seats_for_excursao` → passa a ser disparada **na criação de um ônibus**, gerando `capacidade` poltronas com `onibus_id` setado.
+- `is_active_staff(excursao_id, user_id)` continua existindo; adiciono `is_active_staff_bus(onibus_id, user_id)` para RLS por ônibus.
+- `organizer_create_manual_passageiro` e `organizer_update_passageiro_trip_choices` ganham parâmetro `p_onibus_id` e validam que `seat_id`/`ponto_embarque_id` pertencem àquele ônibus.
+- `criar_reserva_grupo` recebe `p_onibus_id` e grava em cada passageiro.
 
 RLS:
+- Staff continua vendo a excursão, mas só vê `passageiros`, `seats`, `pontos_embarque`, `checkins`, `pagamentos` do **seu** `onibus_id`.
+- Organizador continua com acesso total à excursão e a todos os ônibus.
 
-- `reservas`: comprador vê/edita as próprias; organizador da excursão vê tudo; staff vê (leitura)
-- `passageiros`: comprador da reserva vê todos os passageiros do grupo; passageiro vinculado (`user_id`) vê o seu; organizador/staff como hoje
-- `pagamentos`: comprador vê pagamentos da própria reserva
+## 2. Painel do excursionista
 
-## Fluxo no frontend
+Dentro da página da excursão (`/app/excursao/$id`), adicionar seção **Ônibus**:
+- Listar ônibus existentes com nome, horário, capacidade, ocupação (poltronas usadas / total), staff vinculado.
+- Criar / editar / desativar ônibus.
+- Tela de detalhe por ônibus reaproveitando as telas atuais (passageiros, poltronas, embarques, financeiro, check-in) — todas filtradas por `onibus_id`.
+- Convite de staff passa a exigir escolha do ônibus.
 
-**1. `passageiro.index.tsx` — tela da excursão** (já tem seletor de quantidade, vamos simplificar):
-- Seletor de quantidade 1..N
-- Para cada vaga, formulário: nome + email (titular pré-preenchido, demais editáveis)
-- Botão "Continuar" → cria 1 `reservas` + N `passageiros` (com `reserva_id` setado) numa transação (RPC `criar_reserva_grupo`)
-- Redireciona para nova tela `/passageiro/reserva/{reserva_id}`
+Rotas novas:
+- `/app/excursao/$id/onibus` (listagem/gestão)
+- `/app/excursao/$id/onibus/$onibusId` (detalhe — abas: passageiros, poltronas, embarques, financeiro)
 
-**2. Nova rota `/passageiro/reserva/$id`** — centro de comando da reserva:
-Substitui a tela atual `passageiro.reserva.$id.tsx` (que era por passageiro). Agora mostra:
-- Header: excursão, total, pago, restante, status do pagamento
-- Bloco de pagamento (Pix fracionado consolidado: paga uma parte, atualiza `amount_paid`)
-- Lista de passageiros do grupo. Cada card:
-  - Nome + email + status (vinculado / convidado pendente)
-  - Botão **"Escolher poltrona"** (liberado quando `amount_paid > 0`)
-  - Botão **"Escolher embarque"** (liberado quando `amount_paid > 0`)
-  - Quando escolhidos: mostra poltrona + embarque travados
-  - Quando `payment_status = paid`: mostra QR Code individual
-  - Para convidados sem `user_id`: botão "Copiar link de convite"
+## 3. Fluxo de compra do passageiro
 
-**3. `passageiro.poltrona.tsx` e nova `passageiro.embarque.tsx`**:
-- Recebem `?pax={passageiro_id}` na URL
-- Permitem ao comprador (ou ao próprio convidado autenticado) escolher para aquele passageiro específico
-- Travam após escolha (já implementado via trigger)
+Na página pública da excursão (`/passageiro/excursao/$id` ou equivalente):
+1. Escolhe a excursão (já existente)
+2. **Novo passo**: escolhe o ônibus (cards com nome, horário e vagas restantes)
+3. Escolhe ponto de embarque **daquele ônibus**
+4. Escolhe poltrona **daquele ônibus**
+5. Confirma reserva (grava `onibus_id` no passageiro)
 
-**4. Lista "Minhas viagens" (`passageiro.index` aba minhas)**:
-- Passa a listar **reservas** (não mais passageiros individuais)
-- Cada card: excursão, qtd de passageiros, status pagamento
+## 4. Painel do staff
 
-**5. Convite (`invite.passageiro.$token`)**:
-- Continua funcionando: vincula `user_id` ao passageiro específico do grupo
-- Após claim, convidado vê apenas seu próprio cartão (QR/poltrona/embarque)
+- Tela inicial do staff lista apenas o(s) ônibus em que ele está vinculado.
+- Check-in (`/staff/checkin`) e listas de passageiros filtram por `onibus_id` automaticamente.
+- QR code do passageiro já é único; ao escanear, valida que o passageiro pertence ao ônibus do staff (senão erro "passageiro de outro ônibus").
 
-**6. Pagamentos antigos (`passageiro.pagamentos.tsx`)**:
-- Aposentar/redirecionar — pagamento agora vive dentro da tela da reserva
+## 5. UI / cuidados visuais
 
-## Sincronização excursionista/staff
+- Em todos os lugares onde aparece "Excursão X", incluir o nome do ônibus quando o contexto for por ônibus (ex.: "Festival XYZ · Ônibus A — Manhã").
+- Manter compatibilidade: dashboards de resumo continuam mostrando totais consolidados da excursão, com breakdown por ônibus.
 
-As views de passageiros/financeiro do organizador já consultam as tabelas — vão refletir o novo modelo após ajustar os selects para juntar com `reservas` quando precisarem do status financeiro.
+## Ordem de implementação
 
-## Migração de dados existentes
+1. Migração SQL (tabela `onibus`, colunas `onibus_id`, dados existentes, RLS, funções).
+2. Tipos atualizados (auto-gerados após migração).
+3. Painel do excursionista: CRUD de ônibus + filtros nas telas existentes.
+4. Fluxo de compra do passageiro (seleção de ônibus).
+5. Painel do staff (filtro por ônibus + check-in validando ônibus).
 
-Para cada `passageiros` órfão (sem `reserva_id`): criar uma `reservas` 1-pra-1 e setar `reserva_id`. Copiar `total_price`/`amount_paid`/`payment_status`/`comprador_id`. Ligar `pagamentos.reserva_id` correspondente.
+Esta primeira mensagem cobre o **passo 1 (migração)**. Depois que você aprovar a migração, sigo direto com os passos 2–5 em código.
 
-## Arquivos
+## Detalhes técnicos
 
-**Banco**
-- Nova migration: tabela `reservas`, FK `passageiros.reserva_id`, FK `pagamentos.reserva_id`, novos triggers, RLS, RPC `criar_reserva_grupo(excursao_id, passageiros jsonb)`, backfill dos registros existentes
-
-**Frontend**
-- `src/routes/passageiro.index.tsx` — modal de quantidade + formulário de passageiros, criar reserva via RPC, listar reservas (não passageiros)
-- `src/routes/passageiro.reserva.$id.tsx` — reescrita: agora é a tela da reserva-grupo
-- `src/routes/passageiro.poltrona.tsx` — aceitar `?pax=`
-- `src/routes/passageiro.embarque.tsx` (nova) — escolher ponto por passageiro
-- `src/routes/passageiro.pagamentos.tsx` — remover ou redirecionar para reserva
-- `src/integrations/supabase/types.ts` — regenerado
-
-## Pontos de atenção
-
-- Migração precisa preservar reservas existentes (sem quebrar quem já tá no meio do fluxo)
-- Pagamentos antigos continuam válidos via `passageiro_id` legado
-- RLS precisa permitir comprador ler todos os passageiros do grupo mesmo sem ser `user_id` deles (já temos `comprador_id`, só ajustar políticas para também aceitar via `reserva_id`)
+- `onibus_id` começa **nullable** para permitir a migração de dados; após o backfill, vira `NOT NULL` em `seats`, `passageiros` (apenas onde já há excursão), `pontos_embarque`, `checkins`.
+- `equipe_excursoes.onibus_id` permanece nullable: convites por e-mail entram sem ônibus definido e o organizador escolhe depois.
+- Índices: `(excursao_id, onibus_id)` em `passageiros`, `seats`, `pontos_embarque`, `checkins`, `pagamentos`.
+- `seats` ganha unique `(onibus_id, seat_number)` substituindo `(excursao_id, seat_number)`.
+- Trigger `ensure_seats_for_excursao` é desativado/substituído por um equivalente em `onibus` (gera poltronas no insert do ônibus).
