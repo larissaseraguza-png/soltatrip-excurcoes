@@ -290,9 +290,40 @@ function ReservaDetalhes() {
           value={ex?.data_evento ? new Date(ex.data_evento).toLocaleDateString("pt-BR") : "—"}
         />
         <Info4 icon={MapPin} label="Destino" value={ex?.destino ?? "—"} />
-        <Info4 icon={Clock} label="Saída" value={ex?.horario_saida ?? "—"} />
+        <Info4 icon={Clock} label="Saída" value={onibusInfo?.horario_saida ?? ex?.horario_saida ?? "—"} />
         <Info4 icon={Users} label="Passageiros" value={String(reserva.quantidade)} />
       </div>
+
+      {/* Ônibus do passageiro */}
+      {onibusInfo && (
+        <div className="glass rounded-3xl p-5 mb-5 border border-neon-purple/30">
+          <div className="flex items-center gap-2 mb-3">
+            <Bus className="size-5 text-neon-purple" />
+            <h3 className="font-display font-bold">Seu ônibus</h3>
+          </div>
+          <p className="font-display font-black text-xl">{onibusInfo.nome}</p>
+          <div className="grid grid-cols-2 gap-3 mt-3 text-sm">
+            {onibusInfo.horario_saida && (
+              <div className="bg-background/40 rounded-2xl p-3">
+                <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Saída</p>
+                <p className="font-bold text-neon-pink">⏰ {onibusInfo.horario_saida}</p>
+              </div>
+            )}
+            {onibusInfo.horario_retorno && (
+              <div className="bg-background/40 rounded-2xl p-3">
+                <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Retorno</p>
+                <p className="font-bold">{onibusInfo.horario_retorno}</p>
+              </div>
+            )}
+            {onibusInfo.ponto_partida && (
+              <div className="bg-background/40 rounded-2xl p-3 col-span-2">
+                <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Ponto de partida</p>
+                <p className="font-bold">{onibusInfo.ponto_partida}</p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Pagamento consolidado */}
       <div className="glass rounded-3xl p-5 mb-5">
@@ -300,6 +331,7 @@ function ReservaDetalhes() {
           <Wallet className="size-5 text-neon-green" />
           <h3 className="font-display font-bold">Pagamento da reserva</h3>
         </div>
+
         <div className="flex items-end justify-between">
           <div>
             <p className="text-xs text-muted-foreground">
