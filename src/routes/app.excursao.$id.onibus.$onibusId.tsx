@@ -99,7 +99,6 @@ function OnibusDetail() {
         <NavCard
           to="/app/excursao/$id/passageiros"
           params={{ id }}
-          search={{ onibus: onibusId }}
           icon={Users}
           title="Passageiros deste ônibus"
           desc="Lista filtrada apenas deste ônibus"
@@ -107,7 +106,6 @@ function OnibusDetail() {
         <NavCard
           to="/app/excursao/$id/pontos"
           params={{ id }}
-          search={{ onibus: onibusId }}
           icon={MapPinned}
           title="Pontos de embarque"
           desc="Locais de embarque exclusivos deste ônibus"
@@ -115,7 +113,6 @@ function OnibusDetail() {
         <NavCard
           to="/app/excursao/$id/financeiro"
           params={{ id }}
-          search={{ onibus: onibusId }}
           icon={Wallet}
           title="Financeiro"
           desc="Pagamentos e entradas deste ônibus"
@@ -123,7 +120,6 @@ function OnibusDetail() {
         <NavCard
           to="/app/excursao/$id/checkin"
           params={{ id }}
-          search={{ onibus: onibusId }}
           icon={QrCode}
           title="Check-in"
           desc="Embarque por QR Code deste ônibus"
