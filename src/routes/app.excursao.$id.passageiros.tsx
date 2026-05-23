@@ -365,8 +365,9 @@ function PassageirosPage() {
       {open && (
         <NewPassageiroModal
           excursaoId={id}
+          onibusId={onibusId ?? null}
           pontos={pontos}
-          totalVagas={excursao?.total_vagas ?? 0}
+          totalVagas={capacidadeEfetiva}
           taken={taken}
           seats={seats}
           onClose={() => setOpen(false)}
@@ -377,7 +378,7 @@ function PassageirosPage() {
           passageiro={editing}
           pontos={pontos}
           seats={seats}
-          totalVagas={excursao?.total_vagas ?? 0}
+          totalVagas={capacidadeEfetiva}
           taken={taken}
           saving={tripChoicesMut.isPending}
           onClose={() => setEditing(null)}
