@@ -35,6 +35,21 @@ const accents = {
   green: { border: "hover:border-neon-green/60 data-[active=true]:border-neon-green", glow: "from-neon-green/30 to-transparent", text: "text-neon-green" },
 };
 
+type CompleteSignupProfileArgs = {
+  p_full_name: string;
+  p_phone: string | null;
+  p_role: AppRole;
+};
+
+function completeSignupProfile(args: CompleteSignupProfileArgs) {
+  const rpc = supabase.rpc as unknown as (
+    fn: "complete_signup_profile",
+    rpcArgs: CompleteSignupProfileArgs,
+  ) => Promise<{ error: { message?: string } | null }>;
+
+  return rpc("complete_signup_profile", args);
+}
+
 function AuthPage() {
   const { user, loading } = useAuth();
   const { role, loading: roleLoading } = useRoleForUser(user, loading);
@@ -109,7 +124,7 @@ function AuthPage() {
           if (!loginData.user) throw new Error("Conta criada, mas não foi possível entrar automaticamente.");
         }
 
-        const { error: profileError } = await (supabase as any).rpc("complete_signup_profile", {
+        const { error: profileError } = await completeSignupProfile({
           p_full_name: fullName,
           p_phone: cleanPhone,
           p_role: selectedRole,
@@ -141,7 +156,7 @@ function AuthPage() {
 
         let userRole = rRow?.role as AppRole | undefined;
         if (!userRole) {
-          const { error: profileError } = await (supabase as any).rpc("complete_signup_profile", {
+          const { error: profileError } = await completeSignupProfile({
             p_full_name: "",
             p_phone: null,
             p_role: selectedRole,
@@ -164,8 +179,8 @@ function AuthPage() {
           navigate({ to: roleHome[userRole], replace: true });
         }
       }
-    } catch (err: any) {
-      setError(err.message ?? "Erro inesperado");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Erro inesperado");
     } finally {
       setBusy(false);
     }
