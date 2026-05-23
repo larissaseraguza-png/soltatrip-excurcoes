@@ -18,7 +18,9 @@ import {
   CheckCircle2,
   MapPinned,
   Users,
+  Bus,
 } from "lucide-react";
+
 
 export const Route = createFileRoute("/passageiro/reserva/$id")({
   component: ReservaDetalhes,
