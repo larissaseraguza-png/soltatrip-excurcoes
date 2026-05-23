@@ -8,7 +8,7 @@ export const Route = createFileRoute("/app/excursao/$id/pontos")({
   component: PontosPage,
 });
 
-type Ponto = { id: string; nome: string; horario: string | null; ordem: number };
+type Ponto = { id: string; nome: string; endereco: string | null; referencia: string | null; horario: string | null; ordem: number };
 
 function PontosPage() {
   const { id } = useParams({ from: "/app/excursao/$id/pontos" });
