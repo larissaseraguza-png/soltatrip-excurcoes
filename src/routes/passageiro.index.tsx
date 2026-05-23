@@ -270,7 +270,9 @@ function MinhasViagens() {
           <div className="glass w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl max-h-[92vh] overflow-y-auto">
             <div className="sticky top-0 bg-background/95 backdrop-blur p-5 flex items-center justify-between border-b border-border">
               <div>
-                <p className="text-xs text-muted-foreground">{step === "qtd" ? "Reservar" : "Dados dos passageiros"}</p>
+                <p className="text-xs text-muted-foreground">
+                  {step === "onibus" ? "Escolha o ônibus" : step === "qtd" ? "Reservar" : "Dados dos passageiros"}
+                </p>
                 <h3 className="font-display font-bold text-lg leading-tight">{modalEx.titulo}</h3>
               </div>
               <button onClick={() => setModalEx(null)} className="p-2 rounded-full hover:bg-muted">
@@ -278,7 +280,65 @@ function MinhasViagens() {
               </button>
             </div>
 
-            {step === "qtd" ? (
+            {step === "onibus" ? (
+              <div className="p-5 space-y-4">
+                {onibusDaExcursao.length === 0 ? (
+                  <div className="rounded-2xl bg-yellow-500/10 border border-yellow-500/30 p-4 text-sm text-yellow-200">
+                    Esta excursão ainda não tem ônibus disponíveis. Tente novamente em instantes ou contate o organizador.
+                  </div>
+                ) : (
+                  <>
+                    <p className="text-xs text-muted-foreground">Cada ônibus tem horário, vagas e ponto de saída próprios.</p>
+                    <ul className="space-y-2">
+                      {onibusDaExcursao.map((o: any) => {
+                        const usados = ocupacaoOnibus[o.id] ?? 0;
+                        const livres = Math.max(0, o.capacidade - usados);
+                        const lotado = livres <= 0;
+                        const insuficiente = !lotado && livres < qtd;
+                        const selected = onibusId === o.id;
+                        return (
+                          <li key={o.id}>
+                            <button
+                              type="button"
+                              disabled={lotado}
+                              onClick={() => setOnibusId(o.id)}
+                              className={`w-full text-left rounded-2xl p-3 border transition flex items-start gap-3 ${
+                                selected
+                                  ? "bg-neon-pink/10 border-neon-pink/60"
+                                  : lotado
+                                  ? "bg-background/30 border-border opacity-50 cursor-not-allowed"
+                                  : "bg-background/40 border-border hover:border-neon-pink/40"
+                              }`}
+                            >
+                              <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-neon-purple to-neon-pink flex items-center justify-center shrink-0">
+                                <Bus className="h-5 w-5" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="font-bold text-sm">{o.nome}</p>
+                                <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-muted-foreground mt-0.5">
+                                  {o.horario_saida && <span className="inline-flex items-center gap-1"><Clock className="h-3 w-3" />{o.horario_saida}</span>}
+                                  {o.ponto_partida && <span className="inline-flex items-center gap-1 truncate"><MapPin className="h-3 w-3" />{o.ponto_partida}</span>}
+                                </div>
+                                <p className={`text-[11px] mt-1 font-bold ${lotado ? "text-red-400" : insuficiente ? "text-yellow-400" : "text-neon-green"}`}>
+                                  {lotado ? "Lotado" : `${livres} vaga${livres === 1 ? "" : "s"} disponível${livres === 1 ? "" : "is"}`}
+                                </p>
+                              </div>
+                            </button>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </>
+                )}
+                <button
+                  onClick={() => setStep("qtd")}
+                  disabled={!onibusId}
+                  className="w-full h-12 rounded-2xl font-bold bg-primary text-primary-foreground glow-primary disabled:opacity-50"
+                >
+                  Continuar
+                </button>
+              </div>
+            ) : step === "qtd" ? (
               <div className="p-5 space-y-5">
                 <p className="text-xs text-muted-foreground">Quantas passagens?</p>
                 <div className="flex items-center justify-between bg-background/40 rounded-2xl p-3">
@@ -309,12 +369,22 @@ function MinhasViagens() {
                 <p className="text-[11px] text-muted-foreground">
                   Você é o titular. Uma única reserva é criada com pagamento consolidado e poltrona/embarque/QR Code individuais por passageiro.
                 </p>
-                <button
-                  onClick={avancarDaQtd}
-                  className="w-full h-12 rounded-2xl font-bold bg-primary text-primary-foreground glow-primary"
-                >
-                  Continuar
-                </button>
+                <div className="flex gap-2">
+                  {onibusDaExcursao.length > 0 && (
+                    <button
+                      onClick={() => setStep("onibus")}
+                      className="flex-1 h-12 rounded-2xl font-bold bg-background/40 text-muted-foreground"
+                    >
+                      Voltar
+                    </button>
+                  )}
+                  <button
+                    onClick={avancarDaQtd}
+                    className="flex-1 h-12 rounded-2xl font-bold bg-primary text-primary-foreground glow-primary"
+                  >
+                    Continuar
+                  </button>
+                </div>
               </div>
             ) : (
               <div className="p-5 space-y-4">
