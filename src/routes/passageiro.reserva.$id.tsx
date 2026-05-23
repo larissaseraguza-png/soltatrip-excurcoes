@@ -293,20 +293,77 @@ function ReservaDetalhes() {
         )}
       </div>
 
-      {/* Embarque */}
+      {/* Ponto de embarque */}
       <div className="glass rounded-3xl p-5 mb-5 border-l-4 border-neon-pink">
-        <div className="flex items-center gap-2 mb-2">
+        <div className="flex items-center gap-2 mb-3">
           <Info className="size-5 text-neon-pink" />
-          <h3 className="font-display font-bold">Embarque</h3>
+          <h3 className="font-display font-bold">Ponto de embarque</h3>
         </div>
-        <p className="text-sm font-semibold">{ex?.ponto_embarque ?? "Local a definir"}</p>
-        {ex?.horario_saida && (
-          <p className="text-xs text-muted-foreground mt-1">
-            Chegue 30 min antes · saída {ex.horario_saida}
+
+        {pontos.length === 0 ? (
+          <>
+            <p className="text-sm font-semibold">{ex?.ponto_embarque ?? "Local a definir"}</p>
+            {ex?.horario_saida && (
+              <p className="text-xs text-muted-foreground mt-1">
+                Chegue 30 min antes · saída {ex.horario_saida}
+              </p>
+            )}
+          </>
+        ) : pago === 0 ? (
+          <p className="text-sm text-muted-foreground">
+            Realize um pagamento para escolher seu ponto de embarque.
           </p>
+        ) : (
+          <>
+            <p className="text-xs text-muted-foreground mb-3">
+              {reserva.ponto_embarque_id
+                ? "Você pode trocar a qualquer momento."
+                : "Escolha onde irá embarcar:"}
+            </p>
+            <ul className="space-y-2">
+              {pontos.map((p: any) => {
+                const selected = reserva.ponto_embarque_id === p.id;
+                return (
+                  <li key={p.id}>
+                    <button
+                      onClick={() => escolherPonto(p.id)}
+                      className={`w-full text-left rounded-2xl p-3 border transition ${
+                        selected
+                          ? "border-neon-green/60 bg-neon-green/10"
+                          : "border-border bg-background/40 hover:border-neon-pink/40"
+                      }`}
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0 flex-1">
+                          <p className="font-bold text-sm truncate">{p.nome}</p>
+                          {p.endereco && (
+                            <p className="text-xs text-muted-foreground truncate">{p.endereco}</p>
+                          )}
+                          {p.referencia && (
+                            <p className="text-[11px] text-muted-foreground/80 italic mt-0.5">
+                              {p.referencia}
+                            </p>
+                          )}
+                        </div>
+                        <div className="text-right shrink-0">
+                          {p.horario && (
+                            <p className="text-xs font-bold text-neon-pink">{p.horario}</p>
+                          )}
+                          {selected && (
+                            <Pill tone="green">Selecionado</Pill>
+                          )}
+                        </div>
+                      </div>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          </>
         )}
+
         {ex?.descricao && (
-          <p className="text-sm text-muted-foreground mt-3 whitespace-pre-line">
+          <p className="text-sm text-muted-foreground mt-4 whitespace-pre-line">
             {ex.descricao}
           </p>
         )}
