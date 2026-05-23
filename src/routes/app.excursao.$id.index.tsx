@@ -116,16 +116,41 @@ function ExcursaoDetalhe() {
       </Link>
 
       <div
-        className="rounded-3xl overflow-hidden mb-6 h-40 relative glow-primary"
-        style={{ background: `linear-gradient(135deg, ${data.cor ?? "#a855f7"}, #ec4899)` }}
+        className="rounded-3xl overflow-hidden mb-6 h-48 relative glow-primary group"
+        style={
+          data.banner_url
+            ? { backgroundImage: `url(${data.banner_url})`, backgroundSize: "cover", backgroundPosition: "center" }
+            : { background: `linear-gradient(135deg, ${data.cor ?? "#a855f7"}, #ec4899)` }
+        }
       >
-        <div className="absolute inset-0 grid-bg opacity-40" />
-        <div className="absolute inset-0 bg-gradient-to-t from-background/60 to-transparent" />
+        {!data.banner_url && <div className="absolute inset-0 grid-bg opacity-40" />}
+        <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-background/20 to-transparent" />
+        <button
+          type="button"
+          onClick={() => fileRef.current?.click()}
+          disabled={busy === "upload"}
+          className="absolute top-3 right-3 inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full bg-background/70 backdrop-blur hover:bg-background/90 transition disabled:opacity-50"
+        >
+          {busy === "upload" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ImagePlus className="h-3.5 w-3.5" />}
+          {data.banner_url ? "Trocar capa" : "Adicionar capa"}
+        </button>
+        <input
+          ref={fileRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={(e) => {
+            const f = e.target.files?.[0];
+            if (f) handleBannerUpload(f);
+            e.target.value = "";
+          }}
+        />
         <div className="absolute bottom-4 left-5 right-5">
-          <span className="text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-full bg-background/40 backdrop-blur">
+          <span className="text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-full bg-background/60 backdrop-blur">
             {data.status}
           </span>
-          <h1 className="font-display text-2xl font-black mt-1 leading-tight">{data.titulo}</h1>
+          <h1 className="font-display text-2xl font-black mt-1 leading-tight drop-shadow-lg">{data.titulo}</h1>
+          <p className="text-xs text-white/90 mt-0.5 drop-shadow">{data.destino} · {new Date(data.data_evento).toLocaleDateString("pt-BR")}</p>
         </div>
       </div>
 
@@ -157,12 +182,24 @@ function ExcursaoDetalhe() {
         <NavCard to="/app/excursao/$id/equipe" id={id} icon={UserCog} title="Equipe / Staff" desc="Convidar e gerenciar staff desta excursão" />
       </div>
 
-      <button
-        onClick={handleDelete}
-        className="w-full h-11 rounded-xl border border-red-500/30 text-red-400 font-semibold hover:bg-red-500/10 transition flex items-center justify-center gap-2"
-      >
-        <Trash2 className="h-4 w-4" /> Cancelar excursão
-      </button>
+      <div className="grid grid-cols-2 gap-2">
+        {data.status !== "cancelada" && (
+          <button
+            onClick={handleCancel}
+            disabled={busy !== null}
+            className="h-11 rounded-xl border border-yellow-500/30 text-yellow-400 font-semibold hover:bg-yellow-500/10 transition flex items-center justify-center gap-2 disabled:opacity-50"
+          >
+            {busy === "cancel" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Ban className="h-4 w-4" />} Cancelar
+          </button>
+        )}
+        <button
+          onClick={handleDelete}
+          disabled={busy !== null}
+          className={`h-11 rounded-xl border border-red-500/30 text-red-400 font-semibold hover:bg-red-500/10 transition flex items-center justify-center gap-2 disabled:opacity-50 ${data.status === "cancelada" ? "col-span-2" : ""}`}
+        >
+          {busy === "delete" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />} Excluir definitivamente
+        </button>
+      </div>
     </div>
   );
 }
