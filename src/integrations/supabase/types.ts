@@ -154,6 +154,53 @@ export type Database = {
         }
         Relationships: []
       }
+      invitations: {
+        Row: {
+          created_at: string
+          created_by: string
+          excursao_id: string
+          expires_at: string
+          id: string
+          papel: string
+          token: string
+          used: boolean
+          used_at: string | null
+          used_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          excursao_id: string
+          expires_at?: string
+          id?: string
+          papel?: string
+          token?: string
+          used?: boolean
+          used_at?: string | null
+          used_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          excursao_id?: string
+          expires_at?: string
+          id?: string
+          papel?: string
+          token?: string
+          used?: boolean
+          used_at?: string | null
+          used_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invitations_excursao_id_fkey"
+            columns: ["excursao_id"]
+            isOneToOne: false
+            referencedRelation: "excursoes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       mensagens: {
         Row: {
           autor_id: string
@@ -453,6 +500,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      accept_staff_invitation: { Args: { p_token: string }; Returns: string }
       get_my_role: {
         Args: never
         Returns: Database["public"]["Enums"]["app_role"]
