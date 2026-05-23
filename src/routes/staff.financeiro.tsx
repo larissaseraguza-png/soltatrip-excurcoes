@@ -1,111 +1,190 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { StaffShell, Pill } from "@/components/staff/Shell";
-import { TrendingUp, TrendingDown, FileDown, FileSpreadsheet, Wallet, RefreshCw } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useStaffExcursao } from "@/hooks/use-staff-excursao";
+import { useRealtimeSync } from "@/hooks/use-realtime-sync";
+import { Wallet, Loader2, Lock } from "lucide-react";
 
 export const Route = createFileRoute("/staff/financeiro")({
   component: FinanceiroStaff,
 });
 
+type Reserva = {
+  id: string;
+  total_price: number;
+  amount_paid: number;
+  payment_status: string;
+  quantidade: number;
+};
+type Pagamento = {
+  id: string;
+  valor: number;
+  metodo: string;
+  status: string;
+  created_at: string;
+  passageiro_id: string | null;
+};
+
 function FinanceiroStaff() {
-  const bars = [40, 65, 55, 80, 90, 70, 95, 88, 72, 100, 85, 78];
-  const max = Math.max(...bars);
+  const { excursao, loading } = useStaffExcursao();
 
-  const cards = [
-    { label: "Arrecadado", value: "R$ 84.320", trend: "+12%", tone: "green", icon: TrendingUp },
-    { label: "Pendente", value: "R$ 12.480", trend: "-3%", tone: "yellow", icon: Wallet },
-    { label: "Despesas", value: "R$ 21.700", trend: "+5%", tone: "pink", icon: TrendingDown },
-    { label: "Lucro estimado", value: "R$ 50.140", trend: "+18%", tone: "purple", icon: TrendingUp },
-  ] as const;
+  const { data: reservas = [] } = useQuery({
+    queryKey: ["staff-fin-reservas", excursao?.id],
+    enabled: !!excursao?.id,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("reservas")
+        .select("id,total_price,amount_paid,payment_status,quantidade")
+        .eq("excursao_id", excursao!.id);
+      if (error) throw error;
+      return (data ?? []) as Reserva[];
+    },
+  });
 
-  const recentes = [
-    { who: "Lucas Pereira", method: "PIX", value: "R$ 450", time: "agora", s: "pago" },
-    { who: "Camila Reis", method: "PIX", value: "R$ 700", time: "12 min", s: "pago" },
-    { who: "Marina Souza", method: "Boleto", value: "R$ 350", time: "1h", s: "pendente" },
-    { who: "Rafa Tavares", method: "PIX", value: "R$ 700", time: "2h", s: "pago" },
-    { who: "Pedro L.", method: "PIX", value: "R$ 250", time: "3h", s: "cancelado" },
-  ] as const;
+  const { data: pagamentos = [] } = useQuery({
+    queryKey: ["staff-fin-pagamentos", excursao?.id],
+    enabled: !!excursao?.id,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("pagamentos")
+        .select("id,valor,metodo,status,created_at,passageiro_id")
+        .eq("excursao_id", excursao!.id)
+        .order("created_at", { ascending: false })
+        .limit(20);
+      if (error) throw error;
+      return (data ?? []) as Pagamento[];
+    },
+  });
+
+  const { data: passageiros = [] } = useQuery({
+    queryKey: ["staff-fin-pax", excursao?.id],
+    enabled: !!excursao?.id,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("passageiros")
+        .select("id,nome,payment_status,total_price,amount_paid")
+        .eq("excursao_id", excursao!.id);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  useRealtimeSync(
+    `staff-fin-${excursao?.id ?? "none"}`,
+    excursao?.id
+      ? [
+          { table: "reservas", filter: `excursao_id=eq.${excursao.id}` },
+          { table: "pagamentos", filter: `excursao_id=eq.${excursao.id}` },
+          { table: "passageiros", filter: `excursao_id=eq.${excursao.id}` },
+        ]
+      : [],
+    [
+      ["staff-fin-reservas", excursao?.id],
+      ["staff-fin-pagamentos", excursao?.id],
+      ["staff-fin-pax", excursao?.id],
+    ],
+  );
+
+  const totals = useMemo(() => {
+    const total = reservas.reduce((s, r) => s + Number(r.total_price || 0), 0);
+    const pago = reservas.reduce((s, r) => s + Number(r.amount_paid || 0), 0);
+    const pendente = Math.max(0, total - pago);
+    const confirmadas = reservas.filter((r) => r.payment_status === "paid").length;
+    const parciais = reservas.filter((r) => r.payment_status === "partial_payment").length;
+    const pendentesRes = reservas.filter((r) => r.payment_status === "pending_payment").length;
+    return { total, pago, pendente, confirmadas, parciais, pendentesRes };
+  }, [reservas]);
+
+  const paxById = useMemo(() => new Map((passageiros as any[]).map((p) => [p.id, p])), [passageiros]);
+  const brl = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
   return (
-    <StaffShell title="Financeiro Staff" subtitle="Controle de caixa · multi-excursão">
-      <div className="grid grid-cols-2 gap-3 mb-5">
-        {cards.map((c) => (
-          <div key={c.label} className="glass rounded-2xl p-4">
-            <c.icon className={`size-4 mb-2 ${c.tone === "green" ? "text-neon-green" : c.tone === "pink" ? "text-neon-pink" : c.tone === "yellow" ? "text-yellow-300" : "text-neon-purple"}`} />
-            <div className="text-lg font-display font-black">{c.value}</div>
-            <div className="text-[10px] text-muted-foreground uppercase tracking-wider flex items-center gap-1">
-              {c.label} <span className="text-neon-green">{c.trend}</span>
+    <StaffShell title="Financeiro (visualização)" subtitle={excursao?.titulo ?? "Sem excursão vinculada"}>
+      {loading ? (
+        <div className="flex justify-center py-16"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
+      ) : !excursao ? (
+        <div className="glass rounded-2xl p-8 text-center text-sm text-muted-foreground">
+          Nenhuma excursão ativa vinculada.
+        </div>
+      ) : (
+        <>
+          <div className="glass rounded-2xl p-3 mb-4 flex items-center gap-3 border border-yellow-400/30 bg-yellow-400/5">
+            <Lock className="size-4 text-yellow-300 shrink-0" />
+            <div className="text-[11px] text-yellow-200">
+              Somente leitura. Apenas o organizador pode confirmar ou alterar pagamentos.
             </div>
           </div>
-        ))}
-      </div>
 
-      <section className="glass rounded-2xl p-4 mb-5">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h3 className="font-display font-bold">Receita últimos 12 dias</h3>
-            <p className="text-xs text-muted-foreground">Pagamentos confirmados</p>
+          <div className="grid grid-cols-2 gap-3 mb-5">
+            <Card label="Arrecadado" value={brl(totals.pago)} tone="green" />
+            <Card label="Pendente" value={brl(totals.pendente)} tone="yellow" />
+            <Card label="Total previsto" value={brl(totals.total)} tone="purple" />
+            <Card label="Reservas pagas" value={String(totals.confirmadas)} tone="green" />
           </div>
-          <Pill tone="green">+R$ 18k</Pill>
-        </div>
-        <div className="flex items-end gap-1.5 h-32">
-          {bars.map((v, i) => (
-            <div key={i} className="flex-1 rounded-t-md bg-gradient-to-t from-neon-green/40 to-neon-purple glow-primary"
-              style={{ height: `${(v / max) * 100}%` }} />
-          ))}
-        </div>
-      </section>
 
-      <section className="mb-5">
-        <h3 className="text-xs uppercase tracking-widest text-muted-foreground mb-3">Por excursão</h3>
-        <div className="space-y-2">
-          {[
-            { name: "Tomorrowland BR", v: "R$ 42.100", p: 86 },
-            { name: "Universo Paralello", v: "R$ 28.420", p: 64 },
-            { name: "Festival Doctor Hannibal", v: "R$ 13.800", p: 38 },
-          ].map((e, i) => (
-            <div key={i} className="glass rounded-xl p-3">
-              <div className="flex justify-between mb-2">
-                <span className="text-sm font-semibold">{e.name}</span>
-                <span className="text-sm font-bold text-neon-green">{e.v}</span>
-              </div>
-              <div className="h-1.5 rounded-full bg-background/60 overflow-hidden">
-                <div className="h-full bg-gradient-to-r from-neon-green to-neon-purple glow-primary" style={{ width: `${e.p}%` }} />
-              </div>
+          <section className="mb-5">
+            <h3 className="text-xs uppercase tracking-widest text-muted-foreground mb-3">Status das reservas</h3>
+            <div className="grid grid-cols-3 gap-2">
+              <Mini label="Pagas" value={totals.confirmadas} tone="green" />
+              <Mini label="Parciais" value={totals.parciais} tone="yellow" />
+              <Mini label="Pendentes" value={totals.pendentesRes} tone="muted" />
             </div>
-          ))}
-        </div>
-      </section>
+          </section>
 
-      <section className="mb-5">
-        <h3 className="text-xs uppercase tracking-widest text-muted-foreground mb-3">Pagamentos recentes</h3>
-        <div className="glass rounded-2xl divide-y divide-border/60">
-          {recentes.map((p, i) => (
-            <div key={i} className="p-3 flex items-center gap-3">
-              <div className="size-9 rounded-xl bg-gradient-to-br from-neon-green/30 to-neon-purple/20 grid place-items-center">
-                <Wallet className="size-4 text-neon-green" />
+          <section>
+            <h3 className="text-xs uppercase tracking-widest text-muted-foreground mb-3">Pagamentos recentes</h3>
+            {pagamentos.length === 0 ? (
+              <div className="glass rounded-2xl p-6 text-center text-xs text-muted-foreground">Nenhum pagamento ainda.</div>
+            ) : (
+              <div className="glass rounded-2xl divide-y divide-border/60">
+                {pagamentos.map((p) => {
+                  const pax = p.passageiro_id ? paxById.get(p.passageiro_id) : null;
+                  return (
+                    <div key={p.id} className="p-3 flex items-center gap-3">
+                      <div className="size-9 rounded-xl bg-gradient-to-br from-neon-green/30 to-neon-purple/20 grid place-items-center">
+                        <Wallet className="size-4 text-neon-green" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-semibold truncate">{pax?.nome ?? "—"}</div>
+                        <div className="text-[10px] text-muted-foreground">
+                          {p.metodo.toUpperCase()} ·{" "}
+                          {new Date(p.created_at).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" })}
+                        </div>
+                      </div>
+                      <div className="text-sm font-bold">{brl(Number(p.valor))}</div>
+                      <Pill tone={p.status === "confirmado" ? "green" : p.status === "pendente" ? "yellow" : "red"}>
+                        {p.status}
+                      </Pill>
+                    </div>
+                  );
+                })}
               </div>
-              <div className="flex-1 min-w-0">
-                <div className="text-sm font-semibold truncate">{p.who}</div>
-                <div className="text-[10px] text-muted-foreground">{p.method} · {p.time}</div>
-              </div>
-              <div className="text-sm font-bold">{p.value}</div>
-              <Pill tone={p.s === "pago" ? "green" : p.s === "pendente" ? "yellow" : "red"}>{p.s}</Pill>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <section className="grid grid-cols-3 gap-2">
-        <button className="h-11 rounded-xl glass text-xs font-bold flex items-center justify-center gap-1.5">
-          <FileDown className="size-4" /> PDF
-        </button>
-        <button className="h-11 rounded-xl glass text-xs font-bold flex items-center justify-center gap-1.5">
-          <FileSpreadsheet className="size-4" /> Excel
-        </button>
-        <button className="h-11 rounded-xl bg-gradient-to-br from-neon-green to-neon-purple glow-primary text-primary-foreground text-xs font-bold flex items-center justify-center gap-1.5">
-          <RefreshCw className="size-4" /> Sync
-        </button>
-      </section>
+            )}
+          </section>
+        </>
+      )}
     </StaffShell>
+  );
+}
+
+function Card({ label, value, tone }: { label: string; value: string; tone: "green" | "yellow" | "purple" }) {
+  const color = tone === "green" ? "text-neon-green" : tone === "yellow" ? "text-yellow-300" : "text-neon-purple";
+  return (
+    <div className="glass rounded-2xl p-4">
+      <div className={`text-lg font-display font-black ${color}`}>{value}</div>
+      <div className="text-[10px] text-muted-foreground uppercase tracking-wider">{label}</div>
+    </div>
+  );
+}
+
+function Mini({ label, value, tone }: { label: string; value: number; tone: "green" | "yellow" | "muted" }) {
+  const color = tone === "green" ? "text-neon-green" : tone === "yellow" ? "text-yellow-300" : "text-muted-foreground";
+  return (
+    <div className="glass rounded-2xl p-3 text-center">
+      <div className={`text-xl font-display font-black ${color}`}>{value}</div>
+      <div className="text-[10px] text-muted-foreground uppercase">{label}</div>
+    </div>
   );
 }
