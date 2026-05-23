@@ -101,7 +101,7 @@ function Poltrona() {
             Sua escolha está salva. Apenas o excursionista pode alterar.
           </p>
           <button
-            onClick={() => navigate({ to: "/passageiro/reserva/$id", params: { id: reserva.id } })}
+            onClick={() => navigate({ to: "/passageiro/reserva/$id", params: { id: (reserva as any).reserva_id ?? reserva.id } })}
             className="mt-5 w-full h-12 rounded-2xl font-bold bg-primary text-primary-foreground glow-primary"
           >
             Voltar para a reserva
