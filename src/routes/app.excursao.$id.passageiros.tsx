@@ -514,6 +514,7 @@ function EditChoicesModal({
 
 function NewPassageiroModal({
   excursaoId,
+  onibusId,
   pontos,
   totalVagas,
   taken,
@@ -521,6 +522,7 @@ function NewPassageiroModal({
   onClose,
 }: {
   excursaoId: string;
+  onibusId: string | null;
   pontos: Ponto[];
   totalVagas: number;
   taken: Record<string, { pago: boolean; nome: string }>;
@@ -571,6 +573,7 @@ function NewPassageiroModal({
       p_payment_status: form.payment_status,
       p_status: form.status,
       p_observacao_interna: form.observacao_interna || null,
+      p_onibus_id: onibusId,
     });
     setSaving(false);
     if (error) {
