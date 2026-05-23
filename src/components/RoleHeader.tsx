@@ -1,12 +1,15 @@
 import { Link, useNavigate } from "@tanstack/react-router";
+import { useQueryClient } from "@tanstack/react-query";
 import { Bus, LogOut, UserCircle2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { roleHome, type AppRole } from "@/hooks/use-role";
 
 export function RoleHeader({ role, label }: { role: AppRole; label: string }) {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   async function logout() {
     await supabase.auth.signOut();
+    queryClient.clear();
     navigate({ to: "/auth" });
   }
   return (
@@ -27,6 +30,7 @@ export function RoleHeader({ role, label }: { role: AppRole; label: string }) {
             onClick={async (e) => {
               e.preventDefault();
               await supabase.auth.signOut();
+              queryClient.clear();
               navigate({ to: "/auth" });
             }}
             className="hidden sm:inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition"
