@@ -107,7 +107,7 @@ function PassageirosPage() {
   });
 
   useRealtimeSync(
-    `excursao-${id}`,
+    `excursao-${id}-${onibusId ?? "all"}`,
     [
       { table: "passageiros", filter: `excursao_id=eq.${id}` },
       { table: "pagamentos", filter: `excursao_id=eq.${id}` },
@@ -116,10 +116,10 @@ function PassageirosPage() {
       { table: "reservas", filter: `excursao_id=eq.${id}` },
     ],
     [
-      ["passageiros", id],
-      ["pagamentos", id],
-      ["seats", id],
-      ["pontos", id],
+      ["passageiros", id, onibusId ?? null],
+      ["pagamentos", id, onibusId ?? null],
+      ["seats", id, onibusId ?? null],
+      ["pontos", id, onibusId ?? null],
       ["pontos-counts", id],
       ["excursao", id],
     ],
@@ -130,7 +130,7 @@ function PassageirosPage() {
       await supabase.from("passageiros").delete().eq("id", pid);
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["passageiros", id] });
+      qc.invalidateQueries({ queryKey: ["passageiros", id, onibusId ?? null] });
       qc.invalidateQueries({ queryKey: ["pontos-counts", id] });
     },
   });
@@ -139,7 +139,7 @@ function PassageirosPage() {
     mutationFn: async ({ pid, status }: { pid: string; status: string }) => {
       await supabase.from("passageiros").update({ status }).eq("id", pid);
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["passageiros", id] }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["passageiros", id, onibusId ?? null] }),
   });
 
   const tripChoicesMut = useMutation({
