@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Shell, Pill } from "@/components/passageiro/Shell";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { useRealtimeSync } from "@/hooks/use-realtime-sync";
 import {
   Calendar,
   MapPin,
@@ -111,6 +112,28 @@ function ReservaDetalhes() {
       return data ?? [];
     },
   });
+
+  useRealtimeSync(
+    `reserva-${id}`,
+    [
+      { table: "reservas", filter: `id=eq.${id}` },
+      { table: "passageiros", filter: `reserva_id=eq.${id}` },
+      { table: "pagamentos", filter: `reserva_id=eq.${id}` },
+      ...(reserva?.excursao?.id
+        ? [
+            { table: "seats", filter: `excursao_id=eq.${reserva.excursao.id}` },
+            { table: "pontos_embarque", filter: `excursao_id=eq.${reserva.excursao.id}` },
+          ]
+        : []),
+    ],
+    [
+      ["reserva-grupo", id, user?.id],
+      ["reserva-passageiros", id],
+      ["reserva-pagamentos", id],
+      ["reserva-seats", reserva?.excursao?.id],
+      ["reserva-pontos", reserva?.excursao?.id],
+    ],
+  );
 
   if (authLoading || isLoading) {
     return (

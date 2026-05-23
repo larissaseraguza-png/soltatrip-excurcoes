@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Shell, Pill } from "@/components/passageiro/Shell";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { useRealtimeSync } from "@/hooks/use-realtime-sync";
 import { Calendar, MapPin, Loader2, Sparkles, Ticket, Compass, X, Plus, Minus, Users } from "lucide-react";
 
 export const Route = createFileRoute("/passageiro/")({
@@ -68,6 +69,17 @@ function MinhasViagens() {
       return (data ?? []) as Excursao[];
     },
   });
+  useRealtimeSync(
+    `minhas-reservas-${user?.id ?? "anon"}`,
+    user
+      ? [
+          { table: "reservas", filter: `comprador_id=eq.${user.id}` },
+          { table: "passageiros", filter: `user_id=eq.${user.id}` },
+        ]
+      : [],
+    [["minhas-reservas", user?.id]],
+  );
+
 
   function openReserva(ex: Excursao) {
     setModalEx(ex);

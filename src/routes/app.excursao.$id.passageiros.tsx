@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft, Plus, Loader2, Trash2, QrCode, UserCheck, Search, MapPin, Armchair } from "lucide-react";
 import { useState, useMemo } from "react";
 import { SeatMap } from "@/components/SeatMap";
+import { useRealtimeSync } from "@/hooks/use-realtime-sync";
 
 export const Route = createFileRoute("/app/excursao/$id/passageiros")({
   component: PassageirosPage,
@@ -70,6 +71,24 @@ function PassageirosPage() {
       return data as Passageiro[];
     },
   });
+
+  useRealtimeSync(
+    `excursao-${id}`,
+    [
+      { table: "passageiros", filter: `excursao_id=eq.${id}` },
+      { table: "pagamentos", filter: `excursao_id=eq.${id}` },
+      { table: "seats", filter: `excursao_id=eq.${id}` },
+      { table: "pontos_embarque", filter: `excursao_id=eq.${id}` },
+      { table: "reservas", filter: `excursao_id=eq.${id}` },
+    ],
+    [
+      ["passageiros", id],
+      ["pagamentos", id],
+      ["pontos", id],
+      ["pontos-counts", id],
+      ["excursao", id],
+    ],
+  );
 
   const removeMut = useMutation({
     mutationFn: async (pid: string) => {
