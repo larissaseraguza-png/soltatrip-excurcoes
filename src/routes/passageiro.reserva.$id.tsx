@@ -270,22 +270,40 @@ function ReservaDetalhes() {
         )}
       </div>
 
-      {/* QR Code */}
+      {/* QR Code — só aparece após pagamento total */}
       <div className="glass rounded-3xl p-5 mb-5 text-center">
         <div className="flex items-center justify-center gap-2 mb-3">
           <QrCode className="size-5 text-neon-pink" />
           <h3 className="font-display font-bold">QR Code de embarque</h3>
         </div>
-        <div className="mx-auto w-60 h-60 rounded-3xl bg-white p-3 grid place-items-center">
-          <img src={qrUrl} alt="QR Code da reserva" className="w-full h-full" />
-        </div>
-        <p className="mt-3 text-xs text-muted-foreground tracking-widest font-mono">
-          {qrPayload}
-        </p>
-        {reserva.embarcado_em && (
-          <p className="mt-2 text-xs text-neon-green">
-            ✓ Embarcado em {new Date(reserva.embarcado_em).toLocaleString("pt-BR")}
-          </p>
+        {status === "paid" ? (
+          <>
+            <div className="mx-auto w-60 h-60 rounded-3xl bg-white p-3 grid place-items-center">
+              <img src={qrUrl} alt="QR Code da reserva" className="w-full h-full" />
+            </div>
+            <p className="mt-3 text-xs text-muted-foreground tracking-widest font-mono">
+              {qrPayload}
+            </p>
+            {reserva.embarcado_em && (
+              <p className="mt-2 text-xs text-neon-green">
+                ✓ Embarcado em {new Date(reserva.embarcado_em).toLocaleString("pt-BR")}
+              </p>
+            )}
+          </>
+        ) : (
+          <div className="py-8">
+            <div className="mx-auto w-60 h-60 rounded-3xl bg-muted/30 border-2 border-dashed border-border grid place-items-center">
+              <div className="text-center px-4">
+                <QrCode className="size-10 mx-auto text-muted-foreground/40 mb-2" />
+                <p className="text-xs text-muted-foreground">
+                  Disponível após pagamento total
+                </p>
+                <p className="text-[11px] text-muted-foreground/70 mt-1">
+                  Restante: {brl(restante)}
+                </p>
+              </div>
+            </div>
+          </div>
         )}
       </div>
 
