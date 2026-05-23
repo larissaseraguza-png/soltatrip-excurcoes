@@ -36,6 +36,7 @@ type Seat = { id: string; seat_number: string; occupied: boolean; passageiro_id:
 
 function PassageirosPage() {
   const { id } = useParams({ from: "/app/excursao/$id/passageiros" });
+  const { onibus: onibusId } = useSearch({ from: "/app/excursao/$id/passageiros" });
   const qc = useQueryClient();
   const [search, setSearch] = useState("");
   const [pontoFilter, setPontoFilter] = useState<string>("todos");
@@ -52,47 +53,54 @@ function PassageirosPage() {
     },
   });
 
-  const { data: pagamentos = [] } = useQuery({
-    queryKey: ["pagamentos", id],
+  const { data: onibusInfo } = useQuery({
+    queryKey: ["onibus-info", onibusId],
+    enabled: !!onibusId,
     queryFn: async () => {
-      const { data } = await supabase.from("pagamentos").select("passageiro_id,status").eq("excursao_id", id);
+      const { data } = await supabase.from("onibus").select("id,nome,capacidade").eq("id", onibusId!).maybeSingle();
+      return data;
+    },
+  });
+
+  const capacidadeEfetiva = onibusId ? onibusInfo?.capacidade ?? 0 : excursao?.total_vagas ?? 0;
+
+  const { data: pagamentos = [] } = useQuery({
+    queryKey: ["pagamentos", id, onibusId ?? null],
+    queryFn: async () => {
+      let q = supabase.from("pagamentos").select("passageiro_id,status").eq("excursao_id", id);
+      if (onibusId) q = q.eq("onibus_id", onibusId);
+      const { data } = await q;
       return data ?? [];
     },
   });
 
   const { data: pontos = [] } = useQuery({
-    queryKey: ["pontos", id],
+    queryKey: ["pontos", id, onibusId ?? null],
     queryFn: async () => {
-      const { data } = await supabase
-        .from("pontos_embarque")
-        .select("id, nome, horario")
-        .eq("excursao_id", id)
-        .order("ordem", { ascending: true });
+      let q = supabase.from("pontos_embarque").select("id, nome, horario").eq("excursao_id", id);
+      if (onibusId) q = q.or(`onibus_id.eq.${onibusId},onibus_id.is.null`);
+      const { data } = await q.order("ordem", { ascending: true });
       return (data ?? []) as Ponto[];
     },
   });
 
   const { data: seats = [] } = useQuery({
-    queryKey: ["seats", id],
+    queryKey: ["seats", id, onibusId ?? null],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("seats")
-        .select("id, seat_number, occupied, passageiro_id")
-        .eq("excursao_id", id)
-        .order("seat_number");
+      let q = supabase.from("seats").select("id, seat_number, occupied, passageiro_id").eq("excursao_id", id);
+      if (onibusId) q = q.eq("onibus_id", onibusId);
+      const { data, error } = await q.order("seat_number");
       if (error) throw error;
       return (data ?? []).sort((a, b) => Number(a.seat_number) - Number(b.seat_number)) as Seat[];
     },
   });
 
   const { data: passageiros = [], isLoading } = useQuery({
-    queryKey: ["passageiros", id],
+    queryKey: ["passageiros", id, onibusId ?? null],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("passageiros")
-        .select("*")
-        .eq("excursao_id", id)
-        .order("created_at", { ascending: false });
+      let q = supabase.from("passageiros").select("*").eq("excursao_id", id);
+      if (onibusId) q = q.eq("onibus_id", onibusId);
+      const { data, error } = await q.order("created_at", { ascending: false });
       if (error) throw error;
       return data as Passageiro[];
     },
