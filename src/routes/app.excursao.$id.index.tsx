@@ -1,7 +1,10 @@
 import { createFileRoute, Link, useParams, useNavigate } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, Calendar, MapPin, Clock, Users, DollarSign, Loader2, Trash2, ChevronRight, Wallet, QrCode, MessageCircle, MapPinned, UserCog } from "lucide-react";
+import { useAuth } from "@/hooks/use-auth";
+import { useRealtimeSync } from "@/hooks/use-realtime-sync";
+import { ArrowLeft, Calendar, MapPin, Clock, Users, DollarSign, Loader2, Trash2, ChevronRight, Wallet, QrCode, MessageCircle, MapPinned, UserCog, Ban, ImagePlus } from "lucide-react";
 
 export const Route = createFileRoute("/app/excursao/$id/")({
   component: ExcursaoDetalhe,
