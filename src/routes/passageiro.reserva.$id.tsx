@@ -1,23 +1,16 @@
 import { createFileRoute, Link, useNavigate, useParams } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
 import { Shell, Pill } from "@/components/passageiro/Shell";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
-import {
-  Calendar,
-  MapPin,
-  Loader2,
-  Armchair,
-  Wallet,
-  Clock,
-  QrCode,
-  MessageCircle,
-  Info,
-} from "lucide-react";
+import { Calendar, MapPin, Loader2, Armchair, Wallet, Clock, QrCode, Copy, CheckCircle2, MapPinned, Users } from "lucide-react";
 
 export const Route = createFileRoute("/passageiro/reserva/$id")({
   component: ReservaDetalhes,
 });
+
+const PIX_KEY = "soltatrip@pix.com.br";
 
 function brl(v: number) {
   return v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -29,47 +22,47 @@ function ReservaDetalhes() {
   const navigate = useNavigate();
   const qc = useQueryClient();
 
+  const [metodo, setMetodo] = useState<"pix" | "pix_parcelado" | "debito" | "credito">("pix");
+  const [valor, setValor] = useState<string>("");
+  const [submitting, setSubmitting] = useState(false);
+  const [copied, setCopied] = useState(false);
+
   const { data: reserva, isLoading } = useQuery({
-    queryKey: ["reserva-detalhe", id, user?.id],
+    queryKey: ["reserva-grupo", id, user?.id],
     enabled: !!user,
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("passageiros")
-        .select(
-          "id, nome, email, status, qr_code, total_price, amount_paid, payment_status, seat_id, assento, embarcado_em, ponto_embarque_id, convite_token, user_id, comprador_id, excursao:excursoes(id,titulo,destino,data_evento,horario_saida,horario_retorno,ponto_embarque,descricao,cor,banner_url,preco)"
-        )
+        .from("reservas")
+        .select("id, quantidade, total_price, amount_paid, payment_status, comprador_id, excursao:excursoes(id,titulo,destino,data_evento,horario_saida,horario_retorno,cor,banner_url,preco)")
         .eq("id", id)
-        .or(`user_id.eq.${user!.id},comprador_id.eq.${user!.id}`)
         .maybeSingle();
       if (error) throw error;
       return data as any;
     },
   });
 
-  const { data: seat } = useQuery({
-    queryKey: ["reserva-seat", reserva?.seat_id],
-    enabled: !!reserva?.seat_id,
+  const { data: passageiros = [], refetch: refetchPax } = useQuery({
+    queryKey: ["reserva-passageiros", id],
+    enabled: !!reserva,
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("seats")
-        .select("seat_number")
-        .eq("id", reserva!.seat_id)
-        .maybeSingle();
+        .from("passageiros")
+        .select("id, nome, email, status, qr_code, seat_id, assento, ponto_embarque_id, convite_token, user_id, embarcado_em")
+        .eq("reserva_id", id)
+        .order("created_at", { ascending: true });
       if (error) throw error;
-      return data;
+      return data ?? [];
     },
   });
 
-  const { data: mensagens = [] } = useQuery({
-    queryKey: ["reserva-mensagens", reserva?.excursao?.id],
+  const { data: seats = [] } = useQuery({
+    queryKey: ["reserva-seats", reserva?.excursao?.id],
     enabled: !!reserva?.excursao?.id,
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("mensagens")
-        .select("id, autor_nome, conteudo, created_at")
-        .eq("excursao_id", reserva!.excursao.id)
-        .order("created_at", { ascending: false })
-        .limit(5);
+        .from("seats")
+        .select("id, seat_number")
+        .eq("excursao_id", reserva!.excursao.id);
       if (error) throw error;
       return data ?? [];
     },
@@ -89,44 +82,34 @@ function ReservaDetalhes() {
     },
   });
 
-  async function escolherPonto(pontoId: string) {
-    if (!reserva) return;
-    if (reserva.ponto_embarque_id) {
-      alert("Ponto de embarque já confirmado. Fale com o excursionista para alterar.");
-      return;
-    }
-    const { error } = await supabase
-      .from("passageiros")
-      .update({ ponto_embarque_id: pontoId })
-      .eq("id", reserva.id);
-    if (error) {
-      alert(error.message);
-      return;
-    }
-    qc.invalidateQueries({ queryKey: ["reserva-detalhe", id] });
-  }
+  const { data: pagamentos = [] } = useQuery({
+    queryKey: ["reserva-pagamentos", id],
+    enabled: !!reserva,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("pagamentos")
+        .select("id, valor, metodo, status, parcelas, created_at")
+        .eq("reserva_id", id)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
 
   if (isLoading) {
     return (
-      <Shell back="/passageiro" title="Detalhes da reserva">
-        <div className="flex justify-center py-20">
-          <Loader2 className="size-6 animate-spin text-primary" />
-        </div>
+      <Shell back="/passageiro" title="Reserva">
+        <div className="flex justify-center py-20"><Loader2 className="size-6 animate-spin text-primary" /></div>
       </Shell>
     );
   }
 
   if (!reserva) {
     return (
-      <Shell back="/passageiro" title="Detalhes da reserva">
+      <Shell back="/passageiro" title="Reserva">
         <div className="glass rounded-3xl p-10 text-center">
           <p className="text-sm text-muted-foreground">Reserva não encontrada.</p>
-          <Link
-            to="/passageiro"
-            className="mt-4 inline-flex rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"
-          >
-            Voltar
-          </Link>
+          <Link to="/passageiro" className="mt-4 inline-flex rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground">Voltar</Link>
         </div>
       </Shell>
     );
@@ -138,7 +121,7 @@ function ReservaDetalhes() {
   const restante = Math.max(0, total - pago);
   const pct = total > 0 ? Math.min(100, Math.round((pago / total) * 100)) : 0;
   const status = reserva.payment_status as string;
-  const seatLabel = seat?.seat_number ?? reserva.assento ?? null;
+  const isComprador = reserva.comprador_id === user?.id;
 
   const statusMap: Record<string, { tone: any; label: string }> = {
     pending_payment: { tone: "yellow", label: "Aguardando pagamento" },
@@ -148,123 +131,87 @@ function ReservaDetalhes() {
   };
   const s = statusMap[status] ?? statusMap.pending_payment;
 
-  const qrPayload = reserva.qr_code || reserva.id;
-  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(
-    qrPayload
-  )}`;
+  async function pagar() {
+    const v = Number(valor.replace(",", "."));
+    if (!v || v <= 0) return alert("Informe um valor válido");
+    if (v > restante + 0.001) return alert(`Valor máximo: ${brl(restante)}`);
+    setSubmitting(true);
+    try {
+      const { error } = await supabase.from("pagamentos").insert({
+        reserva_id: reserva.id,
+        excursao_id: ex.id,
+        valor: v,
+        metodo,
+        parcelas: 1,
+        status: "confirmado",
+        pago_em: new Date().toISOString(),
+      } as any);
+      if (error) throw error;
+      setValor("");
+      qc.invalidateQueries({ queryKey: ["reserva-grupo", id] });
+      qc.invalidateQueries({ queryKey: ["reserva-pagamentos", id] });
+      qc.invalidateQueries({ queryKey: ["reserva-passageiros", id] });
+    } catch (err: any) {
+      alert(err.message ?? "Erro");
+    } finally {
+      setSubmitting(false);
+    }
+  }
 
-  const pontoEscolhido = reserva.ponto_embarque_id
-    ? (pontos as any[]).find((p: any) => p.id === reserva.ponto_embarque_id)
-    : null;
+  async function escolherPonto(paxId: string, pontoId: string) {
+    const { error } = await supabase.from("passageiros").update({ ponto_embarque_id: pontoId }).eq("id", paxId);
+    if (error) return alert(error.message);
+    refetchPax();
+  }
+
+  function copyInvite(token: string) {
+    const url = `${window.location.origin}/invite/passageiro/${token}`;
+    navigator.clipboard.writeText(url);
+    alert("Link de convite copiado!");
+  }
 
   return (
-    <Shell back="/passageiro" title="Detalhes da reserva" subtitle={ex?.titulo}>
+    <Shell back="/passageiro" title="Reserva" subtitle={ex?.titulo}>
       {/* Banner */}
       <div className="relative rounded-3xl overflow-hidden mb-5 glow-primary">
         <div
-          className="h-44 relative"
+          className="h-40 relative"
           style={{
-            background: ex?.banner_url
-              ? `url(${ex.banner_url}) center/cover`
-              : `linear-gradient(135deg, ${ex?.cor ?? "#a855f7"}, #ec4899)`,
+            background: ex?.banner_url ? `url(${ex.banner_url}) center/cover` : `linear-gradient(135deg, ${ex?.cor ?? "#a855f7"}, #ec4899)`,
           }}
         >
           <div className="absolute inset-0 grid-bg opacity-30" />
           <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent" />
           <div className="absolute bottom-3 left-4 right-4">
             <Pill tone={s.tone}>{s.label}</Pill>
-            <h1 className="font-display font-black text-2xl mt-2 leading-tight">
-              {ex?.titulo}
-            </h1>
+            <h1 className="font-display font-black text-2xl mt-2 leading-tight">{ex?.titulo}</h1>
           </div>
         </div>
       </div>
 
-      {/* Painel de embarque consolidado — só quando quitado */}
-      {status === "paid" && (
-        <div className="rounded-3xl overflow-hidden mb-5 border border-neon-green/40 bg-gradient-to-br from-neon-green/10 via-background to-neon-purple/10 glow-primary">
-          <div className="px-5 py-3 bg-neon-green/15 border-b border-neon-green/30 flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-widest text-neon-green">
-              ✓ Pagamento confirmado
-            </span>
-            <span className="text-[10px] text-muted-foreground font-mono">
-              #{(reserva.qr_code || reserva.id).slice(0, 8).toUpperCase()}
-            </span>
-          </div>
-
-          <div className="p-5 text-center">
-            <div className="mx-auto w-56 h-56 rounded-2xl bg-white p-3 grid place-items-center">
-              <img src={qrUrl} alt="QR Code de embarque" className="w-full h-full" />
-            </div>
-            <p className="mt-3 text-[11px] text-muted-foreground tracking-widest font-mono break-all">
-              {qrPayload}
-            </p>
-            <p className="mt-1 text-xs font-bold text-neon-green">
-              {reserva.nome}
-            </p>
-          </div>
-
-          <div className="grid grid-cols-2 gap-px bg-border/60">
-            <Field label="Poltrona" value={seatLabel ?? "—"} big />
-            <Field
-              label="Saída"
-              value={ex?.horario_saida ?? "—"}
-              hint={ex?.data_evento ? new Date(ex.data_evento).toLocaleDateString("pt-BR") : ""}
-            />
-            <Field
-              label="Embarque"
-              value={pontoEscolhido?.nome ?? ex?.ponto_embarque ?? "A definir"}
-              hint={pontoEscolhido?.referencia ?? ""}
-              full
-            />
-            <Field
-              label="Endereço"
-              value={pontoEscolhido?.endereco ?? "—"}
-              full
-            />
-            <Field
-              label="Horário do embarque"
-              value={pontoEscolhido?.horario ?? ex?.horario_saida ?? "—"}
-              full
-            />
-          </div>
-
-          {reserva.embarcado_em && (
-            <div className="px-5 py-3 bg-neon-green/10 text-center text-xs text-neon-green border-t border-neon-green/30">
-              ✓ Embarcado em {new Date(reserva.embarcado_em).toLocaleString("pt-BR")}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Resumo */}
+      {/* Resumo da excursão */}
       <div className="grid grid-cols-2 gap-3 mb-5">
         <Info4 icon={Calendar} label="Data" value={ex?.data_evento ? new Date(ex.data_evento).toLocaleDateString("pt-BR") : "—"} />
         <Info4 icon={MapPin} label="Destino" value={ex?.destino ?? "—"} />
         <Info4 icon={Clock} label="Saída" value={ex?.horario_saida ?? "—"} />
-        <Info4 icon={Clock} label="Retorno" value={ex?.horario_retorno ?? "—"} />
+        <Info4 icon={Users} label="Passageiros" value={String(reserva.quantidade)} />
       </div>
 
-      {/* Pagamento */}
+      {/* Pagamento consolidado */}
       <div className="glass rounded-3xl p-5 mb-5">
         <div className="flex items-center gap-2 mb-3">
           <Wallet className="size-5 text-neon-green" />
-          <h3 className="font-display font-bold">Pagamento</h3>
+          <h3 className="font-display font-bold">Pagamento da reserva</h3>
         </div>
         <div className="flex items-end justify-between">
           <div>
-            <p className="text-xs text-muted-foreground">Total da viagem</p>
-            <p className="font-display font-black text-3xl bg-gradient-to-r from-neon-pink to-neon-green bg-clip-text text-transparent">
-              {brl(total)}
-            </p>
+            <p className="text-xs text-muted-foreground">Total ({reserva.quantidade} × {brl(Number(ex?.preco) || 0)})</p>
+            <p className="font-display font-black text-3xl bg-gradient-to-r from-neon-pink to-neon-green bg-clip-text text-transparent">{brl(total)}</p>
           </div>
           <Pill tone={s.tone}>{pct}%</Pill>
         </div>
         <div className="mt-3 h-2 rounded-full bg-muted overflow-hidden">
-          <div
-            className="h-full bg-gradient-to-r from-neon-purple to-neon-green transition-all"
-            style={{ width: `${pct}%` }}
-          />
+          <div className="h-full bg-gradient-to-r from-neon-purple to-neon-green transition-all" style={{ width: `${pct}%` }} />
         </div>
         <div className="grid grid-cols-2 gap-3 mt-4 text-sm">
           <div className="bg-background/40 rounded-2xl p-3">
@@ -276,262 +223,226 @@ function ReservaDetalhes() {
             <p className="font-bold">{brl(restante)}</p>
           </div>
         </div>
-        {status !== "paid" && status !== "cancelled" && (
-          <button
-            onClick={() =>
-              navigate({
-                to: "/passageiro/pagamentos",
-                search: { reserva: reserva.id } as any,
-              })
-            }
-            className="mt-4 w-full h-12 rounded-2xl font-bold bg-primary text-primary-foreground glow-primary"
-          >
-            {pago > 0 ? "Continuar pagando" : "Pagar agora"}
-          </button>
-        )}
-      </div>
 
-      {/* Convite (passageiro adicional ainda não vinculado) */}
-      {reserva.convite_token && reserva.comprador_id === user?.id && reserva.user_id !== user?.id && (
-        <div className="glass rounded-3xl p-5 mb-5 border-l-4 border-neon-purple">
-          <h3 className="font-display font-bold mb-1">Link para {reserva.nome}</h3>
-          <p className="text-xs text-muted-foreground mb-3">
-            Compartilhe para que o passageiro acesse a própria reserva e QR Code.
-          </p>
-          <button
-            onClick={() => {
-              const url = `${window.location.origin}/invite/passageiro/${reserva.convite_token}`;
-              navigator.clipboard.writeText(url);
-              alert("Link copiado!");
-            }}
-            className="w-full h-11 rounded-2xl font-semibold bg-neon-purple/20 text-neon-purple border border-neon-purple/40"
-          >
-            Copiar link de convite
-          </button>
-        </div>
-      )}
-
-      {/* Poltrona */}
-      <div className="glass rounded-3xl p-5 mb-5">
-        <div className="flex items-center gap-2 mb-3">
-          <Armchair className="size-5 text-neon-purple" />
-          <h3 className="font-display font-bold">Sua poltrona</h3>
-        </div>
-        {seatLabel ? (
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs text-muted-foreground">Número</p>
-              <p className="font-display font-black text-3xl">{seatLabel}</p>
-              <p className="text-[11px] text-muted-foreground mt-1">
-                Poltrona confirmada · só o excursionista pode alterar
-              </p>
+        {/* Form pagamento */}
+        {isComprador && restante > 0 && status !== "cancelled" && (
+          <div className="mt-5 pt-5 border-t border-border space-y-3">
+            <p className="text-xs text-muted-foreground">Método</p>
+            <div className="grid grid-cols-2 gap-2">
+              {[
+                { v: "pix", l: "PIX total" },
+                { v: "pix_parcelado", l: "PIX fracionado" },
+                { v: "debito", l: "Débito" },
+                { v: "credito", l: "Crédito" },
+              ].map((m) => (
+                <button
+                  key={m.v}
+                  onClick={() => {
+                    setMetodo(m.v as any);
+                    if (m.v === "pix") setValor(restante.toFixed(2));
+                  }}
+                  className={`py-2.5 rounded-xl text-xs font-bold transition ${
+                    metodo === m.v ? "bg-gradient-to-br from-neon-purple/30 to-neon-pink/20 text-neon-pink border border-neon-pink/40" : "bg-background/40 text-muted-foreground"
+                  }`}
+                >
+                  {m.l}
+                </button>
+              ))}
             </div>
+
+            <input
+              inputMode="decimal"
+              value={valor}
+              onChange={(e) => setValor(e.target.value)}
+              placeholder={`Valor (máx ${restante.toFixed(2)})`}
+              className="w-full h-12 rounded-xl bg-background/40 px-4 text-sm"
+            />
+
+            {(metodo === "pix" || metodo === "pix_parcelado") && (
+              <div className="bg-background/50 rounded-2xl px-4 py-3 flex items-center justify-between">
+                <code className="text-sm font-mono truncate">{PIX_KEY}</code>
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(PIX_KEY);
+                    setCopied(true);
+                    setTimeout(() => setCopied(false), 1500);
+                  }}
+                  className="ml-2 size-9 grid place-items-center rounded-xl bg-gradient-to-br from-neon-purple to-neon-pink text-primary-foreground"
+                >
+                  <Copy className="size-4" />
+                </button>
+              </div>
+            )}
+            {copied && <p className="text-xs text-neon-green">Chave copiada!</p>}
+
+            <button
+              onClick={pagar}
+              disabled={submitting}
+              className="w-full h-12 rounded-2xl font-bold bg-primary text-primary-foreground glow-primary disabled:opacity-50 inline-flex items-center justify-center gap-2"
+            >
+              {submitting && <Loader2 className="size-4 animate-spin" />}
+              Confirmar pagamento
+            </button>
           </div>
-        ) : (
-          <>
-            <p className="text-sm text-muted-foreground mb-3">
-              {pago > 0
-                ? "Você ainda não escolheu sua poltrona."
-                : "Realize um pagamento para liberar a escolha de poltrona."}
-            </p>
-            {pago > 0 && (
-              <button
-                onClick={() =>
-                  navigate({
-                    to: "/passageiro/poltrona",
-                    search: { reserva: reserva.id } as any,
-                  })
-                }
-                className="w-full h-12 rounded-2xl font-bold bg-gradient-to-r from-neon-purple to-neon-pink text-primary-foreground glow-primary"
-              >
-                Escolher poltrona
-              </button>
-            )}
-          </>
+        )}
+
+        {pagamentos.length > 0 && (
+          <details className="mt-4">
+            <summary className="text-xs text-muted-foreground cursor-pointer">Histórico ({pagamentos.length})</summary>
+            <div className="space-y-2 mt-2">
+              {pagamentos.map((p: any) => (
+                <div key={p.id} className="flex items-center justify-between text-xs bg-background/30 rounded-xl p-2">
+                  <span className="flex items-center gap-1.5"><CheckCircle2 className="size-3 text-neon-green" /> {String(p.metodo).replace("_", " ")}</span>
+                  <span className="font-bold">{brl(Number(p.valor))}</span>
+                </div>
+              ))}
+            </div>
+          </details>
         )}
       </div>
 
-      {/* QR Code — só aparece após pagamento total */}
-      <div className="glass rounded-3xl p-5 mb-5 text-center">
-        <div className="flex items-center justify-center gap-2 mb-3">
-          <QrCode className="size-5 text-neon-pink" />
-          <h3 className="font-display font-bold">QR Code de embarque</h3>
-        </div>
-        {status === "paid" ? (
-          <>
-            <div className="mx-auto w-60 h-60 rounded-3xl bg-white p-3 grid place-items-center">
-              <img src={qrUrl} alt="QR Code da reserva" className="w-full h-full" />
-            </div>
-            <p className="mt-3 text-xs text-muted-foreground tracking-widest font-mono">
-              {qrPayload}
-            </p>
-            {reserva.embarcado_em && (
-              <p className="mt-2 text-xs text-neon-green">
-                ✓ Embarcado em {new Date(reserva.embarcado_em).toLocaleString("pt-BR")}
-              </p>
-            )}
-          </>
-        ) : (
-          <div className="py-8">
-            <div className="mx-auto w-60 h-60 rounded-3xl bg-muted/30 border-2 border-dashed border-border grid place-items-center">
-              <div className="text-center px-4">
-                <QrCode className="size-10 mx-auto text-muted-foreground/40 mb-2" />
-                <p className="text-xs text-muted-foreground">
-                  Disponível após pagamento total
-                </p>
-                <p className="text-[11px] text-muted-foreground/70 mt-1">
-                  Restante: {brl(restante)}
-                </p>
+      {/* Lista de passageiros */}
+      <h2 className="font-display font-bold text-lg mb-3 flex items-center gap-2">
+        <Users className="size-5 text-neon-pink" /> Passageiros
+      </h2>
+      <div className="space-y-4">
+        {passageiros.map((p: any, idx: number) => {
+          const seat = (seats as any[]).find((s) => s.id === p.seat_id);
+          const seatLabel = seat?.seat_number ?? p.assento ?? null;
+          const ponto = (pontos as any[]).find((pt) => pt.id === p.ponto_embarque_id);
+          const podeEscolher = pago > 0 && status !== "cancelled";
+          const qrPayload = p.qr_code || p.id;
+          const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(qrPayload)}`;
+          const isPaid = status === "paid";
+          const isVinculadoOuComprador = isComprador || p.user_id === user?.id;
+
+          return (
+            <div key={p.id} className="glass rounded-3xl overflow-hidden">
+              <div className="px-5 py-3 bg-gradient-to-r from-neon-purple/15 to-neon-pink/10 border-b border-border flex items-center justify-between">
+                <div>
+                  <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Passageiro {idx + 1}</p>
+                  <p className="font-display font-bold">{p.nome}</p>
+                  <p className="text-[11px] text-muted-foreground">{p.email}</p>
+                </div>
+                {p.user_id ? (
+                  <Pill tone="green">✓ Vinculado</Pill>
+                ) : (
+                  <Pill tone="yellow">Convidado</Pill>
+                )}
+              </div>
+
+              <div className="p-5 space-y-4">
+                {/* Convite */}
+                {isComprador && p.convite_token && (
+                  <div className="bg-neon-purple/10 border border-neon-purple/30 rounded-2xl p-3">
+                    <p className="text-xs text-muted-foreground mb-2">Convide {p.nome} para acessar a própria reserva:</p>
+                    <button
+                      onClick={() => copyInvite(p.convite_token)}
+                      className="w-full h-10 rounded-xl font-semibold bg-neon-purple/20 text-neon-purple border border-neon-purple/40 text-sm inline-flex items-center justify-center gap-2"
+                    >
+                      <Copy className="size-4" /> Copiar link de convite
+                    </button>
+                  </div>
+                )}
+
+                {/* Poltrona */}
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2">
+                    <Armchair className="size-4 text-neon-purple" />
+                    <span className="text-sm font-bold">Poltrona</span>
+                  </div>
+                  {seatLabel ? (
+                    <span className="font-display font-black text-lg">{seatLabel}</span>
+                  ) : podeEscolher && isVinculadoOuComprador ? (
+                    <button
+                      onClick={() => navigate({ to: "/passageiro/poltrona", search: { pax: p.id } as any })}
+                      className="text-xs font-bold px-3 py-2 rounded-xl bg-gradient-to-r from-neon-purple to-neon-pink text-primary-foreground"
+                    >
+                      Escolher
+                    </button>
+                  ) : (
+                    <span className="text-xs text-muted-foreground">{pago === 0 ? "Pague para liberar" : "—"}</span>
+                  )}
+                </div>
+
+                {/* Embarque */}
+                <div>
+                  <div className="flex items-center justify-between gap-3 mb-2">
+                    <div className="flex items-center gap-2">
+                      <MapPinned className="size-4 text-neon-pink" />
+                      <span className="text-sm font-bold">Embarque</span>
+                    </div>
+                    {ponto ? (
+                      <span className="text-xs text-neon-green font-bold">✓ Confirmado</span>
+                    ) : podeEscolher && isVinculadoOuComprador ? (
+                      <span className="text-[11px] text-muted-foreground">Escolha abaixo</span>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">{pago === 0 ? "Pague para liberar" : "—"}</span>
+                    )}
+                  </div>
+                  {ponto ? (
+                    <div className="bg-neon-green/10 border border-neon-green/30 rounded-2xl p-3 text-sm">
+                      <p className="font-bold">{ponto.nome}</p>
+                      {ponto.endereco && <p className="text-xs text-muted-foreground">{ponto.endereco}</p>}
+                      {ponto.horario && <p className="text-xs text-neon-green mt-1">⏰ {ponto.horario}</p>}
+                    </div>
+                  ) : podeEscolher && isVinculadoOuComprador && pontos.length > 0 ? (
+                    <ul className="space-y-2">
+                      {(pontos as any[]).map((pt) => (
+                        <li key={pt.id}>
+                          <button
+                            onClick={() => escolherPonto(p.id, pt.id)}
+                            className="w-full text-left rounded-2xl p-3 border border-border bg-background/40 hover:border-neon-pink/40 transition"
+                          >
+                            <p className="font-bold text-sm">{pt.nome}</p>
+                            {pt.endereco && <p className="text-xs text-muted-foreground">{pt.endereco}</p>}
+                            {pt.horario && <p className="text-[11px] text-neon-pink">⏰ {pt.horario}</p>}
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : null}
+                </div>
+
+                {/* QR Code */}
+                <div className="pt-3 border-t border-border">
+                  <div className="flex items-center gap-2 mb-2">
+                    <QrCode className="size-4 text-neon-green" />
+                    <span className="text-sm font-bold">QR Code</span>
+                  </div>
+                  {isPaid ? (
+                    <div className="bg-gradient-to-br from-neon-green/10 to-neon-purple/10 border border-neon-green/30 rounded-2xl p-4 text-center">
+                      <div className="mx-auto w-44 h-44 rounded-2xl bg-white p-2 grid place-items-center">
+                        <img src={qrUrl} alt={`QR Code de ${p.nome}`} className="w-full h-full" />
+                      </div>
+                      <p className="text-[10px] font-mono text-muted-foreground mt-2 break-all">{qrPayload}</p>
+                      {p.embarcado_em && (
+                        <p className="text-xs text-neon-green mt-2">✓ Embarcado em {new Date(p.embarcado_em).toLocaleString("pt-BR")}</p>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="bg-muted/20 border-2 border-dashed border-border rounded-2xl p-6 text-center">
+                      <QrCode className="size-8 mx-auto text-muted-foreground/40 mb-2" />
+                      <p className="text-xs text-muted-foreground">Disponível após quitação total</p>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
-        )}
-      </div>
-
-      {/* Ponto de embarque */}
-      <div className="glass rounded-3xl p-5 mb-5 border-l-4 border-neon-pink">
-        <div className="flex items-center gap-2 mb-3">
-          <Info className="size-5 text-neon-pink" />
-          <h3 className="font-display font-bold">Ponto de embarque</h3>
-        </div>
-
-        {pontos.length === 0 ? (
-          <>
-            <p className="text-sm font-semibold">{ex?.ponto_embarque ?? "Local a definir"}</p>
-            {ex?.horario_saida && (
-              <p className="text-xs text-muted-foreground mt-1">
-                Chegue 30 min antes · saída {ex.horario_saida}
-              </p>
-            )}
-          </>
-        ) : pago === 0 ? (
-          <p className="text-sm text-muted-foreground">
-            Realize um pagamento para escolher seu ponto de embarque.
-          </p>
-        ) : (
-          <>
-            <p className="text-xs text-muted-foreground mb-3">
-              {reserva.ponto_embarque_id
-                ? "Ponto confirmado · só o excursionista pode alterar"
-                : "Escolha onde irá embarcar (não poderá ser alterado depois):"}
-            </p>
-            <ul className="space-y-2">
-              {pontos
-                .filter((p: any) =>
-                  reserva.ponto_embarque_id ? p.id === reserva.ponto_embarque_id : true
-                )
-                .map((p: any) => {
-                  const selected = reserva.ponto_embarque_id === p.id;
-                  const locked = !!reserva.ponto_embarque_id;
-                  return (
-                    <li key={p.id}>
-                      <button
-                        disabled={locked}
-                        onClick={() => escolherPonto(p.id)}
-                        className={`w-full text-left rounded-2xl p-3 border transition ${
-                          selected
-                            ? "border-neon-green/60 bg-neon-green/10"
-                            : "border-border bg-background/40 hover:border-neon-pink/40"
-                        } ${locked ? "cursor-default" : ""}`}
-                      >
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="min-w-0 flex-1">
-                            <p className="font-bold text-sm truncate">{p.nome}</p>
-                            {p.endereco && (
-                              <p className="text-xs text-muted-foreground truncate">{p.endereco}</p>
-                            )}
-                            {p.referencia && (
-                              <p className="text-[11px] text-muted-foreground/80 italic mt-0.5">
-                                {p.referencia}
-                              </p>
-                            )}
-                          </div>
-                          <div className="text-right shrink-0">
-                            {p.horario && (
-                              <p className="text-xs font-bold text-neon-pink">{p.horario}</p>
-                            )}
-                            {selected && <Pill tone="green">Confirmado</Pill>}
-                          </div>
-                        </div>
-                      </button>
-                    </li>
-                  );
-                })}
-            </ul>
-          </>
-        )}
-
-        {ex?.descricao && (
-          <p className="text-sm text-muted-foreground mt-4 whitespace-pre-line">
-            {ex.descricao}
-          </p>
-        )}
-      </div>
-
-      {/* Avisos do excursionista */}
-      <div className="glass rounded-3xl p-5 mb-6">
-        <div className="flex items-center gap-2 mb-3">
-          <MessageCircle className="size-5 text-neon-green" />
-          <h3 className="font-display font-bold">Avisos do excursionista</h3>
-        </div>
-        {mensagens.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Nenhum aviso ainda.</p>
-        ) : (
-          <ul className="space-y-3">
-            {mensagens.map((m: any) => (
-              <li key={m.id} className="bg-background/40 rounded-2xl p-3">
-                <div className="flex items-center justify-between">
-                  <p className="text-xs font-bold">{m.autor_nome ?? "Organização"}</p>
-                  <p className="text-[10px] text-muted-foreground">
-                    {new Date(m.created_at).toLocaleString("pt-BR")}
-                  </p>
-                </div>
-                <p className="text-sm mt-1 whitespace-pre-line">{m.conteudo}</p>
-              </li>
-            ))}
-          </ul>
-        )}
+          );
+        })}
       </div>
     </Shell>
   );
 }
 
-function Info4({
-  icon: Icon,
-  label,
-  value,
-}: {
-  icon: any;
-  label: string;
-  value: string;
-}) {
+function Info4({ icon: Icon, label, value }: { icon: any; label: string; value: string }) {
   return (
-    <div className="glass rounded-2xl p-4">
-      <Icon className="size-4 text-neon-pink mb-2" />
-      <p className="text-xs text-muted-foreground">{label}</p>
-      <p className="font-bold text-sm">{value}</p>
-    </div>
-  );
-}
-
-function Field({
-  label,
-  value,
-  hint,
-  big,
-  full,
-}: {
-  label: string;
-  value: string;
-  hint?: string;
-  big?: boolean;
-  full?: boolean;
-}) {
-  return (
-    <div className={`bg-background/60 p-4 ${full ? "col-span-2" : ""}`}>
-      <p className="text-[10px] uppercase tracking-widest text-muted-foreground">{label}</p>
-      <p className={`font-display font-bold mt-1 ${big ? "text-3xl" : "text-base"}`}>{value}</p>
-      {hint && <p className="text-[11px] text-muted-foreground mt-0.5">{hint}</p>}
+    <div className="glass rounded-2xl p-3">
+      <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-widest text-muted-foreground">
+        <Icon className="size-3" /> {label}
+      </div>
+      <p className="font-bold text-sm mt-1 truncate">{value}</p>
     </div>
   );
 }

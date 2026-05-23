@@ -1,55 +1,99 @@
 ## Objetivo
-Transformar o sistema para que cada vaga comprada represente um passageiro individual com sua própria poltrona, ponto de embarque e QR Code.
 
-## Banco de dados (migração)
+Hoje cada vaga vira uma reserva separada com pagamento próprio — fluxo picotado. Vamos consolidar em **UMA reserva de grupo** por compra, com pagamento único, mas mantendo poltrona / embarque / QR Code individuais por passageiro.
 
-**`passageiros`** — novos campos:
-- `comprador_id uuid` — referência ao usuário que pagou (o "titular" da compra)
-- `email text` — email do passageiro (para convidar)
-- `convite_token text` — token único para passageiro adicional reivindicar acesso
-- Manter `user_id` como dono efetivo da reserva (nullable até o convidado fazer login)
+## Modelo de dados
 
-**Trigger ajustado**:
-- Quando um passageiro paga, libera escolha de poltrona/ponto (já existe).
-- Trigger de "lock" continua valendo: depois de escolher poltrona/ponto, só o organizador altera.
+Nova tabela **`reservas`** (a "compra" do grupo):
 
-**Política RLS**:
-- Comprador pode visualizar todas as reservas que ele criou (via `comprador_id = auth.uid()`).
-- Passageiro convidado, após aceitar o convite, vê apenas a própria (via `user_id = auth.uid()`).
-- Comprador pode inserir múltiplas reservas (uma por vaga) na mesma excursão.
+- `id`, `excursao_id`, `comprador_id`
+- `quantidade` (int)
+- `total_price` (soma das vagas)
+- `amount_paid`, `payment_status` (`pending_payment` | `partial_payment` | `paid` | `cancelled`)
+- `created_at`, `updated_at`
 
-**Função RPC `claim_passageiro_invite(token)`**:
-- Vincula `user_id = auth.uid()` à reserva, atribui papel passageiro, marca convite como usado.
+Alterações em **`passageiros`**:
 
-## Frontend
+- Adicionar `reserva_id` (FK → `reservas.id`, NOT NULL nas novas linhas)
+- Remover responsabilidade financeira: `total_price` / `amount_paid` / `payment_status` deixam de ser usados aqui (mantidos por compatibilidade, mas a verdade vai pra `reservas`)
+- Mantém `nome`, `email`, `user_id`, `comprador_id`, `convite_token`, `seat_id`, `ponto_embarque_id`, `qr_code`
 
-**`passageiro.index.tsx`** — botão "Reservar":
-- Abre modal/tela perguntando **quantidade de vagas** (1..N respeitando vagas disponíveis).
-- Se >1: formulário para preencher nome/telefone/email de cada passageiro adicional (titular usa próprio cadastro).
-- Cria N registros em `passageiros` com `comprador_id = user.id`, `total_price = preco`, `payment_status = pending_payment`.
-- Para passageiros adicionais: gera `convite_token`, deixa `user_id = null`.
-- Redireciona para nova tela de gerenciamento da compra.
+Alterações em **`pagamentos`**:
 
-**Nova rota `passageiro.compra.$id.tsx`** (opcional, simplificação: mostrar lista no `passageiro.index`):
-- Lista as N reservas da compra; cada uma com botão "Abrir reserva" → `/passageiro/reserva/{id}`.
-- Botão "Copiar link de convite" para os passageiros adicionais.
+- Adicionar `reserva_id` (FK → `reservas.id`) — passa a ser o vínculo principal
+- `passageiro_id` vira opcional (legado)
 
-**`passageiro.reserva.$id.tsx`** — sem mudança estrutural (já funciona por reserva individual):
-- Cada reserva tem seu próprio pagamento/poltrona/ponto/QR Code.
-- Comprador pode pagar/escolher pelas reservas de quem ele convidou (RLS permite via `comprador_id`).
-- Convidado, após `claim`, acessa a própria.
+Triggers:
 
-**Nova rota `invite.passageiro.$token.tsx`**:
-- Convidado faz login (ou cria conta) → chama `claim_passageiro_invite` → redireciona para `/passageiro/reserva/{id}`.
+- `apply_pagamento_to_reserva` → atualiza `reservas.amount_paid` / `payment_status` (não mais por passageiro)
+- Quando `reservas.payment_status = 'paid'` → marca todos os passageiros do grupo como confirmados
+- Mantém `lock_passageiro_choices` (bloqueia troca de poltrona/embarque depois de definidos, exceto organizador)
 
-**QR Code**: já condicionado a `status === "paid"` (mantém).
+RLS:
 
-**Poltrona/ponto**: já liberados após `amount_paid > 0` e bloqueados após escolha (triggers existentes).
+- `reservas`: comprador vê/edita as próprias; organizador da excursão vê tudo; staff vê (leitura)
+- `passageiros`: comprador da reserva vê todos os passageiros do grupo; passageiro vinculado (`user_id`) vê o seu; organizador/staff como hoje
+- `pagamentos`: comprador vê pagamentos da própria reserva
+
+## Fluxo no frontend
+
+**1. `passageiro.index.tsx` — tela da excursão** (já tem seletor de quantidade, vamos simplificar):
+- Seletor de quantidade 1..N
+- Para cada vaga, formulário: nome + email (titular pré-preenchido, demais editáveis)
+- Botão "Continuar" → cria 1 `reservas` + N `passageiros` (com `reserva_id` setado) numa transação (RPC `criar_reserva_grupo`)
+- Redireciona para nova tela `/passageiro/reserva/{reserva_id}`
+
+**2. Nova rota `/passageiro/reserva/$id`** — centro de comando da reserva:
+Substitui a tela atual `passageiro.reserva.$id.tsx` (que era por passageiro). Agora mostra:
+- Header: excursão, total, pago, restante, status do pagamento
+- Bloco de pagamento (Pix fracionado consolidado: paga uma parte, atualiza `amount_paid`)
+- Lista de passageiros do grupo. Cada card:
+  - Nome + email + status (vinculado / convidado pendente)
+  - Botão **"Escolher poltrona"** (liberado quando `amount_paid > 0`)
+  - Botão **"Escolher embarque"** (liberado quando `amount_paid > 0`)
+  - Quando escolhidos: mostra poltrona + embarque travados
+  - Quando `payment_status = paid`: mostra QR Code individual
+  - Para convidados sem `user_id`: botão "Copiar link de convite"
+
+**3. `passageiro.poltrona.tsx` e nova `passageiro.embarque.tsx`**:
+- Recebem `?pax={passageiro_id}` na URL
+- Permitem ao comprador (ou ao próprio convidado autenticado) escolher para aquele passageiro específico
+- Travam após escolha (já implementado via trigger)
+
+**4. Lista "Minhas viagens" (`passageiro.index` aba minhas)**:
+- Passa a listar **reservas** (não mais passageiros individuais)
+- Cada card: excursão, qtd de passageiros, status pagamento
+
+**5. Convite (`invite.passageiro.$token`)**:
+- Continua funcionando: vincula `user_id` ao passageiro específico do grupo
+- Após claim, convidado vê apenas seu próprio cartão (QR/poltrona/embarque)
+
+**6. Pagamentos antigos (`passageiro.pagamentos.tsx`)**:
+- Aposentar/redirecionar — pagamento agora vive dentro da tela da reserva
+
+## Sincronização excursionista/staff
+
+As views de passageiros/financeiro do organizador já consultam as tabelas — vão refletir o novo modelo após ajustar os selects para juntar com `reservas` quando precisarem do status financeiro.
+
+## Migração de dados existentes
+
+Para cada `passageiros` órfão (sem `reserva_id`): criar uma `reservas` 1-pra-1 e setar `reserva_id`. Copiar `total_price`/`amount_paid`/`payment_status`/`comprador_id`. Ligar `pagamentos.reserva_id` correspondente.
 
 ## Arquivos
-- `supabase/migrations/...` — campos novos em `passageiros`, RLS ajustada, RPC `claim_passageiro_invite`
-- `src/routes/passageiro.index.tsx` — fluxo de quantidade + dados dos adicionais
-- `src/routes/invite.passageiro.$token.tsx` — nova rota
-- `src/routes/passageiro.reserva.$id.tsx` — exibir botão "compartilhar link" se for reserva de convidado
+
+**Banco**
+- Nova migration: tabela `reservas`, FK `passageiros.reserva_id`, FK `pagamentos.reserva_id`, novos triggers, RLS, RPC `criar_reserva_grupo(excursao_id, passageiros jsonb)`, backfill dos registros existentes
+
+**Frontend**
+- `src/routes/passageiro.index.tsx` — modal de quantidade + formulário de passageiros, criar reserva via RPC, listar reservas (não passageiros)
+- `src/routes/passageiro.reserva.$id.tsx` — reescrita: agora é a tela da reserva-grupo
+- `src/routes/passageiro.poltrona.tsx` — aceitar `?pax=`
+- `src/routes/passageiro.embarque.tsx` (nova) — escolher ponto por passageiro
+- `src/routes/passageiro.pagamentos.tsx` — remover ou redirecionar para reserva
 - `src/integrations/supabase/types.ts` — regenerado
-- `src/routeTree.gen.ts` — auto
+
+## Pontos de atenção
+
+- Migração precisa preservar reservas existentes (sem quebrar quem já tá no meio do fluxo)
+- Pagamentos antigos continuam válidos via `passageiro_id` legado
+- RLS precisa permitir comprador ler todos os passageiros do grupo mesmo sem ser `user_id` deles (já temos `comprador_id`, só ajustar políticas para também aceitar via `reserva_id`)

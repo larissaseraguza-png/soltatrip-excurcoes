@@ -246,7 +246,8 @@ export type Database = {
           observacao: string | null
           pago_em: string | null
           parcelas: number
-          passageiro_id: string
+          passageiro_id: string | null
+          reserva_id: string | null
           status: string
           updated_at: string
           valor: number
@@ -260,7 +261,8 @@ export type Database = {
           observacao?: string | null
           pago_em?: string | null
           parcelas?: number
-          passageiro_id: string
+          passageiro_id?: string | null
+          reserva_id?: string | null
           status?: string
           updated_at?: string
           valor?: number
@@ -274,7 +276,8 @@ export type Database = {
           observacao?: string | null
           pago_em?: string | null
           parcelas?: number
-          passageiro_id?: string
+          passageiro_id?: string | null
+          reserva_id?: string | null
           status?: string
           updated_at?: string
           valor?: number
@@ -312,6 +315,7 @@ export type Database = {
           payment_status: string
           ponto_embarque_id: string | null
           qr_code: string
+          reserva_id: string | null
           seat_id: string | null
           status: string
           telefone: string | null
@@ -334,6 +338,7 @@ export type Database = {
           payment_status?: string
           ponto_embarque_id?: string | null
           qr_code?: string
+          reserva_id?: string | null
           seat_id?: string | null
           status?: string
           telefone?: string | null
@@ -356,6 +361,7 @@ export type Database = {
           payment_status?: string
           ponto_embarque_id?: string | null
           qr_code?: string
+          reserva_id?: string | null
           seat_id?: string | null
           status?: string
           telefone?: string | null
@@ -448,6 +454,42 @@ export type Database = {
         }
         Relationships: []
       }
+      reservas: {
+        Row: {
+          amount_paid: number
+          comprador_id: string
+          created_at: string
+          excursao_id: string
+          id: string
+          payment_status: string
+          quantidade: number
+          total_price: number
+          updated_at: string
+        }
+        Insert: {
+          amount_paid?: number
+          comprador_id: string
+          created_at?: string
+          excursao_id: string
+          id?: string
+          payment_status?: string
+          quantidade?: number
+          total_price?: number
+          updated_at?: string
+        }
+        Update: {
+          amount_paid?: number
+          comprador_id?: string
+          created_at?: string
+          excursao_id?: string
+          id?: string
+          payment_status?: string
+          quantidade?: number
+          total_price?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       seats: {
         Row: {
           created_at: string
@@ -517,6 +559,10 @@ export type Database = {
     Functions: {
       accept_staff_invitation: { Args: { p_token: string }; Returns: string }
       claim_passageiro_invite: { Args: { p_token: string }; Returns: string }
+      criar_reserva_grupo: {
+        Args: { p_excursao_id: string; p_passageiros: Json }
+        Returns: string
+      }
       get_my_role: {
         Args: never
         Returns: Database["public"]["Enums"]["app_role"]
