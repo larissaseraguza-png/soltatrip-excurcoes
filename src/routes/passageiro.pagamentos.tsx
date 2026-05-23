@@ -22,7 +22,7 @@ function brl(v: number) {
 }
 
 function Pagamentos() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { reserva: reservaParam } = Route.useSearch();
   const navigate = useNavigate();
   const qc = useQueryClient();
@@ -36,12 +36,10 @@ function Pagamentos() {
     queryKey: ["reservas-pagto", user?.id, reservaParam],
     enabled: !!user,
     queryFn: async () => {
-      let q = supabase
-        .from("passageiros")
-        .select("id, total_price, amount_paid, payment_status, status, seat_id, excursao:excursoes(id, titulo, destino, preco, data_evento)")
-        .or(`user_id.eq.${user!.id},comprador_id.eq.${user!.id}`)
+      const { data, error } = await supabase
+        .from("reservas")
+        .select("id, quantidade, total_price, amount_paid, payment_status, excursao:excursoes!reservas_excursao_id_fkey(id, titulo, destino, preco, data_evento)")
         .order("created_at", { ascending: false });
-      const { data, error } = await q;
       if (error) throw error;
       return data ?? [];
     },
@@ -53,6 +51,20 @@ function Pagamentos() {
     return reservas[0];
   }, [reservas, reservaParam]);
 
+  const { data: passageiros = [] } = useQuery({
+    queryKey: ["pagto-passageiros", reservaAtiva?.id],
+    enabled: !!reservaAtiva?.id,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("passageiros")
+        .select("id, seat_id")
+        .eq("reserva_id", reservaAtiva.id)
+        .order("created_at", { ascending: true });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
   const { data: pagamentos = [] } = useQuery({
     queryKey: ["pagamentos", reservaAtiva?.id],
     enabled: !!reservaAtiva?.id,
@@ -60,14 +72,14 @@ function Pagamentos() {
       const { data, error } = await supabase
         .from("pagamentos")
         .select("id, valor, metodo, status, created_at, parcelas")
-        .eq("passageiro_id", reservaAtiva.id)
+        .eq("reserva_id", reservaAtiva.id)
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data ?? [];
     },
   });
 
-  if (isLoading) {
+  if (authLoading || isLoading) {
     return (
       <Shell title="Pagamentos">
         <div className="flex justify-center py-20">
