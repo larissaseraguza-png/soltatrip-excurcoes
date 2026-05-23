@@ -261,7 +261,9 @@ function AuthPage() {
 
               <form onSubmit={handleSubmit} className="space-y-3">
                 {mode === "signup" && (
-                  <Field label="Nome completo" value={fullName} onChange={setFullName} required placeholder="Como te chamam?" />
+                  <>
+                    <Field label="Nome completo" value={fullName} onChange={setFullName} required placeholder="Como te chamam?" />
+                  </>
                 )}
                 <Field
                   label="E-mail"
@@ -272,6 +274,16 @@ function AuthPage() {
                   required
                   placeholder="voce@email.com"
                 />
+                {mode === "signup" && (
+                  <Field
+                    label="Telefone (com DDD)"
+                    type="tel"
+                    value={phone}
+                    onChange={setPhone}
+                    required
+                    placeholder="(11) 99999-0000"
+                  />
+                )}
                 <Field
                   label="Senha"
                   type="password"
