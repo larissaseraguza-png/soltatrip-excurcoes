@@ -5,7 +5,7 @@ import { Shell, Pill } from "@/components/passageiro/Shell";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useRealtimeSync } from "@/hooks/use-realtime-sync";
-import { Calendar, MapPin, Loader2, Sparkles, Ticket, Compass, X, Plus, Minus, Users } from "lucide-react";
+import { Calendar, MapPin, Loader2, Sparkles, Ticket, Compass, X, Plus, Minus, Users, Bus, Clock } from "lucide-react";
 
 export const Route = createFileRoute("/passageiro/")({
   component: MinhasViagens,
