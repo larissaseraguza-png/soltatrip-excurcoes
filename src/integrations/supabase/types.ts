@@ -505,6 +505,23 @@ export type Database = {
         Args: never
         Returns: Database["public"]["Enums"]["app_role"]
       }
+      get_staff_invitation: {
+        Args: { p_token: string }
+        Returns: {
+          excursao_data_evento: string
+          excursao_destino: string
+          excursao_id: string
+          excursao_titulo: string
+          expires_at: string
+          id: string
+          papel: string
+          used: boolean
+        }[]
+      }
+      has_booking_for_excursao: {
+        Args: { _excursao_id: string; _user_id: string }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
