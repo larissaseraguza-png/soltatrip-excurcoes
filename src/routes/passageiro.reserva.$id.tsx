@@ -36,10 +36,10 @@ function ReservaDetalhes() {
       const { data, error } = await supabase
         .from("passageiros")
         .select(
-          "id, nome, status, qr_code, total_price, amount_paid, payment_status, seat_id, assento, embarcado_em, ponto_embarque_id, excursao:excursoes(id,titulo,destino,data_evento,horario_saida,horario_retorno,ponto_embarque,descricao,cor,banner_url,preco)"
+          "id, nome, email, status, qr_code, total_price, amount_paid, payment_status, seat_id, assento, embarcado_em, ponto_embarque_id, convite_token, user_id, comprador_id, excursao:excursoes(id,titulo,destino,data_evento,horario_saida,horario_retorno,ponto_embarque,descricao,cor,banner_url,preco)"
         )
         .eq("id", id)
-        .eq("user_id", user!.id)
+        .or(`user_id.eq.${user!.id},comprador_id.eq.${user!.id}`)
         .maybeSingle();
       if (error) throw error;
       return data as any;
