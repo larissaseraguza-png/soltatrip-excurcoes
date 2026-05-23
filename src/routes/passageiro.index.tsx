@@ -20,6 +20,7 @@ type Excursao = {
   cor: string | null;
   status: string;
   total_vagas: number;
+  banner_url: string | null;
 };
 
 type MinhaReserva = {
@@ -50,7 +51,7 @@ function MinhasViagens() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("reservas")
-        .select("id, quantidade, total_price, amount_paid, payment_status, excursao:excursoes!reservas_excursao_id_fkey(id,titulo,destino,data_evento,preco,cor,status,total_vagas)")
+        .select("id, quantidade, total_price, amount_paid, payment_status, excursao:excursoes!reservas_excursao_id_fkey(id,titulo,destino,data_evento,preco,cor,status,total_vagas,banner_url)")
         .order("created_at", { ascending: false });
       if (error) throw error;
       return (data ?? []) as unknown as MinhaReserva[];
@@ -62,7 +63,7 @@ function MinhasViagens() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("excursoes")
-        .select("id,titulo,destino,data_evento,preco,cor,status,total_vagas")
+        .select("id,titulo,destino,data_evento,preco,cor,status,total_vagas,banner_url")
         .eq("status", "publicada")
         .order("data_evento", { ascending: true });
       if (error) throw error;
@@ -75,9 +76,10 @@ function MinhasViagens() {
       ? [
           { table: "reservas", filter: `comprador_id=eq.${user.id}` },
           { table: "passageiros", filter: `user_id=eq.${user.id}` },
+          { table: "excursoes" },
         ]
-      : [],
-    [["minhas-reservas", user?.id]],
+      : [{ table: "excursoes" }],
+    [["minhas-reservas", user?.id], ["excursoes-publicadas"]],
   );
 
 
@@ -170,15 +172,22 @@ function MinhasViagens() {
               const pago = Number(r.amount_paid) || 0;
               const total = Number(r.total_price) || 0;
               const pct = total > 0 ? Math.min(100, Math.round((pago / total) * 100)) : 0;
-              const tone = r.payment_status === "paid" ? "green" : r.payment_status === "partial_payment" ? "purple" : "yellow";
-              const label = r.payment_status === "paid" ? "Quitado" : r.payment_status === "partial_payment" ? `${pct}% pago` : "Aguardando";
+              const cancelada = r.excursao.status === "cancelada";
+              const tone = cancelada ? "yellow" : r.payment_status === "paid" ? "green" : r.payment_status === "partial_payment" ? "purple" : "yellow";
+              const label = cancelada
+                ? "Excursão cancelada"
+                : r.payment_status === "paid"
+                ? "Quitado"
+                : r.payment_status === "partial_payment"
+                ? `${pct}% pago`
+                : "Aguardando";
               return (
                 <li key={r.id}>
                   <Link to="/passageiro/reserva/$id" params={{ id: r.id }} className="block">
                     <ExcursaoCard
                       ex={r.excursao}
                       title={r.excursao.titulo}
-                      badge={<Pill tone={tone}>{label}</Pill>}
+                      badge={<Pill tone={tone as any}>{label}</Pill>}
                       tag={r.quantidade > 1 ? `${r.quantidade} passageiros` : null}
                     />
                   </Link>
@@ -353,8 +362,16 @@ function ExcursaoCard({
 }) {
   return (
     <article className="glass rounded-3xl overflow-hidden">
-      <div className="relative h-32" style={{ background: `linear-gradient(135deg, ${ex.cor ?? "#a855f7"}, #ec4899)` }}>
-        <div className="absolute inset-0 grid-bg opacity-40" />
+      <div
+        className="relative h-36"
+        style={
+          ex.banner_url
+            ? { backgroundImage: `url(${ex.banner_url})`, backgroundSize: "cover", backgroundPosition: "center" }
+            : { background: `linear-gradient(135deg, ${ex.cor ?? "#a855f7"}, #ec4899)` }
+        }
+      >
+        {!ex.banner_url && <div className="absolute inset-0 grid-bg opacity-40" />}
+        <div className="absolute inset-0 bg-gradient-to-t from-background/70 via-transparent to-transparent" />
         {tag && (
           <div className="absolute top-3 left-3">
             <Pill tone="purple">{tag}</Pill>

@@ -1,8 +1,8 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useState, type FormEvent } from "react";
+import { useRef, useState, type FormEvent } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
-import { ArrowLeft, Loader2, AlertCircle, Plus, Trash2, MapPin } from "lucide-react";
+import { ArrowLeft, Loader2, AlertCircle, Plus, Trash2, MapPin, ImagePlus, X } from "lucide-react";
 
 export const Route = createFileRoute("/app/excursao/nova")({
   component: NovaExcursao,
@@ -34,6 +34,15 @@ function NovaExcursao() {
   const [pontos, setPontos] = useState<Ponto[]>([
     { nome: "", endereco: "", horario: "", referencia: "" },
   ]);
+  const [bannerFile, setBannerFile] = useState<File | null>(null);
+  const [bannerPreview, setBannerPreview] = useState<string | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  function handleBannerChange(f: File | null) {
+    setBannerFile(f);
+    if (bannerPreview) URL.revokeObjectURL(bannerPreview);
+    setBannerPreview(f ? URL.createObjectURL(f) : null);
+  }
 
   function set<K extends keyof typeof form>(k: K, v: string) {
     setForm((f) => ({ ...f, [k]: v }));
@@ -88,6 +97,23 @@ function NovaExcursao() {
         .single();
       if (error) throw error;
 
+      // Upload do banner (se houver) e update da excursão
+      if (bannerFile) {
+        try {
+          const ext = bannerFile.name.split(".").pop() || "jpg";
+          const path = `${user.id}/${data.id}-${Date.now()}.${ext}`;
+          const { error: upErr } = await supabase.storage
+            .from("excursao-banners")
+            .upload(path, bannerFile, { upsert: true, cacheControl: "3600" });
+          if (!upErr) {
+            const { data: pub } = supabase.storage.from("excursao-banners").getPublicUrl(path);
+            await supabase.from("excursoes").update({ banner_url: pub.publicUrl }).eq("id", data.id);
+          }
+        } catch {
+          // ignora falha de upload, excursão já foi criada
+        }
+      }
+
       const rows = validPontos.map((p, i) => ({
         excursao_id: data.id,
         nome: p.nome,
@@ -117,6 +143,44 @@ function NovaExcursao() {
       <p className="text-sm text-muted-foreground mb-6">Preencha os dados básicos. Você pode editar depois.</p>
 
       <form onSubmit={handleSubmit} className="glass rounded-3xl p-6 space-y-4">
+        {/* Banner upload */}
+        <div>
+          <span className="text-xs font-semibold text-muted-foreground mb-1.5 block">Imagem de capa</span>
+          <div
+            className="relative h-40 rounded-2xl overflow-hidden border border-dashed border-border bg-secondary/30 cursor-pointer hover:border-primary transition"
+            style={
+              bannerPreview
+                ? { backgroundImage: `url(${bannerPreview})`, backgroundSize: "cover", backgroundPosition: "center" }
+                : undefined
+            }
+            onClick={() => fileRef.current?.click()}
+          >
+            {!bannerPreview ? (
+              <div className="absolute inset-0 flex flex-col items-center justify-center text-muted-foreground gap-1.5">
+                <ImagePlus className="h-6 w-6" />
+                <span className="text-xs font-semibold">Toque para enviar imagem</span>
+                <span className="text-[10px]">(JPG ou PNG)</span>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); handleBannerChange(null); }}
+                className="absolute top-2 right-2 h-7 w-7 rounded-full bg-background/80 backdrop-blur flex items-center justify-center"
+                aria-label="Remover imagem"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            )}
+          </div>
+          <input
+            ref={fileRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => handleBannerChange(e.target.files?.[0] ?? null)}
+          />
+        </div>
+
         <Field label="Título" required value={form.titulo} onChange={(v) => set("titulo", v)} placeholder="Ex: Tomorrowland 2026" />
         <Field label="Destino" required value={form.destino} onChange={(v) => set("destino", v)} placeholder="Itu, SP" />
         <Field label="Descrição" textarea value={form.descricao} onChange={(v) => set("descricao", v)} placeholder="Detalhes da viagem (opcional)" />
