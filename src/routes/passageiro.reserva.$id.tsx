@@ -91,6 +91,10 @@ function ReservaDetalhes() {
 
   async function escolherPonto(pontoId: string) {
     if (!reserva) return;
+    if (reserva.ponto_embarque_id) {
+      alert("Ponto de embarque já confirmado. Fale com o excursionista para alterar.");
+      return;
+    }
     const { error } = await supabase
       .from("passageiros")
       .update({ ponto_embarque_id: pontoId })
