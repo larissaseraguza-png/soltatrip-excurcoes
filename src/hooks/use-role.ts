@@ -38,23 +38,28 @@ async function loadRole(userId: string) {
   return p;
 }
 
+const LOADING_ENTRY: RoleEntry = { role: null, loading: true };
+const NO_USER_ENTRY: RoleEntry = { role: null, loading: false };
+
 export function useRoleForUser(user: User | null, authLoading: boolean) {
+  const userId = user?.id ?? null;
+
   useEffect(() => {
-    if (authLoading || !user) return;
-    if (!cache.has(user.id)) {
-      cache.set(user.id, { role: null, loading: true });
-      loadRole(user.id);
+    if (authLoading || !userId) return;
+    if (!cache.has(userId)) {
+      cache.set(userId, LOADING_ENTRY);
+      loadRole(userId);
     }
-  }, [user, authLoading]);
+  }, [userId, authLoading]);
 
   const snapshot = useSyncExternalStore(
     subscribe,
     () => {
-      if (authLoading) return { role: null, loading: true } as RoleEntry;
-      if (!user) return { role: null, loading: false } as RoleEntry;
-      return cache.get(user.id) ?? { role: null, loading: true };
+      if (authLoading) return LOADING_ENTRY;
+      if (!userId) return NO_USER_ENTRY;
+      return cache.get(userId) ?? LOADING_ENTRY;
     },
-    () => ({ role: null, loading: true } as RoleEntry),
+    () => LOADING_ENTRY,
   );
 
   return snapshot;
