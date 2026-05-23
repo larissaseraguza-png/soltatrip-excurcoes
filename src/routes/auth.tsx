@@ -96,45 +96,31 @@ function AuthPage() {
           email,
           password,
           options: {
-            data: { full_name: fullName, phone: cleanPhone },
+            data: { full_name: fullName, phone: cleanPhone, role: selectedRole },
             emailRedirectTo: `${window.location.origin}/auth`,
           },
         });
         if (error) throw error;
         if (!data.user) throw new Error("Falha ao criar conta.");
 
-        // Insere a função do usuário
-        const { error: roleErr } = await supabase
-          .from("user_roles")
-          .insert({ user_id: data.user.id, role: selectedRole });
-        if (roleErr) throw roleErr;
-
-        // Garante telefone no profile (caso trigger não tenha rodado)
-        await supabase.from("profiles").upsert({
-          id: data.user.id,
-          full_name: fullName,
-          phone: cleanPhone,
-        }, { onConflict: "id" });
-
-        if (data.session) {
-          const pendingStaff = localStorage.getItem("pending_staff_invite");
-          const pendingPax = localStorage.getItem("pending_pax_invite");
-          if (pendingStaff) {
-            navigate({ to: "/invite/staff/$token", params: { token: pendingStaff }, replace: true });
-          } else if (pendingPax) {
-            navigate({ to: "/invite/passageiro/$token", params: { token: pendingPax }, replace: true });
-          } else {
-            navigate({ to: roleHome[selectedRole], replace: true });
-          }
-          return;
-        }
-        setInfo("Conta criada! Faça login para continuar.");
+        // E-mail de confirmação é obrigatório: nunca haverá sessão aqui.
+        setInfo("Conta criada! Enviamos um e-mail de confirmação para " + email + ". Clique no link recebido para ativar sua conta antes de fazer login.");
         setMode("signin");
+        setPassword("");
       } else {
         // Login
         const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) throw error;
+        if (error) {
+          if (error.message?.toLowerCase().includes("email not confirmed")) {
+            throw new Error("E-mail ainda não confirmado. Verifique sua caixa de entrada e clique no link de confirmação.");
+          }
+          throw error;
+        }
         if (!data.user) throw new Error("Falha ao entrar.");
+        if (!data.user.email_confirmed_at && !(data.user as any).confirmed_at) {
+          await supabase.auth.signOut();
+          throw new Error("E-mail ainda não confirmado. Verifique sua caixa de entrada.");
+        }
 
         // Valida função
         const { data: rRow, error: roleErr } = await supabase
