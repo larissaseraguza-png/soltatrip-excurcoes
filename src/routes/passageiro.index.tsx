@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Shell, Pill } from "@/components/passageiro/Shell";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
-import { Calendar, MapPin, Loader2, Sparkles, Ticket, Compass } from "lucide-react";
+import { Calendar, MapPin, Loader2, Sparkles, Ticket, Compass, X, Plus, Minus } from "lucide-react";
 
 export const Route = createFileRoute("/passageiro/")({
   component: MinhasViagens,
@@ -27,15 +27,24 @@ type MinhaInscricao = {
   payment_status: string;
   amount_paid: number;
   total_price: number;
+  nome: string;
+  user_id: string | null;
+  comprador_id: string | null;
+  convite_token: string | null;
   excursao: Excursao | null;
 };
+
+type ExtraPax = { nome: string; email: string; telefone: string };
 
 function MinhasViagens() {
   const { user } = useAuth();
   const qc = useQueryClient();
   const navigate = useNavigate();
   const [tab, setTab] = useState<"minhas" | "disponiveis">("minhas");
-  const [reservando, setReservando] = useState<string | null>(null);
+  const [reservando, setReservando] = useState(false);
+  const [modalEx, setModalEx] = useState<Excursao | null>(null);
+  const [qtd, setQtd] = useState(1);
+  const [extras, setExtras] = useState<ExtraPax[]>([]);
 
   const { data: minhas = [], isLoading: loadingMinhas } = useQuery({
     queryKey: ["minhas-inscricoes", user?.id],
@@ -43,8 +52,8 @@ function MinhasViagens() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("passageiros")
-        .select("id, status, payment_status, amount_paid, total_price, excursao:excursoes(id,titulo,destino,data_evento,preco,cor,status,total_vagas)")
-        .eq("user_id", user!.id)
+        .select("id, status, payment_status, amount_paid, total_price, nome, user_id, comprador_id, convite_token, excursao:excursoes(id,titulo,destino,data_evento,preco,cor,status,total_vagas)")
+        .or(`user_id.eq.${user!.id},comprador_id.eq.${user!.id}`)
         .order("created_at", { ascending: false });
       if (error) throw error;
       return (data ?? []) as unknown as MinhaInscricao[];
@@ -64,32 +73,79 @@ function MinhasViagens() {
     },
   });
 
-  async function reservar(ex: Excursao) {
-    if (!user) return;
-    setReservando(ex.id);
+  function openReserva(ex: Excursao) {
+    setModalEx(ex);
+    setQtd(1);
+    setExtras([]);
+  }
+
+  function setQuantidade(n: number) {
+    const clamped = Math.max(1, Math.min(10, n));
+    setQtd(clamped);
+    const adicionais = clamped - 1;
+    setExtras((prev) => {
+      const next = [...prev];
+      while (next.length < adicionais) next.push({ nome: "", email: "", telefone: "" });
+      next.length = adicionais;
+      return next;
+    });
+  }
+
+  async function confirmarReserva() {
+    if (!user || !modalEx) return;
+    // Validar extras
+    for (let i = 0; i < extras.length; i++) {
+      const e = extras[i];
+      if (!e.nome.trim() || !e.email.trim()) {
+        alert(`Preencha nome e email do passageiro ${i + 2}.`);
+        return;
+      }
+    }
+    setReservando(true);
     try {
+      const titularNome = user.user_metadata?.full_name || user.email || "Passageiro";
+      const rows: any[] = [
+        {
+          excursao_id: modalEx.id,
+          user_id: user.id,
+          comprador_id: user.id,
+          nome: titularNome,
+          email: user.email,
+          status: "pendente",
+          total_price: Number(modalEx.preco) || 0,
+          payment_status: "pending_payment",
+        },
+        ...extras.map((e) => ({
+          excursao_id: modalEx.id,
+          user_id: null,
+          comprador_id: user.id,
+          nome: e.nome.trim(),
+          email: e.email.trim(),
+          telefone: e.telefone.trim() || null,
+          status: "pendente",
+          total_price: Number(modalEx.preco) || 0,
+          payment_status: "pending_payment",
+          convite_token: crypto.randomUUID().replace(/-/g, ""),
+        })),
+      ];
       const { data, error } = await supabase
         .from("passageiros")
-        .insert({
-          excursao_id: ex.id,
-          user_id: user.id,
-          nome: user.user_metadata?.full_name || user.email || "Passageiro",
-          status: "pendente",
-          total_price: Number(ex.preco) || 0,
-          payment_status: "pending_payment",
-        })
-        .select("id")
-        .single();
+        .insert(rows)
+        .select("id");
       if (error) throw error;
       qc.invalidateQueries({ queryKey: ["minhas-inscricoes"] });
-      navigate({ to: "/passageiro/pagamentos", search: { reserva: data.id } as any });
+      setModalEx(null);
+      // Vai para a primeira reserva (titular) para iniciar pagamento
+      const firstId = data?.[0]?.id;
+      if (firstId) {
+        navigate({ to: "/passageiro/pagamentos", search: { reserva: firstId } as any });
+      }
     } catch (err: any) {
       alert(err.message ?? "Erro ao reservar");
     } finally {
-      setReservando(null);
+      setReservando(false);
     }
   }
-
 
   const idsMinhas = new Set(minhas.map((m) => m.excursao?.id).filter(Boolean));
 
@@ -139,14 +195,16 @@ function MinhasViagens() {
                   : m.payment_status === "partial_payment"
                     ? `${pct}% pago`
                     : "Aguardando pagamento";
+              const isConvidado = m.comprador_id === user?.id && m.user_id !== user?.id;
               return (
                 <li key={m.id}>
-                  <Link
-                    to="/passageiro/reserva/$id"
-                    params={{ id: m.id }}
-                    className="block"
-                  >
-                    <ExcursaoCard ex={m.excursao} badge={<Pill tone={tone}>{label}</Pill>} />
+                  <Link to="/passageiro/reserva/$id" params={{ id: m.id }} className="block">
+                    <ExcursaoCard
+                      ex={m.excursao}
+                      title={isConvidado ? `${m.excursao.titulo} · ${m.nome}` : m.excursao.titulo}
+                      badge={<Pill tone={tone}>{label}</Pill>}
+                      tag={isConvidado ? "Convidado" : null}
+                    />
                   </Link>
                 </li>
               );
@@ -169,11 +227,9 @@ function MinhasViagens() {
                   <span className="text-xs font-semibold text-neon-green">✓ Já reservado</span>
                 ) : (
                   <button
-                    onClick={() => reservar(ex)}
-                    disabled={reservando === ex.id}
-                    className="text-xs font-bold px-3 py-2 rounded-xl bg-primary text-primary-foreground glow-primary hover:opacity-90 disabled:opacity-50 inline-flex items-center gap-1"
+                    onClick={() => openReserva(ex)}
+                    className="text-xs font-bold px-3 py-2 rounded-xl bg-primary text-primary-foreground glow-primary hover:opacity-90 inline-flex items-center gap-1"
                   >
-                    {reservando === ex.id && <Loader2 className="h-3 w-3 animate-spin" />}
                     Reservar
                   </button>
                 )
@@ -181,6 +237,97 @@ function MinhasViagens() {
             />
           ))}
         </ul>
+      )}
+
+      {modalEx && (
+        <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur flex items-end sm:items-center justify-center p-0 sm:p-4">
+          <div className="glass w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl max-h-[92vh] overflow-y-auto">
+            <div className="sticky top-0 bg-background/95 backdrop-blur p-5 flex items-center justify-between border-b border-border">
+              <div>
+                <p className="text-xs text-muted-foreground">Reservar</p>
+                <h3 className="font-display font-bold text-lg leading-tight">{modalEx.titulo}</h3>
+              </div>
+              <button onClick={() => setModalEx(null)} className="p-2 rounded-full hover:bg-muted">
+                <X className="size-5" />
+              </button>
+            </div>
+            <div className="p-5 space-y-5">
+              <div>
+                <p className="text-xs text-muted-foreground mb-2">Quantas vagas?</p>
+                <div className="flex items-center justify-between bg-background/40 rounded-2xl p-3">
+                  <button onClick={() => setQuantidade(qtd - 1)} className="size-10 grid place-items-center rounded-xl bg-muted">
+                    <Minus className="size-4" />
+                  </button>
+                  <div className="text-center">
+                    <p className="font-display font-black text-3xl">{qtd}</p>
+                    <p className="text-[10px] text-muted-foreground">
+                      Total: R$ {(Number(modalEx.preco) * qtd).toFixed(2)}
+                    </p>
+                  </div>
+                  <button onClick={() => setQuantidade(qtd + 1)} className="size-10 grid place-items-center rounded-xl bg-primary text-primary-foreground">
+                    <Plus className="size-4" />
+                  </button>
+                </div>
+                <p className="text-[11px] text-muted-foreground mt-2">
+                  Você é o titular da 1ª vaga. Cada vaga gera passageiro, poltrona e QR Code individuais.
+                </p>
+              </div>
+
+              {extras.length > 0 && (
+                <div className="space-y-3">
+                  <p className="text-xs font-bold uppercase tracking-wider text-neon-pink">
+                    Passageiros adicionais
+                  </p>
+                  {extras.map((e, i) => (
+                    <div key={i} className="bg-background/40 rounded-2xl p-3 space-y-2">
+                      <p className="text-xs font-bold">Passageiro {i + 2}</p>
+                      <input
+                        value={e.nome}
+                        onChange={(ev) => {
+                          const next = [...extras];
+                          next[i] = { ...e, nome: ev.target.value };
+                          setExtras(next);
+                        }}
+                        placeholder="Nome completo"
+                        className="w-full h-10 px-3 rounded-xl bg-background border border-border text-sm"
+                      />
+                      <input
+                        value={e.email}
+                        onChange={(ev) => {
+                          const next = [...extras];
+                          next[i] = { ...e, email: ev.target.value };
+                          setExtras(next);
+                        }}
+                        type="email"
+                        placeholder="Email (para enviar acesso)"
+                        className="w-full h-10 px-3 rounded-xl bg-background border border-border text-sm"
+                      />
+                      <input
+                        value={e.telefone}
+                        onChange={(ev) => {
+                          const next = [...extras];
+                          next[i] = { ...e, telefone: ev.target.value };
+                          setExtras(next);
+                        }}
+                        placeholder="Telefone (opcional)"
+                        className="w-full h-10 px-3 rounded-xl bg-background border border-border text-sm"
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <button
+                onClick={confirmarReserva}
+                disabled={reservando}
+                className="w-full h-12 rounded-2xl font-bold bg-primary text-primary-foreground glow-primary disabled:opacity-50 inline-flex items-center justify-center gap-2"
+              >
+                {reservando && <Loader2 className="size-4 animate-spin" />}
+                Confirmar e ir para pagamento
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </Shell>
   );
@@ -199,15 +346,32 @@ function TabBtn({ active, onClick, icon: Icon, label }: { active: boolean; onCli
   );
 }
 
-function ExcursaoCard({ ex, badge, action }: { ex: Excursao; badge?: React.ReactNode; action?: React.ReactNode }) {
+function ExcursaoCard({
+  ex,
+  badge,
+  action,
+  title,
+  tag,
+}: {
+  ex: Excursao;
+  badge?: React.ReactNode;
+  action?: React.ReactNode;
+  title?: string;
+  tag?: string | null;
+}) {
   return (
     <article className="glass rounded-3xl overflow-hidden">
       <div className="relative h-32" style={{ background: `linear-gradient(135deg, ${ex.cor ?? "#a855f7"}, #ec4899)` }}>
         <div className="absolute inset-0 grid-bg opacity-40" />
+        {tag && (
+          <div className="absolute top-3 left-3">
+            <Pill tone="purple">{tag}</Pill>
+          </div>
+        )}
         {badge && <div className="absolute bottom-3 right-3">{badge}</div>}
       </div>
       <div className="p-4">
-        <h3 className="font-display font-bold text-lg leading-tight">{ex.titulo}</h3>
+        <h3 className="font-display font-bold text-lg leading-tight">{title ?? ex.titulo}</h3>
         <div className="mt-2 flex items-center gap-4 text-sm text-muted-foreground">
           <span className="flex items-center gap-1.5"><MapPin className="size-4" /> {ex.destino}</span>
           <span className="flex items-center gap-1.5"><Calendar className="size-4" /> {new Date(ex.data_evento).toLocaleDateString("pt-BR")}</span>
