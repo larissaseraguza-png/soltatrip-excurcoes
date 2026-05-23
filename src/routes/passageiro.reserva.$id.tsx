@@ -27,6 +27,7 @@ function ReservaDetalhes() {
   const { id } = useParams({ from: "/passageiro/reserva/$id" });
   const { user } = useAuth();
   const navigate = useNavigate();
+  const qc = useQueryClient();
 
   const { data: reserva, isLoading } = useQuery({
     queryKey: ["reserva-detalhe", id, user?.id],
