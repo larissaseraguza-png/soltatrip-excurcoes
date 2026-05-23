@@ -138,7 +138,7 @@ function ReservaDetalhes() {
     const v = Number(valor.replace(",", "."));
     if (!v || v <= 0) return alert("Informe um valor válido");
     if (v > restante + 0.001) return alert(`Valor máximo: ${brl(restante)}`);
-    if (pago > 0 && v >= restante - 0.001 && (faltamPoltronas || faltamEmbarques)) {
+    if (passageirosList.length > 0 && v >= restante - 0.001 && (faltamPoltronas || faltamEmbarques)) {
       return alert("Confirme as poltronas e os pontos de embarque antes de finalizar o pagamento.");
     }
     setSubmitting(true);
