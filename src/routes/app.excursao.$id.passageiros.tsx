@@ -581,8 +581,8 @@ function NewPassageiroModal({
       return;
     }
     toast.success("Passageiro manual adicionado");
-    qc.invalidateQueries({ queryKey: ["passageiros", excursaoId] });
-    qc.invalidateQueries({ queryKey: ["seats", excursaoId] });
+    qc.invalidateQueries({ queryKey: ["passageiros", excursaoId, onibusId ?? null] });
+    qc.invalidateQueries({ queryKey: ["seats", excursaoId, onibusId ?? null] });
     qc.invalidateQueries({ queryKey: ["pontos-counts", excursaoId] });
     onClose();
   }
