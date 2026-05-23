@@ -21,6 +21,10 @@ type Passageiro = {
   status: string;
   qr_code: string;
   ponto_embarque_id: string | null;
+  observacao_interna: string | null;
+  payment_status: string;
+  total_price: number;
+  amount_paid: number;
 };
 
 type Ponto = { id: string; nome: string; horario: string | null };
