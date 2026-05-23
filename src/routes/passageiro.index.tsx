@@ -34,7 +34,7 @@ type MinhaInscricao = {
   excursao: Excursao | null;
 };
 
-type ExtraPax = { nome: string; email: string; telefone: string };
+type ExtraPax = { nome: string; email: string };
 
 function MinhasViagens() {
   const { user } = useAuth();
