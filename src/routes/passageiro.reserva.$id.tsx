@@ -145,7 +145,7 @@ function ReservaDetalhes() {
         parcelas: 1,
         status: "confirmado",
         pago_em: new Date().toISOString(),
-      });
+      } as any);
       if (error) throw error;
       setValor("");
       qc.invalidateQueries({ queryKey: ["reserva-grupo", id] });
