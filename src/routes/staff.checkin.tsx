@@ -177,11 +177,21 @@ function CheckinStaff() {
         </div>
       ) : (
         <>
+          {onibus && (
+            <div className="glass rounded-2xl p-3 mb-3 flex items-center gap-2 border border-neon-green/30 bg-neon-green/5">
+              <Bus className="size-4 text-neon-green shrink-0" />
+              <div className="text-xs">
+                <span className="text-muted-foreground">Embarque do ônibus:</span>{" "}
+                <span className="font-semibold">{onibus.nome}</span>
+              </div>
+            </div>
+          )}
           <div className="grid grid-cols-3 gap-2 mb-4">
             <Metric value={embarcados.length} label="Embarcados" tone="green" />
             <Metric value={aguardando.length} label="Pendentes" tone="yellow" />
             <Metric value={passageiros.length} label="Total" tone="purple" />
           </div>
+
 
           {!scanning ? (
             <button
