@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Shell } from "@/components/passageiro/Shell";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
-import { Loader2, Armchair, Check } from "lucide-react";
+import { Loader2, Armchair, Check, MapPinned } from "lucide-react";
 
 type Search = { pax?: string; reserva?: string };
 
@@ -23,6 +23,9 @@ function Poltrona() {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const [saving, setSaving] = useState<string | null>(null);
+  const [savingPonto, setSavingPonto] = useState<string | null>(null);
+  const [selectedSeat, setSelectedSeat] = useState<any>(null);
+  const [selectedPontoId, setSelectedPontoId] = useState<string | null>(null);
 
   const { data: reserva, isLoading: l1 } = useQuery({
     queryKey: ["pax-poltrona", paxId],
@@ -30,7 +33,9 @@ function Poltrona() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("passageiros")
-        .select("id, seat_id, payment_status, amount_paid, excursao_id, reserva_id, excursao:excursoes(id, titulo)")
+        .select(
+          "id, seat_id, assento, ponto_embarque_id, payment_status, amount_paid, excursao_id, reserva_id, excursao:excursoes(id, titulo)",
+        )
         .eq("id", paxId!)
         .single();
       if (error) throw error;
@@ -52,7 +57,21 @@ function Poltrona() {
     },
   });
 
-  if (l1 || l2) {
+  const { data: pontos = [], isLoading: l3 } = useQuery({
+    queryKey: ["pontos-poltrona", reserva?.excursao_id],
+    enabled: !!reserva?.excursao_id,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("pontos_embarque")
+        .select("id, nome, endereco, referencia, horario, ordem")
+        .eq("excursao_id", reserva!.excursao_id)
+        .order("ordem", { ascending: true });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  if (l1 || l2 || l3) {
     return (
       <Shell title="Escolher poltrona">
         <div className="flex justify-center py-20">
@@ -74,9 +93,16 @@ function Poltrona() {
     return (
       <Shell title="Escolher poltrona">
         <div className="glass rounded-3xl p-10 text-center">
-          <p className="text-sm text-muted-foreground">Faça pelo menos um pagamento para liberar a escolha de poltrona.</p>
+          <p className="text-sm text-muted-foreground">
+            Faça pelo menos um pagamento para liberar a escolha de poltrona.
+          </p>
           <button
-            onClick={() => navigate({ to: "/passageiro/pagamentos", search: { reserva: (reserva as any).reserva_id ?? reserva.id } as any })}
+            onClick={() =>
+              navigate({
+                to: "/passageiro/pagamentos",
+                search: { reserva: (reserva as any).reserva_id ?? reserva.id } as any,
+              })
+            }
             className="mt-4 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"
           >
             Ir para pagamento
@@ -86,25 +112,100 @@ function Poltrona() {
     );
   }
 
-  // Poltrona já escolhida — bloqueada definitivamente
-  if (reserva.seat_id) {
-    const meuSeat = (seats as any[]).find((s) => s.id === reserva.seat_id);
+  const selectedSeatId = selectedSeat?.id ?? reserva.seat_id;
+  const selectedSeatLabel =
+    selectedSeat?.seat_number ??
+    (seats as any[]).find((s) => s.id === selectedSeatId)?.seat_number ??
+    reserva.assento ??
+    "—";
+  const currentPontoId = selectedPontoId ?? reserva.ponto_embarque_id;
+  const currentPonto = (pontos as any[]).find((p) => p.id === currentPontoId);
+
+  if (selectedSeatId) {
     return (
       <Shell title="Sua poltrona" subtitle={(reserva as any).excursao?.titulo}>
-        <div className="glass rounded-3xl p-8 text-center">
+        <div className="glass rounded-3xl p-8 text-center mb-5">
           <div className="mx-auto size-24 rounded-3xl bg-gradient-to-br from-neon-pink to-neon-purple grid place-items-center glow-primary mb-4">
             <Armchair className="size-10 text-primary-foreground" />
           </div>
           <p className="text-xs text-muted-foreground">Poltrona confirmada</p>
-          <p className="font-display font-black text-5xl mt-1">{meuSeat?.seat_number ?? "—"}</p>
+          <p className="font-display font-black text-5xl mt-1">{selectedSeatLabel}</p>
           <p className="text-[12px] text-muted-foreground mt-3">
-            Sua escolha está salva. Apenas o excursionista pode alterar.
+            Agora confirme o ponto de embarque para finalizar esta etapa.
           </p>
+        </div>
+
+        <div className="glass rounded-3xl p-5">
+          <div className="flex items-center gap-2 mb-4">
+            <MapPinned className="size-5 text-neon-pink" />
+            <h2 className="font-display font-bold">Escolha o embarque</h2>
+          </div>
+
+          {currentPonto ? (
+            <div className="bg-neon-green/10 border border-neon-green/30 rounded-2xl p-4 mb-4">
+              <p className="text-xs font-bold text-neon-green mb-1">✓ Embarque confirmado</p>
+              <p className="font-bold">{currentPonto.nome}</p>
+              {currentPonto.endereco && (
+                <p className="text-xs text-muted-foreground">{currentPonto.endereco}</p>
+              )}
+              {currentPonto.horario && (
+                <p className="text-xs text-neon-green mt-1">⏰ {currentPonto.horario}</p>
+              )}
+            </div>
+          ) : null}
+
+          <div className="space-y-2">
+            {(pontos as any[]).map((pt) => {
+              const selected = currentPontoId === pt.id;
+              const isSaving = savingPonto === pt.id;
+              return (
+                <button
+                  key={pt.id}
+                  type="button"
+                  disabled={!!savingPonto}
+                  onClick={() => escolherPonto(pt.id)}
+                  className={`w-full text-left rounded-2xl p-3 border transition disabled:opacity-60 ${
+                    selected
+                      ? "bg-neon-pink/10 border-neon-pink/60"
+                      : "bg-background/40 border-border hover:border-neon-pink/40"
+                  }`}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="font-bold text-sm">{pt.nome}</p>
+                      {pt.endereco && (
+                        <p className="text-xs text-muted-foreground">{pt.endereco}</p>
+                      )}
+                      {pt.horario && <p className="text-[11px] text-neon-pink">⏰ {pt.horario}</p>}
+                    </div>
+                    {isSaving ? (
+                      <Loader2 className="size-4 animate-spin text-neon-pink" />
+                    ) : selected ? (
+                      <Check className="size-4 text-neon-green" />
+                    ) : null}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+
+          {pontos.length === 0 && (
+            <p className="text-center text-sm text-muted-foreground py-6">
+              Nenhum ponto de embarque cadastrado.
+            </p>
+          )}
+
           <button
-            onClick={() => navigate({ to: "/passageiro/reserva/$id", params: { id: (reserva as any).reserva_id ?? reserva.id } })}
-            className="mt-5 w-full h-12 rounded-2xl font-bold bg-primary text-primary-foreground glow-primary"
+            disabled={!currentPontoId}
+            onClick={() =>
+              navigate({
+                to: "/passageiro/reserva/$id",
+                params: { id: (reserva as any).reserva_id ?? reserva.id },
+              })
+            }
+            className="mt-5 w-full h-12 rounded-2xl font-bold bg-primary text-primary-foreground glow-primary disabled:opacity-40 disabled:cursor-not-allowed"
           >
-            Voltar para a reserva
+            Continuar para a reserva
           </button>
         </div>
       </Shell>
@@ -132,14 +233,16 @@ function Poltrona() {
         .eq("occupied", false);
       if (error) throw error;
 
-      await supabase
+      const { error: passageiroError } = await supabase
         .from("passageiros")
         .update({ seat_id: seat.id, assento: seat.seat_number })
         .eq("id", reserva.id);
+      if (passageiroError) throw passageiroError;
 
-      qc.invalidateQueries({ queryKey: ["seats"] });
-      qc.invalidateQueries({ queryKey: ["pax-poltrona"] });
-      qc.invalidateQueries({ queryKey: ["reserva-passageiros"] });
+      setSelectedSeat(seat);
+      await qc.invalidateQueries({ queryKey: ["seats"] });
+      await qc.invalidateQueries({ queryKey: ["pax-poltrona"] });
+      await qc.invalidateQueries({ queryKey: ["reserva-passageiros"] });
     } catch (err: any) {
       alert(err.message ?? "Erro ao escolher poltrona");
     } finally {
@@ -147,13 +250,39 @@ function Poltrona() {
     }
   }
 
+  async function escolherPonto(pontoId: string) {
+    if (!reserva) return;
+    setSavingPonto(pontoId);
+    try {
+      const { error } = await supabase
+        .from("passageiros")
+        .update({ ponto_embarque_id: pontoId })
+        .eq("id", reserva.id);
+      if (error) throw error;
+      setSelectedPontoId(pontoId);
+      await qc.invalidateQueries({ queryKey: ["pax-poltrona"] });
+      await qc.invalidateQueries({ queryKey: ["reserva-passageiros"] });
+      await qc.invalidateQueries({ queryKey: ["pagto-passageiros"] });
+    } catch (err: any) {
+      alert(err.message ?? "Erro ao escolher embarque");
+    } finally {
+      setSavingPonto(null);
+    }
+  }
+
   return (
     <Shell title="Escolher poltrona" subtitle={(reserva as any).excursao?.titulo}>
       <div className="glass rounded-3xl p-5 mb-5">
         <div className="flex items-center gap-4 text-xs">
-          <span className="flex items-center gap-1.5"><span className="size-3 rounded bg-neon-green" /> Disponível</span>
-          <span className="flex items-center gap-1.5"><span className="size-3 rounded bg-neon-pink" /> Sua</span>
-          <span className="flex items-center gap-1.5"><span className="size-3 rounded bg-muted" /> Ocupada</span>
+          <span className="flex items-center gap-1.5">
+            <span className="size-3 rounded bg-neon-green" /> Disponível
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="size-3 rounded bg-neon-pink" /> Sua
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="size-3 rounded bg-muted" /> Ocupada
+          </span>
         </div>
       </div>
 
@@ -171,8 +300,8 @@ function Poltrona() {
                 isMine
                   ? "bg-gradient-to-br from-neon-pink to-neon-purple text-primary-foreground glow-primary"
                   : isOccupied
-                  ? "bg-muted text-muted-foreground opacity-50 cursor-not-allowed"
-                  : "bg-neon-green/20 text-neon-green hover:bg-neon-green/30"
+                    ? "bg-muted text-muted-foreground opacity-50 cursor-not-allowed"
+                    : "bg-neon-green/20 text-neon-green hover:bg-neon-green/30"
               }`}
             >
               {isSaving ? (
@@ -191,7 +320,9 @@ function Poltrona() {
       </div>
 
       {seats.length === 0 && (
-        <p className="text-center text-sm text-muted-foreground py-10">Nenhuma poltrona disponível.</p>
+        <p className="text-center text-sm text-muted-foreground py-10">
+          Nenhuma poltrona disponível.
+        </p>
       )}
     </Shell>
   );

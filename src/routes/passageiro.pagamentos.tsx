@@ -38,7 +38,9 @@ function Pagamentos() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("reservas")
-        .select("id, quantidade, total_price, amount_paid, payment_status, excursao:excursoes!reservas_excursao_id_fkey(id, titulo, destino, preco, data_evento)")
+        .select(
+          "id, quantidade, total_price, amount_paid, payment_status, excursao:excursoes!reservas_excursao_id_fkey(id, titulo, destino, preco, data_evento)",
+        )
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data ?? [];
@@ -57,7 +59,7 @@ function Pagamentos() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("passageiros")
-        .select("id, seat_id")
+        .select("id, seat_id, ponto_embarque_id")
         .eq("reserva_id", reservaAtiva.id)
         .order("created_at", { ascending: true });
       if (error) throw error;
@@ -110,6 +112,9 @@ function Pagamentos() {
   const restante = Math.max(0, total - pago);
   const pct = total > 0 ? Math.min(100, Math.round((pago / total) * 100)) : 0;
   const status = reservaAtiva.payment_status as string;
+  const passageirosList = passageiros as any[];
+  const faltamPoltronas = passageirosList.some((p) => !p.seat_id);
+  const faltamEmbarques = passageirosList.some((p) => p.seat_id && !p.ponto_embarque_id);
 
   async function pagar() {
     if (!reservaAtiva) return;
@@ -120,6 +125,10 @@ function Pagamentos() {
     }
     if (v > restante + 0.001) {
       alert(`Valor máximo: ${brl(restante)}`);
+      return;
+    }
+    if (pago > 0 && v >= restante - 0.001 && (faltamPoltronas || faltamEmbarques)) {
+      alert("Confirme as poltronas e os pontos de embarque antes de finalizar o pagamento.");
       return;
     }
     setSubmitting(true);
@@ -180,19 +189,21 @@ function Pagamentos() {
       </div>
 
       {/* Botão poltrona — abre a reserva centralizada com todos os passageiros */}
-      {pago > 0 && status !== "cancelled" && (passageiros as any[]).some((p) => !p.seat_id) && (
+      {pago > 0 && status !== "cancelled" && (faltamPoltronas || faltamEmbarques) && (
         <button
-          onClick={() => navigate({ to: "/passageiro/reserva/$id", params: { id: reservaAtiva.id } })}
+          onClick={() =>
+            navigate({ to: "/passageiro/reserva/$id", params: { id: reservaAtiva.id } })
+          }
           className="w-full mb-5 flex items-center justify-center gap-2 h-14 rounded-2xl font-display font-bold bg-gradient-to-r from-neon-green to-neon-purple text-primary-foreground glow-primary"
         >
           <Armchair className="size-5" />
-          Escolher poltronas e embarques
+          {faltamPoltronas ? "Escolher poltronas e embarques" : "Confirmar pontos de embarque"}
         </button>
       )}
-      {passageiros.length > 0 && (passageiros as any[]).every((p) => p.seat_id) && (
+      {passageiros.length > 0 && passageirosList.every((p) => p.seat_id && p.ponto_embarque_id) && (
         <div className="w-full mb-5 flex items-center justify-center gap-2 h-14 rounded-2xl font-display font-bold bg-neon-green/15 text-neon-green border border-neon-green/30">
           <Armchair className="size-5" />
-          Poltronas confirmadas · bloqueadas
+          Poltronas e embarques confirmados
         </div>
       )}
 

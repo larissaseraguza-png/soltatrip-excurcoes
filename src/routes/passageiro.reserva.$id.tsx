@@ -4,7 +4,19 @@ import { useState } from "react";
 import { Shell, Pill } from "@/components/passageiro/Shell";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
-import { Calendar, MapPin, Loader2, Armchair, Wallet, Clock, QrCode, Copy, CheckCircle2, MapPinned, Users } from "lucide-react";
+import {
+  Calendar,
+  MapPin,
+  Loader2,
+  Armchair,
+  Wallet,
+  Clock,
+  QrCode,
+  Copy,
+  CheckCircle2,
+  MapPinned,
+  Users,
+} from "lucide-react";
 
 export const Route = createFileRoute("/passageiro/reserva/$id")({
   component: ReservaDetalhes,
@@ -33,7 +45,9 @@ function ReservaDetalhes() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("reservas")
-        .select("id, quantidade, total_price, amount_paid, payment_status, comprador_id, excursao:excursoes!reservas_excursao_id_fkey(id,titulo,destino,data_evento,horario_saida,horario_retorno,cor,banner_url,preco)")
+        .select(
+          "id, quantidade, total_price, amount_paid, payment_status, comprador_id, excursao:excursoes!reservas_excursao_id_fkey(id,titulo,destino,data_evento,horario_saida,horario_retorno,cor,banner_url,preco)",
+        )
         .eq("id", id)
         .maybeSingle();
       if (error) throw error;
@@ -47,7 +61,9 @@ function ReservaDetalhes() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("passageiros")
-        .select("id, nome, email, status, qr_code, seat_id, assento, ponto_embarque_id, convite_token, user_id, embarcado_em")
+        .select(
+          "id, nome, email, status, qr_code, seat_id, assento, ponto_embarque_id, convite_token, user_id, embarcado_em",
+        )
         .eq("reserva_id", id)
         .order("created_at", { ascending: true });
       if (error) throw error;
@@ -99,7 +115,9 @@ function ReservaDetalhes() {
   if (authLoading || isLoading) {
     return (
       <Shell back="/passageiro" title="Reserva">
-        <div className="flex justify-center py-20"><Loader2 className="size-6 animate-spin text-primary" /></div>
+        <div className="flex justify-center py-20">
+          <Loader2 className="size-6 animate-spin text-primary" />
+        </div>
       </Shell>
     );
   }
@@ -109,7 +127,12 @@ function ReservaDetalhes() {
       <Shell back="/passageiro" title="Reserva">
         <div className="glass rounded-3xl p-10 text-center">
           <p className="text-sm text-muted-foreground">Reserva não encontrada.</p>
-          <Link to="/passageiro" className="mt-4 inline-flex rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground">Voltar</Link>
+          <Link
+            to="/passageiro"
+            className="mt-4 inline-flex rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"
+          >
+            Voltar
+          </Link>
         </div>
       </Shell>
     );
@@ -130,11 +153,17 @@ function ReservaDetalhes() {
     cancelled: { tone: "muted", label: "Cancelado" },
   };
   const s = statusMap[status] ?? statusMap.pending_payment;
+  const passageirosList = passageiros as any[];
+  const faltamPoltronas = passageirosList.some((p) => !p.seat_id);
+  const faltamEmbarques = passageirosList.some((p) => p.seat_id && !p.ponto_embarque_id);
 
   async function pagar() {
     const v = Number(valor.replace(",", "."));
     if (!v || v <= 0) return alert("Informe um valor válido");
     if (v > restante + 0.001) return alert(`Valor máximo: ${brl(restante)}`);
+    if (pago > 0 && v >= restante - 0.001 && (faltamPoltronas || faltamEmbarques)) {
+      return alert("Confirme as poltronas e os pontos de embarque antes de finalizar o pagamento.");
+    }
     setSubmitting(true);
     try {
       const { error } = await supabase.from("pagamentos").insert({
@@ -159,7 +188,10 @@ function ReservaDetalhes() {
   }
 
   async function escolherPonto(paxId: string, pontoId: string) {
-    const { error } = await supabase.from("passageiros").update({ ponto_embarque_id: pontoId }).eq("id", paxId);
+    const { error } = await supabase
+      .from("passageiros")
+      .update({ ponto_embarque_id: pontoId })
+      .eq("id", paxId);
     if (error) return alert(error.message);
     refetchPax();
   }
@@ -177,7 +209,9 @@ function ReservaDetalhes() {
         <div
           className="h-40 relative"
           style={{
-            background: ex?.banner_url ? `url(${ex.banner_url}) center/cover` : `linear-gradient(135deg, ${ex?.cor ?? "#a855f7"}, #ec4899)`,
+            background: ex?.banner_url
+              ? `url(${ex.banner_url}) center/cover`
+              : `linear-gradient(135deg, ${ex?.cor ?? "#a855f7"}, #ec4899)`,
           }}
         >
           <div className="absolute inset-0 grid-bg opacity-30" />
@@ -191,7 +225,11 @@ function ReservaDetalhes() {
 
       {/* Resumo da excursão */}
       <div className="grid grid-cols-2 gap-3 mb-5">
-        <Info4 icon={Calendar} label="Data" value={ex?.data_evento ? new Date(ex.data_evento).toLocaleDateString("pt-BR") : "—"} />
+        <Info4
+          icon={Calendar}
+          label="Data"
+          value={ex?.data_evento ? new Date(ex.data_evento).toLocaleDateString("pt-BR") : "—"}
+        />
         <Info4 icon={MapPin} label="Destino" value={ex?.destino ?? "—"} />
         <Info4 icon={Clock} label="Saída" value={ex?.horario_saida ?? "—"} />
         <Info4 icon={Users} label="Passageiros" value={String(reserva.quantidade)} />
@@ -205,13 +243,20 @@ function ReservaDetalhes() {
         </div>
         <div className="flex items-end justify-between">
           <div>
-            <p className="text-xs text-muted-foreground">Total ({reserva.quantidade} × {brl(Number(ex?.preco) || 0)})</p>
-            <p className="font-display font-black text-3xl bg-gradient-to-r from-neon-pink to-neon-green bg-clip-text text-transparent">{brl(total)}</p>
+            <p className="text-xs text-muted-foreground">
+              Total ({reserva.quantidade} × {brl(Number(ex?.preco) || 0)})
+            </p>
+            <p className="font-display font-black text-3xl bg-gradient-to-r from-neon-pink to-neon-green bg-clip-text text-transparent">
+              {brl(total)}
+            </p>
           </div>
           <Pill tone={s.tone}>{pct}%</Pill>
         </div>
         <div className="mt-3 h-2 rounded-full bg-muted overflow-hidden">
-          <div className="h-full bg-gradient-to-r from-neon-purple to-neon-green transition-all" style={{ width: `${pct}%` }} />
+          <div
+            className="h-full bg-gradient-to-r from-neon-purple to-neon-green transition-all"
+            style={{ width: `${pct}%` }}
+          />
         </div>
         <div className="grid grid-cols-2 gap-3 mt-4 text-sm">
           <div className="bg-background/40 rounded-2xl p-3">
@@ -242,7 +287,9 @@ function ReservaDetalhes() {
                     if (m.v === "pix") setValor(restante.toFixed(2));
                   }}
                   className={`py-2.5 rounded-xl text-xs font-bold transition ${
-                    metodo === m.v ? "bg-gradient-to-br from-neon-purple/30 to-neon-pink/20 text-neon-pink border border-neon-pink/40" : "bg-background/40 text-muted-foreground"
+                    metodo === m.v
+                      ? "bg-gradient-to-br from-neon-purple/30 to-neon-pink/20 text-neon-pink border border-neon-pink/40"
+                      : "bg-background/40 text-muted-foreground"
                   }`}
                 >
                   {m.l}
@@ -288,11 +335,19 @@ function ReservaDetalhes() {
 
         {pagamentos.length > 0 && (
           <details className="mt-4">
-            <summary className="text-xs text-muted-foreground cursor-pointer">Histórico ({pagamentos.length})</summary>
+            <summary className="text-xs text-muted-foreground cursor-pointer">
+              Histórico ({pagamentos.length})
+            </summary>
             <div className="space-y-2 mt-2">
               {pagamentos.map((p: any) => (
-                <div key={p.id} className="flex items-center justify-between text-xs bg-background/30 rounded-xl p-2">
-                  <span className="flex items-center gap-1.5"><CheckCircle2 className="size-3 text-neon-green" /> {String(p.metodo).replace("_", " ")}</span>
+                <div
+                  key={p.id}
+                  className="flex items-center justify-between text-xs bg-background/30 rounded-xl p-2"
+                >
+                  <span className="flex items-center gap-1.5">
+                    <CheckCircle2 className="size-3 text-neon-green" />{" "}
+                    {String(p.metodo).replace("_", " ")}
+                  </span>
                   <span className="font-bold">{brl(Number(p.valor))}</span>
                 </div>
               ))}
@@ -320,7 +375,9 @@ function ReservaDetalhes() {
             <div key={p.id} className="glass rounded-3xl overflow-hidden">
               <div className="px-5 py-3 bg-gradient-to-r from-neon-purple/15 to-neon-pink/10 border-b border-border flex items-center justify-between">
                 <div>
-                  <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Passageiro {idx + 1}</p>
+                  <p className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                    Passageiro {idx + 1}
+                  </p>
                   <p className="font-display font-bold">{p.nome}</p>
                   <p className="text-[11px] text-muted-foreground">{p.email}</p>
                 </div>
@@ -335,7 +392,9 @@ function ReservaDetalhes() {
                 {/* Convite */}
                 {isComprador && p.convite_token && (
                   <div className="bg-neon-purple/10 border border-neon-purple/30 rounded-2xl p-3">
-                    <p className="text-xs text-muted-foreground mb-2">Convide {p.nome} para acessar a própria reserva:</p>
+                    <p className="text-xs text-muted-foreground mb-2">
+                      Convide {p.nome} para acessar a própria reserva:
+                    </p>
                     <button
                       onClick={() => copyInvite(p.convite_token)}
                       className="w-full h-10 rounded-xl font-semibold bg-neon-purple/20 text-neon-purple border border-neon-purple/40 text-sm inline-flex items-center justify-center gap-2"
@@ -355,13 +414,17 @@ function ReservaDetalhes() {
                     <span className="font-display font-black text-lg">{seatLabel}</span>
                   ) : podeEscolher && isVinculadoOuComprador ? (
                     <button
-                      onClick={() => navigate({ to: "/passageiro/poltrona", search: { pax: p.id } as any })}
+                      onClick={() =>
+                        navigate({ to: "/passageiro/poltrona", search: { pax: p.id } as any })
+                      }
                       className="text-xs font-bold px-3 py-2 rounded-xl bg-gradient-to-r from-neon-purple to-neon-pink text-primary-foreground"
                     >
                       Escolher
                     </button>
                   ) : (
-                    <span className="text-xs text-muted-foreground">{pago === 0 ? "Pague para liberar" : "—"}</span>
+                    <span className="text-xs text-muted-foreground">
+                      {pago === 0 ? "Pague para liberar" : "—"}
+                    </span>
                   )}
                 </div>
 
@@ -370,6 +433,7 @@ function ReservaDetalhes() {
                   pax={p}
                   ponto={ponto}
                   pontos={pontos as any[]}
+                  seatSelected={!!seatLabel}
                   podeEscolher={podeEscolher}
                   isVinculadoOuComprador={isVinculadoOuComprador}
                   pago={pago}
@@ -387,15 +451,21 @@ function ReservaDetalhes() {
                       <div className="mx-auto w-44 h-44 rounded-2xl bg-white p-2 grid place-items-center">
                         <img src={qrUrl} alt={`QR Code de ${p.nome}`} className="w-full h-full" />
                       </div>
-                      <p className="text-[10px] font-mono text-muted-foreground mt-2 break-all">{qrPayload}</p>
+                      <p className="text-[10px] font-mono text-muted-foreground mt-2 break-all">
+                        {qrPayload}
+                      </p>
                       {p.embarcado_em && (
-                        <p className="text-xs text-neon-green mt-2">✓ Embarcado em {new Date(p.embarcado_em).toLocaleString("pt-BR")}</p>
+                        <p className="text-xs text-neon-green mt-2">
+                          ✓ Embarcado em {new Date(p.embarcado_em).toLocaleString("pt-BR")}
+                        </p>
                       )}
                     </div>
                   ) : (
                     <div className="bg-muted/20 border-2 border-dashed border-border rounded-2xl p-6 text-center">
                       <QrCode className="size-8 mx-auto text-muted-foreground/40 mb-2" />
-                      <p className="text-xs text-muted-foreground">Disponível após quitação total</p>
+                      <p className="text-xs text-muted-foreground">
+                        Disponível após quitação total
+                      </p>
                     </div>
                   )}
                 </div>
@@ -422,6 +492,7 @@ function Info4({ icon: Icon, label, value }: { icon: any; label: string; value: 
 function EmbarqueSection({
   ponto,
   pontos,
+  seatSelected,
   podeEscolher,
   isVinculadoOuComprador,
   pago,
@@ -430,13 +501,14 @@ function EmbarqueSection({
   pax: any;
   ponto: any;
   pontos: any[];
+  seatSelected: boolean;
   podeEscolher: boolean;
   isVinculadoOuComprador: boolean;
   pago: number;
   onSelect: (pontoId: string) => void;
 }) {
   const [editing, setEditing] = useState(false);
-  const canEdit = podeEscolher && isVinculadoOuComprador && pontos.length > 0;
+  const canEdit = seatSelected && podeEscolher && isVinculadoOuComprador && pontos.length > 0;
   const showList = canEdit && (!ponto || editing);
 
   return (
@@ -459,10 +531,14 @@ function EmbarqueSection({
               </button>
             )}
           </div>
+        ) : !seatSelected ? (
+          <span className="text-[11px] text-muted-foreground">Escolha a poltrona primeiro</span>
         ) : canEdit ? (
           <span className="text-[11px] text-muted-foreground">Escolha abaixo</span>
         ) : (
-          <span className="text-xs text-muted-foreground">{pago === 0 ? "Pague para liberar" : "—"}</span>
+          <span className="text-xs text-muted-foreground">
+            {pago === 0 ? "Pague para liberar" : "—"}
+          </span>
         )}
       </div>
 
