@@ -24,6 +24,9 @@ type Excursao = {
 type MinhaInscricao = {
   id: string;
   status: string;
+  payment_status: string;
+  amount_paid: number;
+  total_price: number;
   excursao: Excursao | null;
 };
 
@@ -40,7 +43,7 @@ function MinhasViagens() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("passageiros")
-        .select("id, status, excursao:excursoes(id,titulo,destino,data_evento,preco,cor,status,total_vagas)")
+        .select("id, status, payment_status, amount_paid, total_price, excursao:excursoes(id,titulo,destino,data_evento,preco,cor,status,total_vagas)")
         .eq("user_id", user!.id)
         .order("created_at", { ascending: false });
       if (error) throw error;
