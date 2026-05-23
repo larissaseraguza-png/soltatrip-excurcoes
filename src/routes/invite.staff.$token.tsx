@@ -30,10 +30,8 @@ function InviteStaffPage() {
   const { data: invite, isLoading } = useQuery({
     queryKey: ["invite", token],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("invitations")
-        .select("id, papel, expires_at, used, excursao:excursoes(id,titulo,destino,data_evento)")
-        .eq("token", token)
+      const { data, error } = await (supabase as any)
+        .rpc("get_staff_invitation", { p_token: token })
         .maybeSingle();
       if (error) throw error;
       return data;
@@ -82,7 +80,12 @@ function InviteStaffPage() {
   }
 
   const expirado = new Date(invite.expires_at) < new Date();
-  const exc = (invite as any).excursao;
+  const exc = {
+    id: invite.excursao_id,
+    titulo: invite.excursao_titulo,
+    destino: invite.excursao_destino,
+    data_evento: invite.excursao_data_evento,
+  };
 
   return (
     <Center>
