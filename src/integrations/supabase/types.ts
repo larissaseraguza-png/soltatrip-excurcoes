@@ -198,6 +198,7 @@ export type Database = {
           metodo: string
           observacao: string | null
           pago_em: string | null
+          parcelas: number
           passageiro_id: string
           status: string
           updated_at: string
@@ -211,6 +212,7 @@ export type Database = {
           metodo?: string
           observacao?: string | null
           pago_em?: string | null
+          parcelas?: number
           passageiro_id: string
           status?: string
           updated_at?: string
@@ -224,6 +226,7 @@ export type Database = {
           metodo?: string
           observacao?: string | null
           pago_em?: string | null
+          parcelas?: number
           passageiro_id?: string
           status?: string
           updated_at?: string
@@ -248,6 +251,7 @@ export type Database = {
       }
       passageiros: {
         Row: {
+          amount_paid: number
           assento: string | null
           created_at: string
           documento: string | null
@@ -255,14 +259,18 @@ export type Database = {
           excursao_id: string
           id: string
           nome: string
+          payment_status: string
           ponto_embarque_id: string | null
           qr_code: string
+          seat_id: string | null
           status: string
           telefone: string | null
+          total_price: number
           updated_at: string
           user_id: string | null
         }
         Insert: {
+          amount_paid?: number
           assento?: string | null
           created_at?: string
           documento?: string | null
@@ -270,14 +278,18 @@ export type Database = {
           excursao_id: string
           id?: string
           nome: string
+          payment_status?: string
           ponto_embarque_id?: string | null
           qr_code?: string
+          seat_id?: string | null
           status?: string
           telefone?: string | null
+          total_price?: number
           updated_at?: string
           user_id?: string | null
         }
         Update: {
+          amount_paid?: number
           assento?: string | null
           created_at?: string
           documento?: string | null
@@ -285,10 +297,13 @@ export type Database = {
           excursao_id?: string
           id?: string
           nome?: string
+          payment_status?: string
           ponto_embarque_id?: string | null
           qr_code?: string
+          seat_id?: string | null
           status?: string
           telefone?: string | null
+          total_price?: number
           updated_at?: string
           user_id?: string | null
         }
@@ -370,6 +385,47 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      seats: {
+        Row: {
+          created_at: string
+          excursao_id: string
+          id: string
+          occupied: boolean
+          passageiro_id: string | null
+          reserved_by: string | null
+          seat_number: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          excursao_id: string
+          id?: string
+          occupied?: boolean
+          passageiro_id?: string | null
+          reserved_by?: string | null
+          seat_number: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          excursao_id?: string
+          id?: string
+          occupied?: boolean
+          passageiro_id?: string | null
+          reserved_by?: string | null
+          seat_number?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seats_excursao_id_fkey"
+            columns: ["excursao_id"]
+            isOneToOne: false
+            referencedRelation: "excursoes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
