@@ -5,7 +5,7 @@ import { StaffShell, Pill } from "@/components/staff/Shell";
 import { supabase } from "@/integrations/supabase/client";
 import { useStaffExcursao } from "@/hooks/use-staff-excursao";
 import { useRealtimeSync } from "@/hooks/use-realtime-sync";
-import { Wallet, Loader2, Lock } from "lucide-react";
+import { Wallet, Loader2, Lock, Bus } from "lucide-react";
 
 export const Route = createFileRoute("/staff/financeiro")({
   component: FinanceiroStaff,
@@ -28,11 +28,11 @@ type Pagamento = {
 };
 
 function FinanceiroStaff() {
-  const { excursao, loading } = useStaffExcursao();
+  const { excursao, onibusId, onibus, loading } = useStaffExcursao();
 
   const { data: reservas = [] } = useQuery({
-    queryKey: ["staff-fin-reservas", excursao?.id],
-    enabled: !!excursao?.id,
+    queryKey: ["staff-fin-reservas", excursao?.id, onibusId],
+    enabled: !!excursao?.id && !onibusId,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("reservas")
@@ -44,35 +44,39 @@ function FinanceiroStaff() {
   });
 
   const { data: pagamentos = [] } = useQuery({
-    queryKey: ["staff-fin-pagamentos", excursao?.id],
+    queryKey: ["staff-fin-pagamentos", excursao?.id, onibusId],
     enabled: !!excursao?.id,
     queryFn: async () => {
-      const { data, error } = await supabase
+      let q = supabase
         .from("pagamentos")
-        .select("id,valor,metodo,status,created_at,passageiro_id")
+        .select("id,valor,metodo,status,created_at,passageiro_id,onibus_id")
         .eq("excursao_id", excursao!.id)
         .order("created_at", { ascending: false })
         .limit(20);
+      if (onibusId) q = q.eq("onibus_id", onibusId);
+      const { data, error } = await q;
       if (error) throw error;
       return (data ?? []) as Pagamento[];
     },
   });
 
   const { data: passageiros = [] } = useQuery({
-    queryKey: ["staff-fin-pax", excursao?.id],
+    queryKey: ["staff-fin-pax", excursao?.id, onibusId],
     enabled: !!excursao?.id,
     queryFn: async () => {
-      const { data, error } = await supabase
+      let q = supabase
         .from("passageiros")
-        .select("id,nome,payment_status,total_price,amount_paid")
+        .select("id,nome,payment_status,total_price,amount_paid,onibus_id")
         .eq("excursao_id", excursao!.id);
+      if (onibusId) q = q.eq("onibus_id", onibusId);
+      const { data, error } = await q;
       if (error) throw error;
       return data ?? [];
     },
   });
 
   useRealtimeSync(
-    `staff-fin-${excursao?.id ?? "none"}`,
+    `staff-fin-${excursao?.id ?? "none"}-${onibusId ?? "all"}`,
     excursao?.id
       ? [
           { table: "reservas", filter: `excursao_id=eq.${excursao.id}` },
@@ -81,13 +85,24 @@ function FinanceiroStaff() {
         ]
       : [],
     [
-      ["staff-fin-reservas", excursao?.id],
-      ["staff-fin-pagamentos", excursao?.id],
-      ["staff-fin-pax", excursao?.id],
+      ["staff-fin-reservas", excursao?.id, onibusId],
+      ["staff-fin-pagamentos", excursao?.id, onibusId],
+      ["staff-fin-pax", excursao?.id, onibusId],
     ],
   );
 
   const totals = useMemo(() => {
+    if (onibusId) {
+      // Bus-scoped: aggregate from passageiros
+      const pax = passageiros as any[];
+      const total = pax.reduce((s, p) => s + Number(p.total_price || 0), 0);
+      const pago = pax.reduce((s, p) => s + Number(p.amount_paid || 0), 0);
+      const pendente = Math.max(0, total - pago);
+      const confirmadas = pax.filter((p) => p.payment_status === "paid").length;
+      const parciais = pax.filter((p) => p.payment_status === "partial_payment").length;
+      const pendentesRes = pax.filter((p) => p.payment_status === "pending_payment").length;
+      return { total, pago, pendente, confirmadas, parciais, pendentesRes };
+    }
     const total = reservas.reduce((s, r) => s + Number(r.total_price || 0), 0);
     const pago = reservas.reduce((s, r) => s + Number(r.amount_paid || 0), 0);
     const pendente = Math.max(0, total - pago);
@@ -95,7 +110,8 @@ function FinanceiroStaff() {
     const parciais = reservas.filter((r) => r.payment_status === "partial_payment").length;
     const pendentesRes = reservas.filter((r) => r.payment_status === "pending_payment").length;
     return { total, pago, pendente, confirmadas, parciais, pendentesRes };
-  }, [reservas]);
+  }, [reservas, passageiros, onibusId]);
+
 
   const paxById = useMemo(() => new Map((passageiros as any[]).map((p) => [p.id, p])), [passageiros]);
   const brl = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -110,6 +126,15 @@ function FinanceiroStaff() {
         </div>
       ) : (
         <>
+          {onibus && (
+            <div className="glass rounded-2xl p-3 mb-3 flex items-center gap-2 border border-neon-green/30 bg-neon-green/5">
+              <Bus className="size-4 text-neon-green shrink-0" />
+              <div className="text-xs">
+                <span className="text-muted-foreground">Financeiro do ônibus:</span>{" "}
+                <span className="font-semibold">{onibus.nome}</span>
+              </div>
+            </div>
+          )}
           <div className="glass rounded-2xl p-3 mb-4 flex items-center gap-3 border border-yellow-400/30 bg-yellow-400/5">
             <Lock className="size-4 text-yellow-300 shrink-0" />
             <div className="text-[11px] text-yellow-200">

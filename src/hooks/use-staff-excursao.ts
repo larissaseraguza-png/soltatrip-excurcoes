@@ -15,9 +15,18 @@ export type StaffExcursao = {
   banner_url: string | null;
 };
 
+export type StaffOnibus = {
+  id: string;
+  nome: string;
+  capacidade: number;
+  horario_saida: string | null;
+  ponto_partida: string | null;
+} | null;
+
 /**
- * Retorna a primeira excursão ativa vinculada ao staff logado.
- * Toda a tela do staff é escopada a essa excursão.
+ * Retorna a primeira excursão ativa vinculada ao staff logado,
+ * junto com o ônibus específico ao qual ele está vinculado (se houver).
+ * Se onibus_id for null, o staff tem acesso a todos os ônibus daquela excursão.
  */
 export function useStaffExcursao() {
   const { user } = useAuth();
@@ -28,7 +37,7 @@ export function useStaffExcursao() {
       const { data, error } = await supabase
         .from("equipe_excursoes")
         .select(
-          "excursao:excursoes(id,titulo,destino,data_evento,horario_saida,horario_retorno,total_vagas,status,cor,banner_url)",
+          "onibus_id, excursao:excursoes(id,titulo,destino,data_evento,horario_saida,horario_retorno,total_vagas,status,cor,banner_url)",
         )
         .eq("staff_user_id", user!.id)
         .eq("status", "ativo")
@@ -36,8 +45,25 @@ export function useStaffExcursao() {
         .limit(1)
         .maybeSingle();
       if (error) throw error;
-      return ((data as any)?.excursao ?? null) as StaffExcursao | null;
+      const excursao = ((data as any)?.excursao ?? null) as StaffExcursao | null;
+      const onibusId = ((data as any)?.onibus_id ?? null) as string | null;
+
+      let onibus: StaffOnibus = null;
+      if (onibusId) {
+        const { data: o } = await supabase
+          .from("onibus")
+          .select("id,nome,capacidade,horario_saida,ponto_partida")
+          .eq("id", onibusId)
+          .maybeSingle();
+        onibus = (o as any) ?? null;
+      }
+      return { excursao, onibusId, onibus };
     },
   });
-  return { excursao: query.data ?? null, loading: query.isLoading };
+  return {
+    excursao: query.data?.excursao ?? null,
+    onibusId: query.data?.onibusId ?? null,
+    onibus: query.data?.onibus ?? null,
+    loading: query.isLoading,
+  };
 }

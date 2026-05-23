@@ -7,7 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useStaffExcursao } from "@/hooks/use-staff-excursao";
 import { useRealtimeSync } from "@/hooks/use-realtime-sync";
-import { CheckCircle2, XCircle, UserCheck, Loader2, Search, Camera, X, AlertTriangle } from "lucide-react";
+import { CheckCircle2, XCircle, UserCheck, Loader2, Search, Camera, X, AlertTriangle, Bus } from "lucide-react";
 
 export const Route = createFileRoute("/staff/checkin")({
   component: CheckinStaff,
@@ -28,7 +28,7 @@ type Passageiro = {
 
 function CheckinStaff() {
   const { user } = useAuth();
-  const { excursao, loading } = useStaffExcursao();
+  const { excursao, onibusId, onibus, loading } = useStaffExcursao();
   const qc = useQueryClient();
   const [code, setCode] = useState("");
   const [scanning, setScanning] = useState(false);
@@ -36,36 +36,40 @@ function CheckinStaff() {
   const lastScanRef = useRef<{ code: string; at: number }>({ code: "", at: 0 });
 
   const { data: passageiros = [] } = useQuery({
-    queryKey: ["staff-checkin-pax", excursao?.id],
+    queryKey: ["staff-checkin-pax", excursao?.id, onibusId],
     enabled: !!excursao?.id,
     queryFn: async () => {
-      const { data, error } = await supabase
+      let q = supabase
         .from("passageiros")
-        .select("id,nome,assento,seat_id,qr_code,embarcado_em,status,payment_status,ponto_embarque_id,ponto:pontos_embarque(nome,horario)")
+        .select("id,nome,assento,seat_id,qr_code,embarcado_em,status,payment_status,ponto_embarque_id,onibus_id,ponto:pontos_embarque(nome,horario)")
         .eq("excursao_id", excursao!.id)
         .order("embarcado_em", { ascending: false, nullsFirst: false });
+      if (onibusId) q = q.eq("onibus_id", onibusId);
+      const { data, error } = await q;
       if (error) throw error;
       return (data ?? []) as unknown as Passageiro[];
     },
   });
 
   const { data: checkins = [] } = useQuery({
-    queryKey: ["staff-checkins", excursao?.id],
+    queryKey: ["staff-checkins", excursao?.id, onibusId],
     enabled: !!excursao?.id,
     queryFn: async () => {
-      const { data, error } = await supabase
+      let q = supabase
         .from("checkins")
-        .select("id,passageiro_id,created_at")
+        .select("id,passageiro_id,created_at,onibus_id")
         .eq("excursao_id", excursao!.id)
         .order("created_at", { ascending: false })
         .limit(30);
+      if (onibusId) q = q.eq("onibus_id", onibusId);
+      const { data, error } = await q;
       if (error) throw error;
       return data ?? [];
     },
   });
 
   useRealtimeSync(
-    `staff-checkin-${excursao?.id ?? "none"}`,
+    `staff-checkin-${excursao?.id ?? "none"}-${onibusId ?? "all"}`,
     excursao?.id
       ? [
           { table: "passageiros", filter: `excursao_id=eq.${excursao.id}` },
@@ -73,10 +77,11 @@ function CheckinStaff() {
         ]
       : [],
     [
-      ["staff-checkin-pax", excursao?.id],
-      ["staff-checkins", excursao?.id],
+      ["staff-checkin-pax", excursao?.id, onibusId],
+      ["staff-checkins", excursao?.id, onibusId],
     ],
   );
+
 
   const paxById = useMemo(() => new Map(passageiros.map((p) => [p.id, p])), [passageiros]);
   const embarcados = passageiros.filter((p) => !!p.embarcado_em);
@@ -94,6 +99,10 @@ function CheckinStaff() {
       showFeedback(false, "Passageiro não encontrado.");
       return;
     }
+    if (onibusId && (pax as any).onibus_id && (pax as any).onibus_id !== onibusId) {
+      showFeedback(false, `${pax.nome} é de outro ônibus.`);
+      return;
+    }
     if (pax.embarcado_em) {
       showFeedback(false, `${pax.nome} já embarcou — QR Code já utilizado.`);
       toast.message(`${pax.nome} já embarcou.`);
@@ -108,17 +117,20 @@ function CheckinStaff() {
       showFeedback(false, e1.message);
       return;
     }
-    const { error: e2 } = await supabase
-      .from("checkins")
-      .insert({ excursao_id: excursao.id, passageiro_id: passageiroId, feito_por: user.id });
+    const { error: e2 } = await supabase.from("checkins").insert({
+      excursao_id: excursao.id,
+      passageiro_id: passageiroId,
+      feito_por: user.id,
+      onibus_id: (pax as any).onibus_id ?? onibusId ?? null,
+    });
     if (e2) {
       showFeedback(false, e2.message);
       return;
     }
     showFeedback(true, `${pax.nome} embarcou! ${viaQr ? "(QR)" : ""}`);
     toast.success(`Check-in: ${pax.nome}`);
-    qc.invalidateQueries({ queryKey: ["staff-checkin-pax", excursao.id] });
-    qc.invalidateQueries({ queryKey: ["staff-checkins", excursao.id] });
+    qc.invalidateQueries({ queryKey: ["staff-checkin-pax", excursao.id, onibusId] });
+    qc.invalidateQueries({ queryKey: ["staff-checkins", excursao.id, onibusId] });
   }
 
   async function handleQrResult(decoded: string) {
@@ -165,11 +177,21 @@ function CheckinStaff() {
         </div>
       ) : (
         <>
+          {onibus && (
+            <div className="glass rounded-2xl p-3 mb-3 flex items-center gap-2 border border-neon-green/30 bg-neon-green/5">
+              <Bus className="size-4 text-neon-green shrink-0" />
+              <div className="text-xs">
+                <span className="text-muted-foreground">Embarque do ônibus:</span>{" "}
+                <span className="font-semibold">{onibus.nome}</span>
+              </div>
+            </div>
+          )}
           <div className="grid grid-cols-3 gap-2 mb-4">
             <Metric value={embarcados.length} label="Embarcados" tone="green" />
             <Metric value={aguardando.length} label="Pendentes" tone="yellow" />
             <Metric value={passageiros.length} label="Total" tone="purple" />
           </div>
+
 
           {!scanning ? (
             <button

@@ -2,16 +2,15 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { StaffShell, Pill } from "@/components/staff/Shell";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/use-auth";
+import { useStaffExcursao } from "@/hooks/use-staff-excursao";
 import { useRealtimeSync } from "@/hooks/use-realtime-sync";
-import { Search, Loader2, MapPin, Armchair, Phone } from "lucide-react";
+import { Search, Loader2, MapPin, Armchair, Phone, Bus } from "lucide-react";
 import { useMemo, useState } from "react";
 
 export const Route = createFileRoute("/staff/passageiros")({
   component: PassageirosStaff,
 });
 
-type Vinculo = { excursao: { id: string; titulo: string } | null };
 type Passageiro = {
   id: string;
   nome: string;
@@ -24,69 +23,59 @@ type Passageiro = {
 type Ponto = { id: string; nome: string; horario: string | null };
 
 function PassageirosStaff() {
-  const { user } = useAuth();
+  const { excursao, onibusId, onibus, loading: loadingExc } = useStaffExcursao();
   const [search, setSearch] = useState("");
 
-  const { data: vinculos = [], isLoading: loadingVinculos } = useQuery({
-    queryKey: ["staff-vinculos", user?.id],
-    enabled: !!user,
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("equipe_excursoes")
-        .select("excursao:excursoes(id,titulo)")
-        .eq("staff_user_id", user!.id)
-        .eq("status", "ativo")
-        .order("created_at", { ascending: false });
-      if (error) throw error;
-      return (data ?? []) as unknown as Vinculo[];
-    },
-  });
-
-  const excursao = vinculos[0]?.excursao ?? null;
-
   const { data: passageiros = [], isLoading: loadingPax } = useQuery({
-    queryKey: ["staff-passageiros", excursao?.id],
+    queryKey: ["staff-passageiros", excursao?.id, onibusId],
     enabled: !!excursao?.id,
     queryFn: async () => {
-      const { data, error } = await supabase
+      let q = supabase
         .from("passageiros")
-        .select("id,nome,telefone,assento,seat_id,status,ponto_embarque_id")
+        .select("id,nome,telefone,assento,seat_id,status,ponto_embarque_id,onibus_id")
         .eq("excursao_id", excursao!.id)
         .order("created_at", { ascending: false });
+      if (onibusId) q = q.eq("onibus_id", onibusId);
+      const { data, error } = await q;
       if (error) throw error;
       return (data ?? []) as Passageiro[];
     },
   });
 
   const { data: pontos = [] } = useQuery({
-    queryKey: ["staff-pontos", excursao?.id],
+    queryKey: ["staff-pontos", excursao?.id, onibusId],
     enabled: !!excursao?.id,
     queryFn: async () => {
-      const { data, error } = await supabase
+      let q = supabase
         .from("pontos_embarque")
-        .select("id,nome,horario")
+        .select("id,nome,horario,onibus_id")
         .eq("excursao_id", excursao!.id)
         .order("ordem", { ascending: true });
+      if (onibusId) q = q.or(`onibus_id.eq.${onibusId},onibus_id.is.null`);
+      const { data, error } = await q;
       if (error) throw error;
       return (data ?? []) as Ponto[];
     },
   });
 
   const { data: seats = [] } = useQuery({
-    queryKey: ["staff-seats", excursao?.id],
+    queryKey: ["staff-seats", excursao?.id, onibusId],
     enabled: !!excursao?.id,
     queryFn: async () => {
-      const { data, error } = await supabase
+      let q = supabase
         .from("seats")
-        .select("id,seat_number")
+        .select("id,seat_number,onibus_id")
         .eq("excursao_id", excursao!.id);
+      if (onibusId) q = q.eq("onibus_id", onibusId);
+      const { data, error } = await q;
       if (error) throw error;
       return data ?? [];
     },
   });
 
+
   useRealtimeSync(
-    `staff-passageiros-${excursao?.id ?? "none"}`,
+    `staff-passageiros-${excursao?.id ?? "none"}-${onibusId ?? "all"}`,
     excursao?.id
       ? [
           { table: "passageiros", filter: `excursao_id=eq.${excursao.id}` },
@@ -94,7 +83,11 @@ function PassageirosStaff() {
           { table: "pontos_embarque", filter: `excursao_id=eq.${excursao.id}` },
         ]
       : [],
-    [["staff-passageiros", excursao?.id], ["staff-seats", excursao?.id], ["staff-pontos", excursao?.id]],
+    [
+      ["staff-passageiros", excursao?.id, onibusId],
+      ["staff-seats", excursao?.id, onibusId],
+      ["staff-pontos", excursao?.id, onibusId],
+    ],
   );
 
   const seatById = useMemo(() => new Map((seats as any[]).map((s) => [s.id, s.seat_number])), [seats]);
@@ -105,12 +98,21 @@ function PassageirosStaff() {
 
   return (
     <StaffShell title="Controle de Passageiros" subtitle={excursao?.titulo ?? "Atualizações em tempo real"}>
+      {onibus && (
+        <div className="glass rounded-2xl p-3 mb-3 flex items-center gap-2 border border-neon-green/30 bg-neon-green/5">
+          <Bus className="size-4 text-neon-green shrink-0" />
+          <div className="text-xs">
+            <span className="text-muted-foreground">Ônibus vinculado:</span>{" "}
+            <span className="font-semibold">{onibus.nome}</span>
+          </div>
+        </div>
+      )}
       <div className="glass rounded-2xl p-3 flex items-center gap-2 mb-4">
         <Search className="size-4 text-muted-foreground ml-2" />
         <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar por nome ou telefone…" className="flex-1 bg-transparent outline-none text-sm" />
       </div>
 
-      {loadingVinculos || loadingPax ? (
+      {loadingExc || loadingPax ? (
         <div className="flex justify-center py-16"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
       ) : !excursao ? (
         <div className="glass rounded-2xl p-8 text-center text-sm text-muted-foreground">Nenhuma excursão ativa vinculada.</div>
