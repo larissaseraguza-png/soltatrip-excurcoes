@@ -51,7 +51,7 @@ function MinhasViagens() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("reservas")
-        .select("id, quantidade, total_price, amount_paid, payment_status, excursao:excursoes!reservas_excursao_id_fkey(id,titulo,destino,data_evento,preco,cor,status,total_vagas)")
+        .select("id, quantidade, total_price, amount_paid, payment_status, excursao:excursoes!reservas_excursao_id_fkey(id,titulo,destino,data_evento,preco,cor,status,total_vagas,banner_url)")
         .order("created_at", { ascending: false });
       if (error) throw error;
       return (data ?? []) as unknown as MinhaReserva[];
@@ -63,7 +63,7 @@ function MinhasViagens() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("excursoes")
-        .select("id,titulo,destino,data_evento,preco,cor,status,total_vagas")
+        .select("id,titulo,destino,data_evento,preco,cor,status,total_vagas,banner_url")
         .eq("status", "publicada")
         .order("data_evento", { ascending: true });
       if (error) throw error;
@@ -76,9 +76,10 @@ function MinhasViagens() {
       ? [
           { table: "reservas", filter: `comprador_id=eq.${user.id}` },
           { table: "passageiros", filter: `user_id=eq.${user.id}` },
+          { table: "excursoes" },
         ]
-      : [],
-    [["minhas-reservas", user?.id]],
+      : [{ table: "excursoes" }],
+    [["minhas-reservas", user?.id], ["excursoes-publicadas"]],
   );
 
 
