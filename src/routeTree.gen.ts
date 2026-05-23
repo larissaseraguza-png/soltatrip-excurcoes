@@ -31,6 +31,7 @@ import { Route as StaffCheckinRouteImport } from './routes/staff.checkin'
 import { Route as PassageiroTicketRouteImport } from './routes/passageiro.ticket'
 import { Route as PassageiroSuporteRouteImport } from './routes/passageiro.suporte'
 import { Route as PassageiroRegrasRouteImport } from './routes/passageiro.regras'
+import { Route as PassageiroPoltronaRouteImport } from './routes/passageiro.poltrona'
 import { Route as PassageiroPerfilRouteImport } from './routes/passageiro.perfil'
 import { Route as PassageiroPagamentosRouteImport } from './routes/passageiro.pagamentos'
 import { Route as PassageiroInformacoesRouteImport } from './routes/passageiro.informacoes'
@@ -164,6 +165,11 @@ const PassageiroRegrasRoute = PassageiroRegrasRouteImport.update({
   path: '/regras',
   getParentRoute: () => PassageiroRoute,
 } as any)
+const PassageiroPoltronaRoute = PassageiroPoltronaRouteImport.update({
+  id: '/poltrona',
+  path: '/poltrona',
+  getParentRoute: () => PassageiroRoute,
+} as any)
 const PassageiroPerfilRoute = PassageiroPerfilRouteImport.update({
   id: '/perfil',
   path: '/perfil',
@@ -295,6 +301,7 @@ export interface FileRoutesByFullPath {
   '/passageiro/informacoes': typeof PassageiroInformacoesRoute
   '/passageiro/pagamentos': typeof PassageiroPagamentosRoute
   '/passageiro/perfil': typeof PassageiroPerfilRoute
+  '/passageiro/poltrona': typeof PassageiroPoltronaRoute
   '/passageiro/regras': typeof PassageiroRegrasRoute
   '/passageiro/suporte': typeof PassageiroSuporteRoute
   '/passageiro/ticket': typeof PassageiroTicketRoute
@@ -337,6 +344,7 @@ export interface FileRoutesByTo {
   '/passageiro/informacoes': typeof PassageiroInformacoesRoute
   '/passageiro/pagamentos': typeof PassageiroPagamentosRoute
   '/passageiro/perfil': typeof PassageiroPerfilRoute
+  '/passageiro/poltrona': typeof PassageiroPoltronaRoute
   '/passageiro/regras': typeof PassageiroRegrasRoute
   '/passageiro/suporte': typeof PassageiroSuporteRoute
   '/passageiro/ticket': typeof PassageiroTicketRoute
@@ -383,6 +391,7 @@ export interface FileRoutesById {
   '/passageiro/informacoes': typeof PassageiroInformacoesRoute
   '/passageiro/pagamentos': typeof PassageiroPagamentosRoute
   '/passageiro/perfil': typeof PassageiroPerfilRoute
+  '/passageiro/poltrona': typeof PassageiroPoltronaRoute
   '/passageiro/regras': typeof PassageiroRegrasRoute
   '/passageiro/suporte': typeof PassageiroSuporteRoute
   '/passageiro/ticket': typeof PassageiroTicketRoute
@@ -431,6 +440,7 @@ export interface FileRouteTypes {
     | '/passageiro/informacoes'
     | '/passageiro/pagamentos'
     | '/passageiro/perfil'
+    | '/passageiro/poltrona'
     | '/passageiro/regras'
     | '/passageiro/suporte'
     | '/passageiro/ticket'
@@ -473,6 +483,7 @@ export interface FileRouteTypes {
     | '/passageiro/informacoes'
     | '/passageiro/pagamentos'
     | '/passageiro/perfil'
+    | '/passageiro/poltrona'
     | '/passageiro/regras'
     | '/passageiro/suporte'
     | '/passageiro/ticket'
@@ -518,6 +529,7 @@ export interface FileRouteTypes {
     | '/passageiro/informacoes'
     | '/passageiro/pagamentos'
     | '/passageiro/perfil'
+    | '/passageiro/poltrona'
     | '/passageiro/regras'
     | '/passageiro/suporte'
     | '/passageiro/ticket'
@@ -711,6 +723,13 @@ declare module '@tanstack/react-router' {
       path: '/regras'
       fullPath: '/passageiro/regras'
       preLoaderRoute: typeof PassageiroRegrasRouteImport
+      parentRoute: typeof PassageiroRoute
+    }
+    '/passageiro/poltrona': {
+      id: '/passageiro/poltrona'
+      path: '/poltrona'
+      fullPath: '/passageiro/poltrona'
+      preLoaderRoute: typeof PassageiroPoltronaRouteImport
       parentRoute: typeof PassageiroRoute
     }
     '/passageiro/perfil': {
@@ -939,6 +958,7 @@ interface PassageiroRouteChildren {
   PassageiroInformacoesRoute: typeof PassageiroInformacoesRoute
   PassageiroPagamentosRoute: typeof PassageiroPagamentosRoute
   PassageiroPerfilRoute: typeof PassageiroPerfilRoute
+  PassageiroPoltronaRoute: typeof PassageiroPoltronaRoute
   PassageiroRegrasRoute: typeof PassageiroRegrasRoute
   PassageiroSuporteRoute: typeof PassageiroSuporteRoute
   PassageiroTicketRoute: typeof PassageiroTicketRoute
@@ -951,6 +971,7 @@ const PassageiroRouteChildren: PassageiroRouteChildren = {
   PassageiroInformacoesRoute: PassageiroInformacoesRoute,
   PassageiroPagamentosRoute: PassageiroPagamentosRoute,
   PassageiroPerfilRoute: PassageiroPerfilRoute,
+  PassageiroPoltronaRoute: PassageiroPoltronaRoute,
   PassageiroRegrasRoute: PassageiroRegrasRoute,
   PassageiroSuporteRoute: PassageiroSuporteRoute,
   PassageiroTicketRoute: PassageiroTicketRoute,
