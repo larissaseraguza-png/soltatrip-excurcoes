@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { Shell, Pill } from "@/components/passageiro/Shell";
@@ -30,6 +30,7 @@ type MinhaInscricao = {
 function MinhasViagens() {
   const { user } = useAuth();
   const qc = useQueryClient();
+  const navigate = useNavigate();
   const [tab, setTab] = useState<"minhas" | "disponiveis">("minhas");
   const [reservando, setReservando] = useState<string | null>(null);
 
@@ -64,21 +65,28 @@ function MinhasViagens() {
     if (!user) return;
     setReservando(ex.id);
     try {
-      const { error } = await supabase.from("passageiros").insert({
-        excursao_id: ex.id,
-        user_id: user.id,
-        nome: user.user_metadata?.full_name || user.email || "Passageiro",
-        status: "pendente",
-      });
+      const { data, error } = await supabase
+        .from("passageiros")
+        .insert({
+          excursao_id: ex.id,
+          user_id: user.id,
+          nome: user.user_metadata?.full_name || user.email || "Passageiro",
+          status: "pendente",
+          total_price: Number(ex.preco) || 0,
+          payment_status: "pending_payment",
+        })
+        .select("id")
+        .single();
       if (error) throw error;
       qc.invalidateQueries({ queryKey: ["minhas-inscricoes"] });
-      setTab("minhas");
+      navigate({ to: "/passageiro/pagamentos", search: { reserva: data.id } as any });
     } catch (err: any) {
       alert(err.message ?? "Erro ao reservar");
     } finally {
       setReservando(null);
     }
   }
+
 
   const idsMinhas = new Set(minhas.map((m) => m.excursao?.id).filter(Boolean));
 

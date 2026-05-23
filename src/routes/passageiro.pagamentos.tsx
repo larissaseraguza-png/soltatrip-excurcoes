@@ -1,122 +1,294 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMemo, useState } from "react";
 import { Shell, Pill } from "@/components/passageiro/Shell";
-import { Copy, Upload, MessageCircle, CheckCircle2, Clock, FileText } from "lucide-react";
-import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/use-auth";
+import { Copy, Loader2, CheckCircle2, Armchair } from "lucide-react";
+
+type Search = { reserva?: string };
 
 export const Route = createFileRoute("/passageiro/pagamentos")({
+  validateSearch: (s: Record<string, unknown>): Search => ({
+    reserva: typeof s.reserva === "string" ? s.reserva : undefined,
+  }),
   component: Pagamentos,
 });
 
-function Pagamentos() {
-  const [copied, setCopied] = useState(false);
-  const pix = "soltatrip@pix.com.br";
+const PIX_KEY = "soltatrip@pix.com.br";
 
-  const parcelas = [
-    { n: 1, valor: "R$ 250,00", status: "pago", data: "10 Jun" },
-    { n: 2, valor: "R$ 250,00", status: "pago", data: "10 Jul" },
-    { n: 3, valor: "R$ 250,00", status: "pendente", data: "10 Ago" },
-    { n: 4, valor: "R$ 250,00", status: "futuro", data: "10 Set" },
-  ];
+function brl(v: number) {
+  return v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+}
+
+function Pagamentos() {
+  const { user } = useAuth();
+  const { reserva: reservaParam } = Route.useSearch();
+  const navigate = useNavigate();
+  const qc = useQueryClient();
+  const [copied, setCopied] = useState(false);
+  const [metodo, setMetodo] = useState<"pix" | "pix_parcelado" | "debito" | "credito">("pix");
+  const [valor, setValor] = useState<string>("");
+  const [parcelas, setParcelas] = useState(1);
+  const [submitting, setSubmitting] = useState(false);
+
+  const { data: reservas, isLoading } = useQuery({
+    queryKey: ["reservas-pagto", user?.id, reservaParam],
+    enabled: !!user,
+    queryFn: async () => {
+      let q = supabase
+        .from("passageiros")
+        .select("id, total_price, amount_paid, payment_status, status, seat_id, excursao:excursoes(id, titulo, destino, preco, data_evento)")
+        .eq("user_id", user!.id)
+        .order("created_at", { ascending: false });
+      const { data, error } = await q;
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const reservaAtiva: any = useMemo(() => {
+    if (!reservas?.length) return null;
+    if (reservaParam) return reservas.find((r: any) => r.id === reservaParam) ?? reservas[0];
+    return reservas[0];
+  }, [reservas, reservaParam]);
+
+  const { data: pagamentos = [] } = useQuery({
+    queryKey: ["pagamentos", reservaAtiva?.id],
+    enabled: !!reservaAtiva?.id,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("pagamentos")
+        .select("id, valor, metodo, status, created_at, parcelas")
+        .eq("passageiro_id", reservaAtiva.id)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  if (isLoading) {
+    return (
+      <Shell title="Pagamentos">
+        <div className="flex justify-center py-20">
+          <Loader2 className="size-6 animate-spin text-primary" />
+        </div>
+      </Shell>
+    );
+  }
+
+  if (!reservaAtiva) {
+    return (
+      <Shell title="Pagamentos">
+        <div className="glass rounded-3xl p-10 text-center">
+          <p className="text-sm text-muted-foreground">Você ainda não possui reservas.</p>
+          <button
+            onClick={() => navigate({ to: "/passageiro" })}
+            className="mt-4 inline-flex rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"
+          >
+            Ver excursões
+          </button>
+        </div>
+      </Shell>
+    );
+  }
+
+  const total = Number(reservaAtiva.total_price) || 0;
+  const pago = Number(reservaAtiva.amount_paid) || 0;
+  const restante = Math.max(0, total - pago);
+  const pct = total > 0 ? Math.min(100, Math.round((pago / total) * 100)) : 0;
+  const status = reservaAtiva.payment_status as string;
+
+  async function pagar() {
+    if (!reservaAtiva) return;
+    const v = Number(valor.replace(",", "."));
+    if (!v || v <= 0) {
+      alert("Informe um valor válido");
+      return;
+    }
+    if (v > restante + 0.001) {
+      alert(`Valor máximo: ${brl(restante)}`);
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const { error } = await supabase.from("pagamentos").insert({
+        passageiro_id: reservaAtiva.id,
+        excursao_id: reservaAtiva.excursao.id,
+        valor: v,
+        metodo,
+        parcelas: metodo === "credito" ? parcelas : 1,
+        status: "confirmado",
+        pago_em: new Date().toISOString(),
+      });
+      if (error) throw error;
+      setValor("");
+      qc.invalidateQueries({ queryKey: ["pagamentos"] });
+      qc.invalidateQueries({ queryKey: ["reservas-pagto"] });
+    } catch (err: any) {
+      alert(err.message ?? "Erro ao registrar pagamento");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  const statusLabel: Record<string, { tone: any; label: string }> = {
+    pending_payment: { tone: "yellow", label: "Aguardando pagamento" },
+    partial_payment: { tone: "purple", label: "Pagamento parcial" },
+    paid: { tone: "green", label: "Quitado" },
+    cancelled: { tone: "muted", label: "Cancelado" },
+  };
+  const s = statusLabel[status] ?? statusLabel.pending_payment;
 
   return (
-    <Shell title="Pagamentos" subtitle="Tomorrowland Brasil">
+    <Shell title="Pagamentos" subtitle={reservaAtiva.excursao.titulo}>
+      {/* Resumo */}
       <div className="glass rounded-3xl p-6 mb-5 relative overflow-hidden">
         <div className="absolute -right-10 -top-10 size-40 rounded-full bg-neon-green/20 blur-3xl" />
-        <p className="text-xs uppercase tracking-widest text-muted-foreground">Total da viagem</p>
+        <div className="flex items-center justify-between mb-2">
+          <p className="text-xs uppercase tracking-widest text-muted-foreground">Total da viagem</p>
+          <Pill tone={s.tone}>{s.label}</Pill>
+        </div>
         <p className="font-display font-black text-4xl bg-gradient-to-r from-neon-pink to-neon-green bg-clip-text text-transparent">
-          R$ 1.000,00
+          {brl(total)}
         </p>
         <div className="mt-3 flex items-center gap-3">
           <div className="flex-1 h-2 rounded-full bg-muted overflow-hidden">
             <div
-              className="h-full bg-gradient-to-r from-neon-purple to-neon-green"
-              style={{ width: "50%" }}
+              className="h-full bg-gradient-to-r from-neon-purple to-neon-green transition-all"
+              style={{ width: `${pct}%` }}
             />
           </div>
-          <span className="text-sm font-bold text-neon-green">50%</span>
+          <span className="text-sm font-bold text-neon-green">{pct}%</span>
         </div>
-        <p className="text-xs text-muted-foreground mt-2">R$ 500,00 pagos · R$ 500,00 restantes</p>
+        <p className="text-xs text-muted-foreground mt-2">
+          {brl(pago)} pagos · {brl(restante)} restantes
+        </p>
       </div>
 
-      <div className="glass rounded-3xl p-5 mb-5 border border-neon-pink/30">
-        <div className="flex items-center justify-between mb-3">
-          <div>
-            <p className="text-xs uppercase tracking-widest text-neon-pink font-bold">
-              PIX disponível
-            </p>
-            <p className="text-sm text-muted-foreground">Próxima parcela: R$ 250,00</p>
+      {/* Botão poltrona */}
+      {pago > 0 && status !== "cancelled" && (
+        <button
+          onClick={() => navigate({ to: "/passageiro/poltrona", search: { reserva: reservaAtiva.id } as any })}
+          className="w-full mb-5 flex items-center justify-center gap-2 h-14 rounded-2xl font-display font-bold bg-gradient-to-r from-neon-green to-neon-purple text-primary-foreground glow-primary"
+        >
+          <Armchair className="size-5" />
+          {reservaAtiva.seat_id ? "Trocar poltrona" : "Escolher poltrona"}
+        </button>
+      )}
+
+      {/* Form de pagamento */}
+      {restante > 0 && status !== "cancelled" && (
+        <div className="glass rounded-3xl p-5 mb-5">
+          <h3 className="font-display font-bold mb-3">Fazer pagamento</h3>
+
+          <label className="text-xs text-muted-foreground">Método</label>
+          <div className="grid grid-cols-2 gap-2 mt-1 mb-3">
+            {[
+              { v: "pix", l: "PIX (total)" },
+              { v: "pix_parcelado", l: "PIX fracionado" },
+              { v: "debito", l: "Débito" },
+              { v: "credito", l: "Crédito" },
+            ].map((m) => (
+              <button
+                key={m.v}
+                onClick={() => {
+                  setMetodo(m.v as any);
+                  if (m.v === "pix") setValor(restante.toFixed(2));
+                }}
+                className={`py-2.5 rounded-xl text-xs font-bold transition ${
+                  metodo === m.v
+                    ? "bg-gradient-to-br from-neon-purple/30 to-neon-pink/20 text-neon-pink border border-neon-pink/40"
+                    : "bg-background/40 text-muted-foreground"
+                }`}
+              >
+                {m.l}
+              </button>
+            ))}
           </div>
-          <Pill tone="pink">vence 10/08</Pill>
-        </div>
-        <div className="bg-background/50 rounded-2xl px-4 py-3 flex items-center justify-between">
-          <code className="text-sm font-mono truncate">{pix}</code>
+
+          {metodo === "credito" && (
+            <>
+              <label className="text-xs text-muted-foreground">Parcelas</label>
+              <select
+                value={parcelas}
+                onChange={(e) => setParcelas(Number(e.target.value))}
+                className="w-full mt-1 mb-3 h-11 rounded-xl bg-background/40 px-3 text-sm"
+              >
+                {[1, 2, 3, 4, 6, 10, 12].map((n) => (
+                  <option key={n} value={n}>
+                    {n}x de {brl(restante / n)}
+                  </option>
+                ))}
+              </select>
+            </>
+          )}
+
+          <label className="text-xs text-muted-foreground">Valor (R$)</label>
+          <input
+            inputMode="decimal"
+            value={valor}
+            onChange={(e) => setValor(e.target.value)}
+            placeholder={restante.toFixed(2)}
+            className="w-full mt-1 mb-3 h-12 rounded-xl bg-background/40 px-4 text-sm"
+          />
+
+          {(metodo === "pix" || metodo === "pix_parcelado") && (
+            <div className="bg-background/50 rounded-2xl px-4 py-3 mb-3 flex items-center justify-between">
+              <code className="text-sm font-mono truncate">{PIX_KEY}</code>
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(PIX_KEY);
+                  setCopied(true);
+                  setTimeout(() => setCopied(false), 1500);
+                }}
+                className="ml-2 size-9 grid place-items-center rounded-xl bg-gradient-to-br from-neon-purple to-neon-pink text-primary-foreground"
+              >
+                <Copy className="size-4" />
+              </button>
+            </div>
+          )}
+          {copied && <p className="text-xs text-neon-green mb-2">Chave copiada!</p>}
+
           <button
-            onClick={() => {
-              navigator.clipboard.writeText(pix);
-              setCopied(true);
-              setTimeout(() => setCopied(false), 1500);
-            }}
-            className="ml-2 size-9 grid place-items-center rounded-xl bg-gradient-to-br from-neon-purple to-neon-pink text-primary-foreground"
+            onClick={pagar}
+            disabled={submitting}
+            className="w-full h-12 rounded-2xl font-bold bg-primary text-primary-foreground glow-primary disabled:opacity-50 inline-flex items-center justify-center gap-2"
           >
-            <Copy className="size-4" />
+            {submitting && <Loader2 className="size-4 animate-spin" />}
+            Confirmar pagamento
           </button>
         </div>
-        {copied && <p className="text-xs text-neon-green mt-2">Chave copiada!</p>}
-      </div>
+      )}
 
-      <h3 className="font-display font-bold mb-3">Parcelas</h3>
-      <div className="space-y-2 mb-6">
-        {parcelas.map((p) => (
-          <div key={p.n} className="glass rounded-2xl p-4 flex items-center gap-3">
-            <div
-              className={`size-10 rounded-xl grid place-items-center ${
-                p.status === "pago"
-                  ? "bg-neon-green/20 text-neon-green"
-                  : p.status === "pendente"
-                    ? "bg-yellow-400/20 text-yellow-300"
-                    : "bg-muted text-muted-foreground"
-              }`}
-            >
-              {p.status === "pago" ? <CheckCircle2 className="size-5" /> : <Clock className="size-5" />}
+      {/* Histórico */}
+      <h3 className="font-display font-bold mb-3">Pagamentos realizados</h3>
+      {pagamentos.length === 0 ? (
+        <div className="glass rounded-2xl p-6 text-center text-sm text-muted-foreground">
+          Nenhum pagamento ainda.
+        </div>
+      ) : (
+        <div className="space-y-2 mb-6">
+          {pagamentos.map((p: any) => (
+            <div key={p.id} className="glass rounded-2xl p-4 flex items-center gap-3">
+              <div className="size-10 rounded-xl grid place-items-center bg-neon-green/20 text-neon-green">
+                <CheckCircle2 className="size-5" />
+              </div>
+              <div className="flex-1">
+                <p className="font-semibold capitalize">{String(p.metodo).replace("_", " ")}</p>
+                <p className="text-xs text-muted-foreground">
+                  {new Date(p.created_at).toLocaleString("pt-BR")}
+                  {p.parcelas > 1 && ` · ${p.parcelas}x`}
+                </p>
+              </div>
+              <div className="text-right">
+                <p className="font-display font-bold">{brl(Number(p.valor))}</p>
+                <Pill tone="green">{p.status}</Pill>
+              </div>
             </div>
-            <div className="flex-1">
-              <p className="font-semibold">Parcela {p.n}/4</p>
-              <p className="text-xs text-muted-foreground">Venc. {p.data}</p>
-            </div>
-            <div className="text-right">
-              <p className="font-display font-bold">{p.valor}</p>
-              <Pill tone={p.status === "pago" ? "green" : p.status === "pendente" ? "yellow" : "muted"}>
-                {p.status}
-              </Pill>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      <h3 className="font-display font-bold mb-3">Comprovantes enviados</h3>
-      <div className="space-y-2 mb-6">
-        {[1, 2].map((i) => (
-          <div key={i} className="glass rounded-2xl p-3 flex items-center gap-3">
-            <div className="size-10 rounded-xl bg-neon-purple/20 text-neon-purple grid place-items-center">
-              <FileText className="size-5" />
-            </div>
-            <div className="flex-1">
-              <p className="text-sm font-semibold">comprovante_pix_0{i}.pdf</p>
-              <p className="text-xs text-muted-foreground">Aprovado · {i === 1 ? "10 Jun" : "10 Jul"}</p>
-            </div>
-            <Pill tone="green">ok</Pill>
-          </div>
-        ))}
-      </div>
-
-      <div className="space-y-3">
-        <button className="w-full flex items-center justify-center gap-2 h-14 rounded-2xl font-display font-bold bg-gradient-to-r from-neon-purple to-neon-pink text-primary-foreground glow-primary">
-          <Upload className="size-5" /> Enviar comprovante
-        </button>
-        <button className="w-full flex items-center justify-center gap-2 h-12 rounded-2xl font-semibold glass">
-          <MessageCircle className="size-4" /> Falar com financeiro
-        </button>
-      </div>
+          ))}
+        </div>
+      )}
     </Shell>
   );
 }

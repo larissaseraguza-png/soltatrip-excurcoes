@@ -1,0 +1,170 @@
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
+import { Shell } from "@/components/passageiro/Shell";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/use-auth";
+import { Loader2, Armchair, Check } from "lucide-react";
+
+type Search = { reserva?: string };
+
+export const Route = createFileRoute("/passageiro/poltrona")({
+  validateSearch: (s: Record<string, unknown>): Search => ({
+    reserva: typeof s.reserva === "string" ? s.reserva : undefined,
+  }),
+  component: Poltrona,
+});
+
+function Poltrona() {
+  const { user } = useAuth();
+  const { reserva: reservaId } = Route.useSearch();
+  const navigate = useNavigate();
+  const qc = useQueryClient();
+  const [saving, setSaving] = useState<string | null>(null);
+
+  const { data: reserva, isLoading: l1 } = useQuery({
+    queryKey: ["reserva-poltrona", reservaId],
+    enabled: !!reservaId && !!user,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("passageiros")
+        .select("id, seat_id, payment_status, amount_paid, excursao_id, excursao:excursoes(id, titulo)")
+        .eq("id", reservaId!)
+        .single();
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const { data: seats = [], isLoading: l2 } = useQuery({
+    queryKey: ["seats", reserva?.excursao_id],
+    enabled: !!reserva?.excursao_id,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("seats")
+        .select("id, seat_number, occupied, reserved_by")
+        .eq("excursao_id", reserva!.excursao_id)
+        .order("seat_number");
+      if (error) throw error;
+      return (data ?? []).sort((a, b) => Number(a.seat_number) - Number(b.seat_number));
+    },
+  });
+
+  if (l1 || l2) {
+    return (
+      <Shell title="Escolher poltrona">
+        <div className="flex justify-center py-20">
+          <Loader2 className="size-6 animate-spin text-primary" />
+        </div>
+      </Shell>
+    );
+  }
+
+  if (!reserva) {
+    return (
+      <Shell title="Escolher poltrona">
+        <p className="text-center text-sm text-muted-foreground py-10">Reserva não encontrada.</p>
+      </Shell>
+    );
+  }
+
+  if (Number(reserva.amount_paid) <= 0) {
+    return (
+      <Shell title="Escolher poltrona">
+        <div className="glass rounded-3xl p-10 text-center">
+          <p className="text-sm text-muted-foreground">Faça pelo menos um pagamento para liberar a escolha de poltrona.</p>
+          <button
+            onClick={() => navigate({ to: "/passageiro/pagamentos", search: { reserva: reserva.id } as any })}
+            className="mt-4 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"
+          >
+            Ir para pagamento
+          </button>
+        </div>
+      </Shell>
+    );
+  }
+
+  async function escolher(seat: any) {
+    if (!user || !reserva) return;
+    if (seat.occupied && seat.reserved_by !== user.id) return;
+    setSaving(seat.id);
+    try {
+      // Libera poltrona anterior, se houver
+      if (reserva.seat_id && reserva.seat_id !== seat.id) {
+        await supabase
+          .from("seats")
+          .update({ occupied: false, reserved_by: null, passageiro_id: null })
+          .eq("id", reserva.seat_id)
+          .eq("reserved_by", user.id);
+      }
+      // Marca nova
+      const { error } = await supabase
+        .from("seats")
+        .update({ occupied: true, reserved_by: user.id, passageiro_id: reserva.id })
+        .eq("id", seat.id)
+        .eq("occupied", false);
+      if (error) throw error;
+
+      await supabase
+        .from("passageiros")
+        .update({ seat_id: seat.id, assento: seat.seat_number })
+        .eq("id", reserva.id);
+
+      qc.invalidateQueries({ queryKey: ["seats"] });
+      qc.invalidateQueries({ queryKey: ["reserva-poltrona"] });
+    } catch (err: any) {
+      alert(err.message ?? "Erro ao escolher poltrona");
+    } finally {
+      setSaving(null);
+    }
+  }
+
+  return (
+    <Shell title="Escolher poltrona" subtitle={(reserva as any).excursao?.titulo}>
+      <div className="glass rounded-3xl p-5 mb-5">
+        <div className="flex items-center gap-4 text-xs">
+          <span className="flex items-center gap-1.5"><span className="size-3 rounded bg-neon-green" /> Disponível</span>
+          <span className="flex items-center gap-1.5"><span className="size-3 rounded bg-neon-pink" /> Sua</span>
+          <span className="flex items-center gap-1.5"><span className="size-3 rounded bg-muted" /> Ocupada</span>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-4 gap-3">
+        {seats.map((s: any) => {
+          const isMine = s.reserved_by === user?.id;
+          const isOccupied = s.occupied && !isMine;
+          const isSaving = saving === s.id;
+          return (
+            <button
+              key={s.id}
+              disabled={isOccupied || isSaving}
+              onClick={() => escolher(s)}
+              className={`aspect-square rounded-2xl grid place-items-center font-bold transition ${
+                isMine
+                  ? "bg-gradient-to-br from-neon-pink to-neon-purple text-primary-foreground glow-primary"
+                  : isOccupied
+                  ? "bg-muted text-muted-foreground opacity-50 cursor-not-allowed"
+                  : "bg-neon-green/20 text-neon-green hover:bg-neon-green/30"
+              }`}
+            >
+              {isSaving ? (
+                <Loader2 className="size-5 animate-spin" />
+              ) : isMine ? (
+                <Check className="size-5" />
+              ) : (
+                <div className="flex flex-col items-center gap-1">
+                  <Armchair className="size-4" />
+                  <span className="text-xs">{s.seat_number}</span>
+                </div>
+              )}
+            </button>
+          );
+        })}
+      </div>
+
+      {seats.length === 0 && (
+        <p className="text-center text-sm text-muted-foreground py-10">Nenhuma poltrona disponível.</p>
+      )}
+    </Shell>
+  );
+}
