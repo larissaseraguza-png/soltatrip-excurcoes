@@ -331,47 +331,51 @@ function ReservaDetalhes() {
           <>
             <p className="text-xs text-muted-foreground mb-3">
               {reserva.ponto_embarque_id
-                ? "Você pode trocar a qualquer momento."
-                : "Escolha onde irá embarcar:"}
+                ? "Ponto confirmado · só o excursionista pode alterar"
+                : "Escolha onde irá embarcar (não poderá ser alterado depois):"}
             </p>
             <ul className="space-y-2">
-              {pontos.map((p: any) => {
-                const selected = reserva.ponto_embarque_id === p.id;
-                return (
-                  <li key={p.id}>
-                    <button
-                      onClick={() => escolherPonto(p.id)}
-                      className={`w-full text-left rounded-2xl p-3 border transition ${
-                        selected
-                          ? "border-neon-green/60 bg-neon-green/10"
-                          : "border-border bg-background/40 hover:border-neon-pink/40"
-                      }`}
-                    >
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="min-w-0 flex-1">
-                          <p className="font-bold text-sm truncate">{p.nome}</p>
-                          {p.endereco && (
-                            <p className="text-xs text-muted-foreground truncate">{p.endereco}</p>
-                          )}
-                          {p.referencia && (
-                            <p className="text-[11px] text-muted-foreground/80 italic mt-0.5">
-                              {p.referencia}
-                            </p>
-                          )}
+              {pontos
+                .filter((p: any) =>
+                  reserva.ponto_embarque_id ? p.id === reserva.ponto_embarque_id : true
+                )
+                .map((p: any) => {
+                  const selected = reserva.ponto_embarque_id === p.id;
+                  const locked = !!reserva.ponto_embarque_id;
+                  return (
+                    <li key={p.id}>
+                      <button
+                        disabled={locked}
+                        onClick={() => escolherPonto(p.id)}
+                        className={`w-full text-left rounded-2xl p-3 border transition ${
+                          selected
+                            ? "border-neon-green/60 bg-neon-green/10"
+                            : "border-border bg-background/40 hover:border-neon-pink/40"
+                        } ${locked ? "cursor-default" : ""}`}
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0 flex-1">
+                            <p className="font-bold text-sm truncate">{p.nome}</p>
+                            {p.endereco && (
+                              <p className="text-xs text-muted-foreground truncate">{p.endereco}</p>
+                            )}
+                            {p.referencia && (
+                              <p className="text-[11px] text-muted-foreground/80 italic mt-0.5">
+                                {p.referencia}
+                              </p>
+                            )}
+                          </div>
+                          <div className="text-right shrink-0">
+                            {p.horario && (
+                              <p className="text-xs font-bold text-neon-pink">{p.horario}</p>
+                            )}
+                            {selected && <Pill tone="green">Confirmado</Pill>}
+                          </div>
                         </div>
-                        <div className="text-right shrink-0">
-                          {p.horario && (
-                            <p className="text-xs font-bold text-neon-pink">{p.horario}</p>
-                          )}
-                          {selected && (
-                            <Pill tone="green">Selecionado</Pill>
-                          )}
-                        </div>
-                      </div>
-                    </button>
-                  </li>
-                );
-              })}
+                      </button>
+                    </li>
+                  );
+                })}
             </ul>
           </>
         )}
