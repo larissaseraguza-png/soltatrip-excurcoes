@@ -145,7 +145,9 @@ function PontosPage() {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="font-semibold truncate">{p.nome}</p>
-                <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5">
+                {p.endereco && <p className="text-xs text-muted-foreground truncate">{p.endereco}</p>}
+                {p.referencia && <p className="text-[11px] text-muted-foreground/80 truncate italic">{p.referencia}</p>}
+                <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1">
                   {p.horario && <span className="inline-flex items-center gap-1"><Clock className="h-3 w-3" />{p.horario}</span>}
                   <span className="inline-flex items-center gap-1"><Users className="h-3 w-3" />{counts[p.id] ?? 0} pax</span>
                 </div>
