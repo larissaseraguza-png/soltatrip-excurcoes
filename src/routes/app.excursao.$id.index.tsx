@@ -4,7 +4,7 @@ import { useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useRealtimeSync } from "@/hooks/use-realtime-sync";
-import { ArrowLeft, Calendar, MapPin, Clock, Users, DollarSign, Loader2, Trash2, ChevronRight, Wallet, QrCode, MessageCircle, MapPinned, UserCog, Ban, ImagePlus } from "lucide-react";
+import { ArrowLeft, Calendar, MapPin, Clock, Users, DollarSign, Loader2, Trash2, ChevronRight, Wallet, QrCode, MessageCircle, MapPinned, UserCog, Ban, ImagePlus, Bus } from "lucide-react";
 
 export const Route = createFileRoute("/app/excursao/$id/")({
   component: ExcursaoDetalhe,
@@ -174,6 +174,7 @@ function ExcursaoDetalhe() {
       <PontosSummary excursaoId={id} />
 
       <div className="space-y-2 mb-6">
+        <NavCard to="/app/excursao/$id/onibus" id={id} icon={Bus} title="Ônibus" desc="Gerenciar múltiplos ônibus desta excursão" />
         <NavCard to="/app/excursao/$id/passageiros" id={id} icon={Users} title="Passageiros" desc="Cadastrar, confirmar e gerenciar a lista" />
         <NavCard to="/app/excursao/$id/pontos" id={id} icon={MapPinned} title="Pontos de embarque" desc="Definir locais e horários de embarque" />
         <NavCard to="/app/excursao/$id/financeiro" id={id} icon={Wallet} title="Financeiro" desc="Lançar pagamentos e acompanhar entradas" />
