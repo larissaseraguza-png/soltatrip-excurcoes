@@ -61,8 +61,10 @@ function AuthPage() {
 
   // Já autenticado: retoma convite pendente ou vai para a área do papel.
   if (!busy && user && role) {
-    const pending = typeof window !== "undefined" ? localStorage.getItem("pending_staff_invite") : null;
-    if (pending) return <Navigate to="/invite/staff/$token" params={{ token: pending }} />;
+    const pendingStaff = typeof window !== "undefined" ? localStorage.getItem("pending_staff_invite") : null;
+    if (pendingStaff) return <Navigate to="/invite/staff/$token" params={{ token: pendingStaff }} />;
+    const pendingPax = typeof window !== "undefined" ? localStorage.getItem("pending_pax_invite") : null;
+    if (pendingPax) return <Navigate to="/invite/passageiro/$token" params={{ token: pendingPax }} />;
     return <Navigate to={roleHome[role]} />;
   }
 
@@ -105,9 +107,12 @@ function AuthPage() {
         if (roleErr) throw roleErr;
 
         if (data.session) {
-          const pending = localStorage.getItem("pending_staff_invite");
-          if (pending) {
-            navigate({ to: "/invite/staff/$token", params: { token: pending }, replace: true });
+          const pendingStaff = localStorage.getItem("pending_staff_invite");
+          const pendingPax = localStorage.getItem("pending_pax_invite");
+          if (pendingStaff) {
+            navigate({ to: "/invite/staff/$token", params: { token: pendingStaff }, replace: true });
+          } else if (pendingPax) {
+            navigate({ to: "/invite/passageiro/$token", params: { token: pendingPax }, replace: true });
           } else {
             navigate({ to: roleHome[selectedRole], replace: true });
           }
@@ -134,9 +139,12 @@ function AuthPage() {
           await supabase.auth.signOut();
           throw new Error("Você não tem acesso a este tipo de perfil");
         }
-        const pending = localStorage.getItem("pending_staff_invite");
-        if (pending) {
-          navigate({ to: "/invite/staff/$token", params: { token: pending }, replace: true });
+        const pendingStaff = localStorage.getItem("pending_staff_invite");
+        const pendingPax = localStorage.getItem("pending_pax_invite");
+        if (pendingStaff) {
+          navigate({ to: "/invite/staff/$token", params: { token: pendingStaff }, replace: true });
+        } else if (pendingPax) {
+          navigate({ to: "/invite/passageiro/$token", params: { token: pendingPax }, replace: true });
         } else {
           navigate({ to: roleHome[userRole], replace: true });
         }

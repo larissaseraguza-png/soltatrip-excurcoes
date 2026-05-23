@@ -39,7 +39,7 @@ function Pagamentos() {
       let q = supabase
         .from("passageiros")
         .select("id, total_price, amount_paid, payment_status, status, seat_id, excursao:excursoes(id, titulo, destino, preco, data_evento)")
-        .eq("user_id", user!.id)
+        .or(`user_id.eq.${user!.id},comprador_id.eq.${user!.id}`)
         .order("created_at", { ascending: false });
       const { data, error } = await q;
       if (error) throw error;

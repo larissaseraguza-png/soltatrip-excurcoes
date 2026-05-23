@@ -36,10 +36,10 @@ function ReservaDetalhes() {
       const { data, error } = await supabase
         .from("passageiros")
         .select(
-          "id, nome, status, qr_code, total_price, amount_paid, payment_status, seat_id, assento, embarcado_em, ponto_embarque_id, excursao:excursoes(id,titulo,destino,data_evento,horario_saida,horario_retorno,ponto_embarque,descricao,cor,banner_url,preco)"
+          "id, nome, email, status, qr_code, total_price, amount_paid, payment_status, seat_id, assento, embarcado_em, ponto_embarque_id, convite_token, user_id, comprador_id, excursao:excursoes(id,titulo,destino,data_evento,horario_saida,horario_retorno,ponto_embarque,descricao,cor,banner_url,preco)"
         )
         .eq("id", id)
-        .eq("user_id", user!.id)
+        .or(`user_id.eq.${user!.id},comprador_id.eq.${user!.id}`)
         .maybeSingle();
       if (error) throw error;
       return data as any;
@@ -229,6 +229,26 @@ function ReservaDetalhes() {
           </button>
         )}
       </div>
+
+      {/* Convite (passageiro adicional ainda não vinculado) */}
+      {reserva.convite_token && reserva.comprador_id === user?.id && reserva.user_id !== user?.id && (
+        <div className="glass rounded-3xl p-5 mb-5 border-l-4 border-neon-purple">
+          <h3 className="font-display font-bold mb-1">Link para {reserva.nome}</h3>
+          <p className="text-xs text-muted-foreground mb-3">
+            Compartilhe para que o passageiro acesse a própria reserva e QR Code.
+          </p>
+          <button
+            onClick={() => {
+              const url = `${window.location.origin}/invite/passageiro/${reserva.convite_token}`;
+              navigator.clipboard.writeText(url);
+              alert("Link copiado!");
+            }}
+            className="w-full h-11 rounded-2xl font-semibold bg-neon-purple/20 text-neon-purple border border-neon-purple/40"
+          >
+            Copiar link de convite
+          </button>
+        </div>
+      )}
 
       {/* Poltrona */}
       <div className="glass rounded-3xl p-5 mb-5">
