@@ -125,17 +125,6 @@ function PassageirosPage() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["passageiros", id] }),
   });
 
-  const pontoMut = useMutation({
-    mutationFn: async ({ pid, ponto_embarque_id }: { pid: string; ponto_embarque_id: string | null }) => {
-      const { error } = await supabase.from("passageiros").update({ ponto_embarque_id }).eq("id", pid);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["passageiros", id] });
-      qc.invalidateQueries({ queryKey: ["pontos-counts", id] });
-    },
-  });
-
   const tripChoicesMut = useMutation({
     mutationFn: async ({
       passageiro,
