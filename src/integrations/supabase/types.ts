@@ -319,6 +319,7 @@ export type Database = {
           excursao_id: string
           id: string
           nome: string
+          observacao_interna: string | null
           payment_status: string
           ponto_embarque_id: string | null
           qr_code: string
@@ -342,6 +343,7 @@ export type Database = {
           excursao_id: string
           id?: string
           nome: string
+          observacao_interna?: string | null
           payment_status?: string
           ponto_embarque_id?: string | null
           qr_code?: string
@@ -365,6 +367,7 @@ export type Database = {
           excursao_id?: string
           id?: string
           nome?: string
+          observacao_interna?: string | null
           payment_status?: string
           ponto_embarque_id?: string | null
           qr_code?: string
@@ -637,6 +640,52 @@ export type Database = {
         Args: { _reserva_id: string; _user_id: string }
         Returns: boolean
       }
+      organizer_create_manual_passageiro: {
+        Args: {
+          p_amount_paid?: number
+          p_documento?: string
+          p_email?: string
+          p_excursao_id: string
+          p_nome: string
+          p_observacao_interna?: string
+          p_payment_status?: string
+          p_ponto_embarque_id?: string
+          p_seat_id?: string
+          p_status?: string
+          p_telefone?: string
+          p_total_price?: number
+        }
+        Returns: {
+          amount_paid: number
+          assento: string | null
+          comprador_id: string | null
+          convite_token: string | null
+          created_at: string
+          documento: string | null
+          email: string | null
+          embarcado_em: string | null
+          excursao_id: string
+          id: string
+          nome: string
+          observacao_interna: string | null
+          payment_status: string
+          ponto_embarque_id: string | null
+          qr_code: string
+          reserva_id: string | null
+          seat_id: string | null
+          status: string
+          telefone: string | null
+          total_price: number
+          updated_at: string
+          user_id: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "passageiros"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       organizer_update_passageiro_trip_choices: {
         Args: {
           p_passageiro_id: string
@@ -657,6 +706,7 @@ export type Database = {
           excursao_id: string
           id: string
           nome: string
+          observacao_interna: string | null
           payment_status: string
           ponto_embarque_id: string | null
           qr_code: string
