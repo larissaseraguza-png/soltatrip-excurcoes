@@ -18,7 +18,9 @@ import {
   CheckCircle2,
   MapPinned,
   Users,
+  Bus,
 } from "lucide-react";
+
 
 export const Route = createFileRoute("/passageiro/reserva/$id")({
   component: ReservaDetalhes,
@@ -64,7 +66,7 @@ function ReservaDetalhes() {
       const { data, error } = await supabase
         .from("passageiros")
         .select(
-          "id, nome, email, status, qr_code, seat_id, assento, ponto_embarque_id, convite_token, user_id, embarcado_em",
+          "id, nome, email, status, qr_code, seat_id, assento, ponto_embarque_id, convite_token, user_id, embarcado_em, onibus_id, onibus:onibus(id, nome, horario_saida, horario_retorno, ponto_partida, capacidade)",
         )
         .eq("reserva_id", id)
         .order("created_at", { ascending: true });
@@ -73,32 +75,40 @@ function ReservaDetalhes() {
     },
   });
 
+  const onibusId = (passageiros as any[])[0]?.onibus_id ?? null;
+  const onibusInfo = (passageiros as any[])[0]?.onibus ?? null;
+
   const { data: seats = [] } = useQuery({
-    queryKey: ["reserva-seats", reserva?.excursao?.id],
+    queryKey: ["reserva-seats", reserva?.excursao?.id, onibusId],
     enabled: !!reserva?.excursao?.id,
     queryFn: async () => {
-      const { data, error } = await supabase
+      let q = supabase
         .from("seats")
-        .select("id, seat_number")
+        .select("id, seat_number, onibus_id")
         .eq("excursao_id", reserva!.excursao.id);
+      if (onibusId) q = q.eq("onibus_id", onibusId);
+      const { data, error } = await q;
       if (error) throw error;
       return data ?? [];
     },
   });
 
   const { data: pontos = [] } = useQuery({
-    queryKey: ["reserva-pontos", reserva?.excursao?.id],
+    queryKey: ["reserva-pontos", reserva?.excursao?.id, onibusId],
     enabled: !!reserva?.excursao?.id,
     queryFn: async () => {
-      const { data, error } = await supabase
+      let q = supabase
         .from("pontos_embarque")
-        .select("id, nome, endereco, referencia, horario, ordem")
+        .select("id, nome, endereco, referencia, horario, ordem, onibus_id")
         .eq("excursao_id", reserva!.excursao.id)
         .order("ordem", { ascending: true });
+      if (onibusId) q = q.eq("onibus_id", onibusId);
+      const { data, error } = await q;
       if (error) throw error;
       return data ?? [];
     },
   });
+
 
   const { data: pagamentos = [] } = useQuery({
     queryKey: ["reserva-pagamentos", id],
@@ -280,9 +290,40 @@ function ReservaDetalhes() {
           value={ex?.data_evento ? new Date(ex.data_evento).toLocaleDateString("pt-BR") : "—"}
         />
         <Info4 icon={MapPin} label="Destino" value={ex?.destino ?? "—"} />
-        <Info4 icon={Clock} label="Saída" value={ex?.horario_saida ?? "—"} />
+        <Info4 icon={Clock} label="Saída" value={onibusInfo?.horario_saida ?? ex?.horario_saida ?? "—"} />
         <Info4 icon={Users} label="Passageiros" value={String(reserva.quantidade)} />
       </div>
+
+      {/* Ônibus do passageiro */}
+      {onibusInfo && (
+        <div className="glass rounded-3xl p-5 mb-5 border border-neon-purple/30">
+          <div className="flex items-center gap-2 mb-3">
+            <Bus className="size-5 text-neon-purple" />
+            <h3 className="font-display font-bold">Seu ônibus</h3>
+          </div>
+          <p className="font-display font-black text-xl">{onibusInfo.nome}</p>
+          <div className="grid grid-cols-2 gap-3 mt-3 text-sm">
+            {onibusInfo.horario_saida && (
+              <div className="bg-background/40 rounded-2xl p-3">
+                <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Saída</p>
+                <p className="font-bold text-neon-pink">⏰ {onibusInfo.horario_saida}</p>
+              </div>
+            )}
+            {onibusInfo.horario_retorno && (
+              <div className="bg-background/40 rounded-2xl p-3">
+                <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Retorno</p>
+                <p className="font-bold">{onibusInfo.horario_retorno}</p>
+              </div>
+            )}
+            {onibusInfo.ponto_partida && (
+              <div className="bg-background/40 rounded-2xl p-3 col-span-2">
+                <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Ponto de partida</p>
+                <p className="font-bold">{onibusInfo.ponto_partida}</p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Pagamento consolidado */}
       <div className="glass rounded-3xl p-5 mb-5">
@@ -290,6 +331,7 @@ function ReservaDetalhes() {
           <Wallet className="size-5 text-neon-green" />
           <h3 className="font-display font-bold">Pagamento da reserva</h3>
         </div>
+
         <div className="flex items-end justify-between">
           <div>
             <p className="text-xs text-muted-foreground">

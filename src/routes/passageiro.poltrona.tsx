@@ -34,7 +34,7 @@ function Poltrona() {
       const { data, error } = await supabase
         .from("passageiros")
         .select(
-          "id, seat_id, assento, ponto_embarque_id, payment_status, amount_paid, excursao_id, reserva_id, excursao:excursoes(id, titulo)",
+          "id, seat_id, assento, ponto_embarque_id, payment_status, amount_paid, excursao_id, reserva_id, onibus_id, onibus:onibus(id, nome, horario_saida, ponto_partida), excursao:excursoes(id, titulo)",
         )
         .eq("id", paxId!)
         .single();
@@ -43,33 +43,41 @@ function Poltrona() {
     },
   });
 
+  const onibusId = (reserva as any)?.onibus_id ?? null;
+  const onibusInfo = (reserva as any)?.onibus ?? null;
+
   const { data: seats = [], isLoading: l2 } = useQuery({
-    queryKey: ["seats", reserva?.excursao_id],
+    queryKey: ["seats", reserva?.excursao_id, onibusId],
     enabled: !!reserva?.excursao_id,
     queryFn: async () => {
-      const { data, error } = await supabase
+      let q = supabase
         .from("seats")
-        .select("id, seat_number, occupied, reserved_by")
+        .select("id, seat_number, occupied, reserved_by, onibus_id")
         .eq("excursao_id", reserva!.excursao_id)
         .order("seat_number");
+      if (onibusId) q = q.eq("onibus_id", onibusId);
+      const { data, error } = await q;
       if (error) throw error;
       return (data ?? []).sort((a, b) => Number(a.seat_number) - Number(b.seat_number));
     },
   });
 
   const { data: pontos = [], isLoading: l3 } = useQuery({
-    queryKey: ["pontos-poltrona", reserva?.excursao_id],
+    queryKey: ["pontos-poltrona", reserva?.excursao_id, onibusId],
     enabled: !!reserva?.excursao_id,
     queryFn: async () => {
-      const { data, error } = await supabase
+      let q = supabase
         .from("pontos_embarque")
-        .select("id, nome, endereco, referencia, horario, ordem")
+        .select("id, nome, endereco, referencia, horario, ordem, onibus_id")
         .eq("excursao_id", reserva!.excursao_id)
         .order("ordem", { ascending: true });
+      if (onibusId) q = q.eq("onibus_id", onibusId);
+      const { data, error } = await q;
       if (error) throw error;
       return data ?? [];
     },
   });
+
 
   if (l1 || l2 || l3) {
     return (
@@ -272,6 +280,21 @@ function Poltrona() {
 
   return (
     <Shell title="Escolher poltrona" subtitle={(reserva as any).excursao?.titulo}>
+      {onibusInfo && (
+        <div className="glass rounded-2xl p-4 mb-4 flex items-center gap-3 border border-neon-purple/30">
+          <div className="size-10 grid place-items-center rounded-xl bg-neon-purple/20">
+            <Armchair className="size-5 text-neon-purple" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Seu ônibus</p>
+            <p className="font-display font-bold truncate">{onibusInfo.nome}</p>
+          </div>
+          {onibusInfo.horario_saida && (
+            <span className="text-xs font-bold text-neon-pink">⏰ {onibusInfo.horario_saida}</span>
+          )}
+        </div>
+      )}
+
       <div className="glass rounded-3xl p-5 mb-5">
         <div className="flex items-center gap-4 text-xs">
           <span className="flex items-center gap-1.5">
@@ -285,6 +308,7 @@ function Poltrona() {
           </span>
         </div>
       </div>
+
 
       <div className="grid grid-cols-4 gap-3">
         {seats.map((s: any) => {
