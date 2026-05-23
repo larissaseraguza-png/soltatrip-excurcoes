@@ -280,6 +280,21 @@ function Poltrona() {
 
   return (
     <Shell title="Escolher poltrona" subtitle={(reserva as any).excursao?.titulo}>
+      {onibusInfo && (
+        <div className="glass rounded-2xl p-4 mb-4 flex items-center gap-3 border border-neon-purple/30">
+          <div className="size-10 grid place-items-center rounded-xl bg-neon-purple/20">
+            <Armchair className="size-5 text-neon-purple" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Seu ônibus</p>
+            <p className="font-display font-bold truncate">{onibusInfo.nome}</p>
+          </div>
+          {onibusInfo.horario_saida && (
+            <span className="text-xs font-bold text-neon-pink">⏰ {onibusInfo.horario_saida}</span>
+          )}
+        </div>
+      )}
+
       <div className="glass rounded-3xl p-5 mb-5">
         <div className="flex items-center gap-4 text-xs">
           <span className="flex items-center gap-1.5">
@@ -293,6 +308,7 @@ function Poltrona() {
           </span>
         </div>
       </div>
+
 
       <div className="grid grid-cols-4 gap-3">
         {seats.map((s: any) => {
