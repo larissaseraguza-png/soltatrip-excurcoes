@@ -17,6 +17,7 @@ function setState(next: Partial<AuthState>) {
 
 function init() {
   if (initialized) return;
+  if (typeof window === "undefined") return; // nunca inicializa no servidor
   initialized = true;
   supabase.auth.getSession().then(({ data }) => {
     setState({ session: data.session, user: data.session?.user ?? null, loading: false });
@@ -33,12 +34,14 @@ function subscribe(l: () => void) {
   };
 }
 const getSnapshot = () => state;
+// Snapshot estável para SSR — evita hidratação divergente
+const SSR_STATE: AuthState = { session: null, user: null, loading: true };
+const getServerSnapshot = () => SSR_STATE;
 
 export function useAuth() {
   useEffect(() => {
     init();
   }, []);
-  // Garante init síncrono no primeiro acesso (inclusive em SSR client hydration)
-  if (!initialized) init();
-  return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+  if (typeof window !== "undefined" && !initialized) init();
+  return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 }
