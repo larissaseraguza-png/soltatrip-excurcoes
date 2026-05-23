@@ -1,102 +1,149 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
 import { StaffShell, Pill } from "@/components/staff/Shell";
-import { Search, Filter, MessageCircle, Edit3, Trash2, ArrowRightLeft, Plus } from "lucide-react";
-import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/use-auth";
+import { useRealtimeSync } from "@/hooks/use-realtime-sync";
+import { Search, Loader2, MapPin, Armchair, Phone } from "lucide-react";
+import { useMemo, useState } from "react";
 
 export const Route = createFileRoute("/staff/passageiros")({
   component: PassageirosStaff,
 });
 
-const PAX = [
-  { id: "p1", nome: "Bianca Martins", cidade: "São Paulo", tel: "(11) 9 9821-4422", status: "embarcado", tone: "green", poltrona: "12A", onibus: "#01", tag: "VIP" },
-  { id: "p2", nome: "Lucas Pereira", cidade: "Campinas", tel: "(19) 9 8741-1003", status: "pago", tone: "green", poltrona: "08B", onibus: "#01", tag: null },
-  { id: "p3", nome: "Marina Souza", cidade: "Santos", tel: "(13) 9 9311-2098", status: "pendente", tone: "yellow", poltrona: "—", onibus: "—", tag: null },
-  { id: "p4", nome: "Diego Rocha", cidade: "São Paulo", tel: "(11) 9 9012-8821", status: "staff", tone: "purple", poltrona: "01A", onibus: "#02", tag: "STAFF" },
-  { id: "p5", nome: "Rafa Tavares", cidade: "Sorocaba", tel: "(15) 9 8112-7700", status: "embarcado", tone: "green", poltrona: "22C", onibus: "#02", tag: null },
-  { id: "p6", nome: "Camila Reis", cidade: "São Paulo", tel: "(11) 9 9544-1190", status: "ausente", tone: "red", poltrona: "15A", onibus: "#01", tag: null },
-] as const;
-
-const FILTERS = ["Todos", "Pagos", "Pendentes", "Embarcados", "Ausentes", "VIP", "Staff"];
+type Vinculo = { excursao: { id: string; titulo: string } | null };
+type Passageiro = {
+  id: string;
+  nome: string;
+  telefone: string | null;
+  assento: string | null;
+  seat_id: string | null;
+  status: string;
+  ponto_embarque_id: string | null;
+};
+type Ponto = { id: string; nome: string; horario: string | null };
 
 function PassageirosStaff() {
-  const [filter, setFilter] = useState("Todos");
+  const { user } = useAuth();
+  const [search, setSearch] = useState("");
+
+  const { data: vinculos = [], isLoading: loadingVinculos } = useQuery({
+    queryKey: ["staff-vinculos", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("equipe_excursoes")
+        .select("excursao:excursoes(id,titulo)")
+        .eq("staff_user_id", user!.id)
+        .eq("status", "ativo")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data ?? []) as unknown as Vinculo[];
+    },
+  });
+
+  const excursao = vinculos[0]?.excursao ?? null;
+
+  const { data: passageiros = [], isLoading: loadingPax } = useQuery({
+    queryKey: ["staff-passageiros", excursao?.id],
+    enabled: !!excursao?.id,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("passageiros")
+        .select("id,nome,telefone,assento,seat_id,status,ponto_embarque_id")
+        .eq("excursao_id", excursao!.id)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data ?? []) as Passageiro[];
+    },
+  });
+
+  const { data: pontos = [] } = useQuery({
+    queryKey: ["staff-pontos", excursao?.id],
+    enabled: !!excursao?.id,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("pontos_embarque")
+        .select("id,nome,horario")
+        .eq("excursao_id", excursao!.id)
+        .order("ordem", { ascending: true });
+      if (error) throw error;
+      return (data ?? []) as Ponto[];
+    },
+  });
+
+  const { data: seats = [] } = useQuery({
+    queryKey: ["staff-seats", excursao?.id],
+    enabled: !!excursao?.id,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("seats")
+        .select("id,seat_number")
+        .eq("excursao_id", excursao!.id);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  useRealtimeSync(
+    `staff-passageiros-${excursao?.id ?? "none"}`,
+    excursao?.id
+      ? [
+          { table: "passageiros", filter: `excursao_id=eq.${excursao.id}` },
+          { table: "seats", filter: `excursao_id=eq.${excursao.id}` },
+          { table: "pontos_embarque", filter: `excursao_id=eq.${excursao.id}` },
+        ]
+      : [],
+    [["staff-passageiros", excursao?.id], ["staff-seats", excursao?.id], ["staff-pontos", excursao?.id]],
+  );
+
+  const seatById = useMemo(() => new Map((seats as any[]).map((s) => [s.id, s.seat_number])), [seats]);
+  const pontoById = useMemo(() => new Map(pontos.map((p) => [p.id, p])), [pontos]);
+  const filtered = passageiros.filter((p) =>
+    p.nome.toLowerCase().includes(search.toLowerCase()) || (p.telefone ?? "").includes(search),
+  );
+
   return (
-    <StaffShell title="Controle de Passageiros" subtitle="312 cadastrados · 248 confirmados">
+    <StaffShell title="Controle de Passageiros" subtitle={excursao?.titulo ?? "Atualizações em tempo real"}>
       <div className="glass rounded-2xl p-3 flex items-center gap-2 mb-4">
         <Search className="size-4 text-muted-foreground ml-2" />
-        <input placeholder="Buscar por nome, CPF ou telefone…" className="flex-1 bg-transparent outline-none text-sm" />
-        <button className="size-9 grid place-items-center rounded-xl bg-gradient-to-br from-neon-green to-neon-purple glow-primary">
-          <Filter className="size-4 text-primary-foreground" />
-        </button>
+        <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar por nome ou telefone…" className="flex-1 bg-transparent outline-none text-sm" />
       </div>
 
-      <div className="flex gap-2 overflow-x-auto pb-3 mb-4 -mx-1 px-1">
-        {FILTERS.map((f) => (
-          <button
-            key={f}
-            onClick={() => setFilter(f)}
-            className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap border transition ${
-              filter === f
-                ? "bg-neon-green text-background border-neon-green glow-primary"
-                : "glass border-border/60 text-muted-foreground"
-            }`}
-          >
-            {f}
-          </button>
-        ))}
-      </div>
-
-      <div className="space-y-3">
-        {PAX.map((p) => (
-          <div key={p.id} className="glass rounded-2xl p-4">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="size-12 rounded-full bg-gradient-to-br from-neon-purple to-neon-pink grid place-items-center font-display font-black text-primary-foreground">
-                {p.nome.split(" ").map((n) => n[0]).slice(0, 2).join("")}
-              </div>
-              <div className="flex-1 min-w-0">
-                <Link to="/staff/passageiro/$id" params={{ id: p.id }} className="font-semibold truncate block hover:text-neon-green transition">
-                  {p.nome}
-                </Link>
-                <div className="text-xs text-muted-foreground">{p.cidade} · {p.tel}</div>
-              </div>
-              <div className="flex flex-col gap-1 items-end">
-                <Pill tone={p.tone as never}>{p.status}</Pill>
-                {p.tag && <Pill tone={p.tag === "VIP" ? "pink" : "purple"}>{p.tag}</Pill>}
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-2 mb-3 text-xs">
-              <div className="bg-background/40 rounded-lg p-2">
-                <div className="text-[10px] text-muted-foreground uppercase">Ônibus</div>
-                <div className="font-bold text-neon-green">{p.onibus}</div>
-              </div>
-              <div className="bg-background/40 rounded-lg p-2">
-                <div className="text-[10px] text-muted-foreground uppercase">Poltrona</div>
-                <div className="font-bold text-neon-pink">{p.poltrona}</div>
-              </div>
-            </div>
-
-            <div className="flex gap-2">
-              <button className="flex-1 h-9 rounded-xl glass text-xs font-semibold flex items-center justify-center gap-1.5">
-                <Edit3 className="size-3.5" /> Editar
-              </button>
-              <button className="flex-1 h-9 rounded-xl glass text-xs font-semibold flex items-center justify-center gap-1.5">
-                <ArrowRightLeft className="size-3.5" /> Trocar
-              </button>
-              <button className="flex-1 h-9 rounded-xl bg-gradient-to-br from-neon-green/30 to-neon-purple/20 text-neon-green text-xs font-semibold flex items-center justify-center gap-1.5">
-                <MessageCircle className="size-3.5" /> Msg
-              </button>
-              <button className="size-9 grid place-items-center rounded-xl bg-destructive/20 text-destructive">
-                <Trash2 className="size-3.5" />
-              </button>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      <button className="fixed bottom-24 right-5 size-14 rounded-full bg-gradient-to-br from-neon-green to-neon-purple glow-primary grid place-items-center shadow-2xl">
-        <Plus className="size-6 text-primary-foreground" />
-      </button>
+      {loadingVinculos || loadingPax ? (
+        <div className="flex justify-center py-16"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
+      ) : !excursao ? (
+        <div className="glass rounded-2xl p-8 text-center text-sm text-muted-foreground">Nenhuma excursão ativa vinculada.</div>
+      ) : filtered.length === 0 ? (
+        <div className="glass rounded-2xl p-8 text-center text-sm text-muted-foreground">Nenhum passageiro encontrado.</div>
+      ) : (
+        <div className="space-y-3">
+          {filtered.map((p) => {
+            const ponto = p.ponto_embarque_id ? pontoById.get(p.ponto_embarque_id) : null;
+            const seat = p.assento ?? (p.seat_id ? seatById.get(p.seat_id) : null) ?? "—";
+            return (
+              <Link key={p.id} to="/staff/passageiro/$id" params={{ id: p.id }} className="glass rounded-2xl p-4 block hover:border-neon-green/50 border border-transparent transition">
+                <div className="flex items-center gap-3">
+                  <div className="size-12 rounded-full bg-gradient-to-br from-neon-purple to-neon-pink grid place-items-center font-display font-black text-primary-foreground">
+                    {p.nome.split(" ").map((n) => n[0]).slice(0, 2).join("")}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <p className="font-semibold truncate">{p.nome}</p>
+                      <Pill tone={p.status === "confirmado" ? "green" : "yellow"}>{p.status}</Pill>
+                    </div>
+                    <div className="grid gap-1 text-xs text-muted-foreground">
+                      <span className="flex items-center gap-1"><Phone className="size-3" /> {p.telefone ?? "sem telefone"}</span>
+                      <span className="flex items-center gap-1"><Armchair className="size-3 text-neon-pink" /> Poltrona {seat}</span>
+                      <span className="flex items-center gap-1"><MapPin className="size-3 text-neon-green" /> {ponto ? `${ponto.nome}${ponto.horario ? ` · ${ponto.horario}` : ""}` : "Sem ponto"}</span>
+                    </div>
+                  </div>
+                </div>
+              </Link>
+            );
+          })}
+        </div>
+      )}
     </StaffShell>
   );
 }

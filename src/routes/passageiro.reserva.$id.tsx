@@ -1,10 +1,11 @@
 import { createFileRoute, Link, useNavigate, useParams } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { Shell, Pill } from "@/components/passageiro/Shell";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useRealtimeSync } from "@/hooks/use-realtime-sync";
+import { toast } from "sonner";
 import {
   Calendar,
   MapPin,
@@ -113,6 +114,30 @@ function ReservaDetalhes() {
     },
   });
 
+  const notifyTripChange = useCallback(
+    (payload: { table: string; eventType: string; new: Record<string, any>; old: Record<string, any> }) => {
+      if (payload.table !== "passageiros" || payload.eventType !== "UPDATE") return;
+      if (payload.new?.reserva_id !== id) return;
+
+      const oldSeatId = payload.old?.seat_id ?? null;
+      const newSeatId = payload.new?.seat_id ?? null;
+      const oldAssento = payload.old?.assento ?? null;
+      const newAssento = payload.new?.assento ?? null;
+      if (oldSeatId !== newSeatId || oldAssento !== newAssento) {
+        const seatLabel = (seats as any[]).find((s) => s.id === newSeatId)?.seat_number ?? newAssento;
+        if (seatLabel) toast.info(`Sua poltrona foi alterada para ${seatLabel}.`);
+      }
+
+      const oldPontoId = payload.old?.ponto_embarque_id ?? null;
+      const newPontoId = payload.new?.ponto_embarque_id ?? null;
+      if (oldPontoId !== newPontoId) {
+        const ponto = (pontos as any[]).find((p) => p.id === newPontoId);
+        if (ponto) toast.info(`Seu embarque foi alterado para ${ponto.nome}${ponto.horario ? ` - ${ponto.horario}` : ""}.`);
+      }
+    },
+    [id, pontos, seats],
+  );
+
   useRealtimeSync(
     `reserva-${id}`,
     [
@@ -133,6 +158,7 @@ function ReservaDetalhes() {
       ["reserva-seats", reserva?.excursao?.id],
       ["reserva-pontos", reserva?.excursao?.id],
     ],
+    notifyTripChange,
   );
 
   if (authLoading || isLoading) {

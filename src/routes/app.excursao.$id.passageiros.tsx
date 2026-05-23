@@ -1,10 +1,11 @@
 import { createFileRoute, Link, useParams } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, Plus, Loader2, Trash2, QrCode, UserCheck, Search, MapPin, Armchair } from "lucide-react";
+import { ArrowLeft, Plus, Loader2, Trash2, QrCode, UserCheck, Search, MapPin, Armchair, Edit3, X } from "lucide-react";
 import { useState, useMemo } from "react";
 import { SeatMap } from "@/components/SeatMap";
 import { useRealtimeSync } from "@/hooks/use-realtime-sync";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/app/excursao/$id/passageiros")({
   component: PassageirosPage,
@@ -16,12 +17,14 @@ type Passageiro = {
   telefone: string | null;
   documento: string | null;
   assento: string | null;
+  seat_id: string | null;
   status: string;
   qr_code: string;
   ponto_embarque_id: string | null;
 };
 
 type Ponto = { id: string; nome: string; horario: string | null };
+type Seat = { id: string; seat_number: string; occupied: boolean; passageiro_id: string | null };
 
 function PassageirosPage() {
   const { id } = useParams({ from: "/app/excursao/$id/passageiros" });
@@ -30,6 +33,7 @@ function PassageirosPage() {
   const [pontoFilter, setPontoFilter] = useState<string>("todos");
   const [open, setOpen] = useState(false);
   const [showMap, setShowMap] = useState(false);
+  const [editing, setEditing] = useState<Passageiro | null>(null);
 
   const { data: excursao } = useQuery({
     queryKey: ["excursao", id],
@@ -59,6 +63,19 @@ function PassageirosPage() {
     },
   });
 
+  const { data: seats = [] } = useQuery({
+    queryKey: ["seats", id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("seats")
+        .select("id, seat_number, occupied, passageiro_id")
+        .eq("excursao_id", id)
+        .order("seat_number");
+      if (error) throw error;
+      return (data ?? []).sort((a, b) => Number(a.seat_number) - Number(b.seat_number)) as Seat[];
+    },
+  });
+
   const { data: passageiros = [], isLoading } = useQuery({
     queryKey: ["passageiros", id],
     queryFn: async () => {
@@ -84,6 +101,7 @@ function PassageirosPage() {
     [
       ["passageiros", id],
       ["pagamentos", id],
+      ["seats", id],
       ["pontos", id],
       ["pontos-counts", id],
       ["excursao", id],
@@ -107,17 +125,43 @@ function PassageirosPage() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["passageiros", id] }),
   });
 
-  const pontoMut = useMutation({
-    mutationFn: async ({ pid, ponto_embarque_id }: { pid: string; ponto_embarque_id: string | null }) => {
-      await supabase.from("passageiros").update({ ponto_embarque_id }).eq("id", pid);
+  const tripChoicesMut = useMutation({
+    mutationFn: async ({
+      passageiro,
+      seatId,
+      pontoId,
+    }: {
+      passageiro: Passageiro;
+      seatId: string | null;
+      pontoId: string | null;
+    }) => {
+      const { error } = await (supabase as any).rpc("organizer_update_passageiro_trip_choices", {
+        p_passageiro_id: passageiro.id,
+        p_seat_id: seatId,
+        p_update_seat: true,
+        p_ponto_embarque_id: pontoId,
+        p_update_ponto: true,
+      });
+      if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       qc.invalidateQueries({ queryKey: ["passageiros", id] });
+      qc.invalidateQueries({ queryKey: ["seats", id] });
       qc.invalidateQueries({ queryKey: ["pontos-counts", id] });
+      setEditing(null);
+      const seat = seats.find((s) => s.id === variables.seatId)?.seat_number;
+      const ponto = pontos.find((p) => p.id === variables.pontoId);
+      toast.success(
+        [seat ? `Poltrona alterada para ${seat}` : null, ponto ? `Embarque: ${ponto.nome}${ponto.horario ? ` - ${ponto.horario}` : ""}` : null]
+          .filter(Boolean)
+          .join(" · "),
+      );
     },
+    onError: (err: any) => alert(err.message ?? "Erro ao salvar alterações"),
   });
 
   const pontoNome = (pid: string | null) => pontos.find((p) => p.id === pid)?.nome ?? null;
+  const seatById = useMemo(() => new Map(seats.map((s) => [s.id, s])), [seats]);
 
   const pagoMap = useMemo(() => {
     const m = new Map<string, boolean>();
@@ -130,10 +174,11 @@ function PassageirosPage() {
   const taken = useMemo(() => {
     const t: Record<string, { pago: boolean; nome: string }> = {};
     for (const p of passageiros) {
-      if (p.assento) t[p.assento] = { pago: !!pagoMap.get(p.id), nome: p.nome };
+      const seatNumber = p.assento ?? (p.seat_id ? seatById.get(p.seat_id)?.seat_number : null);
+      if (seatNumber) t[seatNumber] = { pago: !!pagoMap.get(p.id), nome: p.nome };
     }
     return t;
-  }, [passageiros, pagoMap]);
+  }, [passageiros, pagoMap, seatById]);
 
   const filtered = passageiros.filter((p) => {
     const matchSearch =
@@ -212,7 +257,11 @@ function PassageirosPage() {
         </div>
       ) : (
         <ul className="space-y-2">
-          {filtered.map((p) => (
+          {filtered.map((p) => {
+            const displayedSeat = p.assento ?? (p.seat_id ? seatById.get(p.seat_id)?.seat_number : null);
+            const displayedPonto = pontoNome(p.ponto_embarque_id);
+
+            return (
             <li key={p.id} className="glass rounded-2xl p-4 flex items-center gap-3">
               <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-neon-purple to-neon-pink flex items-center justify-center font-black text-sm shrink-0">
                 {p.nome.charAt(0).toUpperCase()}
@@ -220,21 +269,14 @@ function PassageirosPage() {
               <div className="flex-1 min-w-0">
                 <p className="font-semibold truncate">{p.nome}</p>
                 <p className="text-xs text-muted-foreground truncate">
-                  {p.telefone ?? "sem telefone"} • {p.assento ? `Assento ${p.assento}` : "sem assento"}
+                  {p.telefone ?? "sem telefone"} • {displayedSeat ? `Assento ${displayedSeat}` : "sem assento"}
                 </p>
                 {pontos.length > 0 && (
                   <div className="flex items-center gap-1 mt-1.5">
                     <MapPin className="h-3 w-3 text-neon-pink" />
-                    <select
-                      value={p.ponto_embarque_id ?? ""}
-                      onChange={(e) => pontoMut.mutate({ pid: p.id, ponto_embarque_id: e.target.value || null })}
-                      className="text-xs bg-secondary/50 border border-border rounded-md px-1.5 py-0.5 max-w-[160px] truncate"
-                    >
-                      <option value="">Sem ponto</option>
-                      {pontos.map((pt) => (
-                        <option key={pt.id} value={pt.id}>{pt.nome}</option>
-                      ))}
-                    </select>
+                    <span className="text-xs text-muted-foreground truncate">
+                      {displayedPonto ?? "sem ponto"}
+                    </span>
                   </div>
                 )}
                 {pontos.length === 0 && p.ponto_embarque_id && (
@@ -242,6 +284,13 @@ function PassageirosPage() {
                 )}
               </div>
               <div className="flex items-center gap-1 shrink-0">
+                <button
+                  title="Editar poltrona e embarque"
+                  onClick={() => setEditing(p)}
+                  className="h-8 w-8 rounded-lg bg-neon-purple/10 text-neon-purple hover:bg-neon-purple/20 flex items-center justify-center"
+                >
+                  <Edit3 className="h-4 w-4" />
+                </button>
                 {p.status !== "confirmado" && (
                   <button
                     title="Confirmar"
@@ -270,7 +319,8 @@ function PassageirosPage() {
                 </button>
               </div>
             </li>
-          ))}
+            );
+          })}
         </ul>
       )}
 
@@ -281,6 +331,18 @@ function PassageirosPage() {
           totalVagas={excursao?.total_vagas ?? 0}
           taken={taken}
           onClose={() => setOpen(false)}
+        />
+      )}
+      {editing && (
+        <EditChoicesModal
+          passageiro={editing}
+          pontos={pontos}
+          seats={seats}
+          totalVagas={excursao?.total_vagas ?? 0}
+          taken={taken}
+          saving={tripChoicesMut.isPending}
+          onClose={() => setEditing(null)}
+          onSave={(seatId, pontoId) => tripChoicesMut.mutate({ passageiro: editing, seatId, pontoId })}
         />
       )}
     </div>
@@ -297,6 +359,109 @@ function Chip({ children, active, onClick }: { children: React.ReactNode; active
     >
       {children}
     </button>
+  );
+}
+
+function EditChoicesModal({
+  passageiro,
+  pontos,
+  seats,
+  totalVagas,
+  taken,
+  saving,
+  onClose,
+  onSave,
+}: {
+  passageiro: Passageiro;
+  pontos: Ponto[];
+  seats: Seat[];
+  totalVagas: number;
+  taken: Record<string, { pago: boolean; nome: string }>;
+  saving: boolean;
+  onClose: () => void;
+  onSave: (seatId: string | null, pontoId: string | null) => void;
+}) {
+  const currentSeatNumber = passageiro.assento ?? seats.find((s) => s.id === passageiro.seat_id)?.seat_number ?? "";
+  const [selectedSeatNumber, setSelectedSeatNumber] = useState(currentSeatNumber);
+  const [selectedPontoId, setSelectedPontoId] = useState(passageiro.ponto_embarque_id ?? "");
+  const selectedSeat = seats.find((s) => s.seat_number === selectedSeatNumber);
+  const selectedPonto = pontos.find((p) => p.id === selectedPontoId);
+
+  return (
+    <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur flex items-end sm:items-center justify-center p-4 overflow-y-auto" onClick={onClose}>
+      <div onClick={(e) => e.stopPropagation()} className="glass rounded-3xl p-5 w-full max-w-lg border border-border my-4">
+        <div className="flex items-start justify-between gap-3 mb-4">
+          <div>
+            <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">Editar reserva</p>
+            <h2 className="font-display text-xl font-black">{passageiro.nome}</h2>
+          </div>
+          <button type="button" onClick={onClose} className="h-9 w-9 rounded-xl bg-secondary grid place-items-center">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-1">
+          <section>
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[10px] uppercase tracking-wider font-bold text-muted-foreground">Editar poltrona</span>
+              <span className="text-xs font-bold text-neon-pink">{selectedSeatNumber ? `Selecionada: ${selectedSeatNumber}` : "Selecione"}</span>
+            </div>
+            <SeatMap
+              total={Math.max(totalVagas, seats.length)}
+              taken={taken}
+              selected={selectedSeatNumber || null}
+              onSelect={(assento) => setSelectedSeatNumber(assento)}
+            />
+          </section>
+
+          <section>
+            <span className="text-[10px] uppercase tracking-wider font-bold text-muted-foreground">Editar embarque</span>
+            {pontos.length === 0 ? (
+              <p className="mt-2 text-xs text-muted-foreground italic">Nenhum ponto de embarque cadastrado.</p>
+            ) : (
+              <div className="mt-2 space-y-2">
+                {pontos.map((ponto) => {
+                  const selected = selectedPontoId === ponto.id;
+                  return (
+                    <button
+                      key={ponto.id}
+                      type="button"
+                      onClick={() => setSelectedPontoId(ponto.id)}
+                      className={`w-full text-left rounded-2xl p-3 border transition ${
+                        selected ? "bg-neon-pink/10 border-neon-pink/60" : "bg-background/40 border-border hover:border-neon-pink/40"
+                      }`}
+                    >
+                      <p className="font-bold text-sm">{ponto.nome}</p>
+                      {ponto.horario && <p className="text-[11px] text-neon-pink">⏰ {ponto.horario}</p>}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </section>
+
+          {(selectedSeatNumber || selectedPonto) && (
+            <div className="rounded-2xl bg-background/40 border border-border p-3 text-xs text-muted-foreground">
+              {selectedSeatNumber && <p>Sua poltrona foi alterada para {selectedSeatNumber}.</p>}
+              {selectedPonto && <p>Seu embarque foi alterado para {selectedPonto.nome}{selectedPonto.horario ? ` - ${selectedPonto.horario}` : ""}.</p>}
+            </div>
+          )}
+        </div>
+
+        <div className="flex gap-2 mt-5">
+          <button type="button" onClick={onClose} className="flex-1 h-11 rounded-xl bg-secondary font-semibold">Cancelar</button>
+          <button
+            type="button"
+            disabled={saving || !selectedSeat}
+            onClick={() => onSave(selectedSeat?.id ?? null, selectedPontoId || null)}
+            className="flex-1 h-11 rounded-xl bg-gradient-to-r from-neon-pink to-neon-purple text-primary-foreground font-bold disabled:opacity-50 inline-flex items-center justify-center gap-2"
+          >
+            {saving && <Loader2 className="h-4 w-4 animate-spin" />}
+            Salvar alteração
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
 
