@@ -88,8 +88,10 @@ function OnibusStaff() {
               <Bus className="size-5 text-primary-foreground" />
             </div>
             <div className="flex-1">
-              <div className="font-display font-bold">{excursao.titulo}</div>
-              <div className="text-[11px] text-muted-foreground">{excursao.destino ?? "—"}</div>
+              <div className="font-display font-bold">{onibus?.nome ?? excursao.titulo}</div>
+              <div className="text-[11px] text-muted-foreground">
+                {onibus ? `${excursao.titulo} · ${excursao.destino ?? ""}` : (excursao.destino ?? "—")}
+              </div>
             </div>
             <Pill tone="green">visualização</Pill>
           </div>
