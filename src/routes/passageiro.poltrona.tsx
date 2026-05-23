@@ -138,7 +138,8 @@ function Poltrona() {
         .eq("id", reserva.id);
 
       qc.invalidateQueries({ queryKey: ["seats"] });
-      qc.invalidateQueries({ queryKey: ["reserva-poltrona"] });
+      qc.invalidateQueries({ queryKey: ["pax-poltrona"] });
+      qc.invalidateQueries({ queryKey: ["reserva-passageiros"] });
     } catch (err: any) {
       alert(err.message ?? "Erro ao escolher poltrona");
     } finally {
