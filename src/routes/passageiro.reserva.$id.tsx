@@ -91,6 +91,10 @@ function ReservaDetalhes() {
 
   async function escolherPonto(pontoId: string) {
     if (!reserva) return;
+    if (reserva.ponto_embarque_id) {
+      alert("Ponto de embarque já confirmado. Fale com o excursionista para alterar.");
+      return;
+    }
     const { error } = await supabase
       .from("passageiros")
       .update({ ponto_embarque_id: pontoId })
@@ -237,18 +241,10 @@ function ReservaDetalhes() {
             <div>
               <p className="text-xs text-muted-foreground">Número</p>
               <p className="font-display font-black text-3xl">{seatLabel}</p>
+              <p className="text-[11px] text-muted-foreground mt-1">
+                Poltrona confirmada · só o excursionista pode alterar
+              </p>
             </div>
-            <button
-              onClick={() =>
-                navigate({
-                  to: "/passageiro/poltrona",
-                  search: { reserva: reserva.id } as any,
-                })
-              }
-              className="px-4 h-11 rounded-2xl text-sm font-bold glass"
-            >
-              Trocar
-            </button>
           </div>
         ) : (
           <>
@@ -274,22 +270,40 @@ function ReservaDetalhes() {
         )}
       </div>
 
-      {/* QR Code */}
+      {/* QR Code — só aparece após pagamento total */}
       <div className="glass rounded-3xl p-5 mb-5 text-center">
         <div className="flex items-center justify-center gap-2 mb-3">
           <QrCode className="size-5 text-neon-pink" />
           <h3 className="font-display font-bold">QR Code de embarque</h3>
         </div>
-        <div className="mx-auto w-60 h-60 rounded-3xl bg-white p-3 grid place-items-center">
-          <img src={qrUrl} alt="QR Code da reserva" className="w-full h-full" />
-        </div>
-        <p className="mt-3 text-xs text-muted-foreground tracking-widest font-mono">
-          {qrPayload}
-        </p>
-        {reserva.embarcado_em && (
-          <p className="mt-2 text-xs text-neon-green">
-            ✓ Embarcado em {new Date(reserva.embarcado_em).toLocaleString("pt-BR")}
-          </p>
+        {status === "paid" ? (
+          <>
+            <div className="mx-auto w-60 h-60 rounded-3xl bg-white p-3 grid place-items-center">
+              <img src={qrUrl} alt="QR Code da reserva" className="w-full h-full" />
+            </div>
+            <p className="mt-3 text-xs text-muted-foreground tracking-widest font-mono">
+              {qrPayload}
+            </p>
+            {reserva.embarcado_em && (
+              <p className="mt-2 text-xs text-neon-green">
+                ✓ Embarcado em {new Date(reserva.embarcado_em).toLocaleString("pt-BR")}
+              </p>
+            )}
+          </>
+        ) : (
+          <div className="py-8">
+            <div className="mx-auto w-60 h-60 rounded-3xl bg-muted/30 border-2 border-dashed border-border grid place-items-center">
+              <div className="text-center px-4">
+                <QrCode className="size-10 mx-auto text-muted-foreground/40 mb-2" />
+                <p className="text-xs text-muted-foreground">
+                  Disponível após pagamento total
+                </p>
+                <p className="text-[11px] text-muted-foreground/70 mt-1">
+                  Restante: {brl(restante)}
+                </p>
+              </div>
+            </div>
+          </div>
         )}
       </div>
 
@@ -317,47 +331,51 @@ function ReservaDetalhes() {
           <>
             <p className="text-xs text-muted-foreground mb-3">
               {reserva.ponto_embarque_id
-                ? "Você pode trocar a qualquer momento."
-                : "Escolha onde irá embarcar:"}
+                ? "Ponto confirmado · só o excursionista pode alterar"
+                : "Escolha onde irá embarcar (não poderá ser alterado depois):"}
             </p>
             <ul className="space-y-2">
-              {pontos.map((p: any) => {
-                const selected = reserva.ponto_embarque_id === p.id;
-                return (
-                  <li key={p.id}>
-                    <button
-                      onClick={() => escolherPonto(p.id)}
-                      className={`w-full text-left rounded-2xl p-3 border transition ${
-                        selected
-                          ? "border-neon-green/60 bg-neon-green/10"
-                          : "border-border bg-background/40 hover:border-neon-pink/40"
-                      }`}
-                    >
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="min-w-0 flex-1">
-                          <p className="font-bold text-sm truncate">{p.nome}</p>
-                          {p.endereco && (
-                            <p className="text-xs text-muted-foreground truncate">{p.endereco}</p>
-                          )}
-                          {p.referencia && (
-                            <p className="text-[11px] text-muted-foreground/80 italic mt-0.5">
-                              {p.referencia}
-                            </p>
-                          )}
+              {pontos
+                .filter((p: any) =>
+                  reserva.ponto_embarque_id ? p.id === reserva.ponto_embarque_id : true
+                )
+                .map((p: any) => {
+                  const selected = reserva.ponto_embarque_id === p.id;
+                  const locked = !!reserva.ponto_embarque_id;
+                  return (
+                    <li key={p.id}>
+                      <button
+                        disabled={locked}
+                        onClick={() => escolherPonto(p.id)}
+                        className={`w-full text-left rounded-2xl p-3 border transition ${
+                          selected
+                            ? "border-neon-green/60 bg-neon-green/10"
+                            : "border-border bg-background/40 hover:border-neon-pink/40"
+                        } ${locked ? "cursor-default" : ""}`}
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0 flex-1">
+                            <p className="font-bold text-sm truncate">{p.nome}</p>
+                            {p.endereco && (
+                              <p className="text-xs text-muted-foreground truncate">{p.endereco}</p>
+                            )}
+                            {p.referencia && (
+                              <p className="text-[11px] text-muted-foreground/80 italic mt-0.5">
+                                {p.referencia}
+                              </p>
+                            )}
+                          </div>
+                          <div className="text-right shrink-0">
+                            {p.horario && (
+                              <p className="text-xs font-bold text-neon-pink">{p.horario}</p>
+                            )}
+                            {selected && <Pill tone="green">Confirmado</Pill>}
+                          </div>
                         </div>
-                        <div className="text-right shrink-0">
-                          {p.horario && (
-                            <p className="text-xs font-bold text-neon-pink">{p.horario}</p>
-                          )}
-                          {selected && (
-                            <Pill tone="green">Selecionado</Pill>
-                          )}
-                        </div>
-                      </div>
-                    </button>
-                  </li>
-                );
-              })}
+                      </button>
+                    </li>
+                  );
+                })}
             </ul>
           </>
         )}
