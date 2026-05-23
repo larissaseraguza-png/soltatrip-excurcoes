@@ -72,6 +72,24 @@ function PassageirosPage() {
     },
   });
 
+  useRealtimeSync(
+    `excursao-${id}`,
+    [
+      { table: "passageiros", filter: `excursao_id=eq.${id}` },
+      { table: "pagamentos", filter: `excursao_id=eq.${id}` },
+      { table: "seats", filter: `excursao_id=eq.${id}` },
+      { table: "pontos_embarque", filter: `excursao_id=eq.${id}` },
+      { table: "reservas", filter: `excursao_id=eq.${id}` },
+    ],
+    [
+      ["passageiros", id],
+      ["pagamentos", id],
+      ["pontos", id],
+      ["pontos-counts", id],
+      ["excursao", id],
+    ],
+  );
+
   const removeMut = useMutation({
     mutationFn: async (pid: string) => {
       await supabase.from("passageiros").delete().eq("id", pid);
