@@ -13,36 +13,40 @@ export const Route = createFileRoute("/staff/onibus")({
 });
 
 function OnibusStaff() {
-  const { excursao, loading } = useStaffExcursao();
+  const { excursao, onibusId, onibus, loading } = useStaffExcursao();
 
   const { data: passageiros = [] } = useQuery({
-    queryKey: ["staff-onibus-pax", excursao?.id],
+    queryKey: ["staff-onibus-pax", excursao?.id, onibusId],
     enabled: !!excursao?.id,
     queryFn: async () => {
-      const { data, error } = await supabase
+      let q = supabase
         .from("passageiros")
-        .select("id,nome,assento,seat_id,payment_status")
+        .select("id,nome,assento,seat_id,payment_status,onibus_id")
         .eq("excursao_id", excursao!.id);
+      if (onibusId) q = q.eq("onibus_id", onibusId);
+      const { data, error } = await q;
       if (error) throw error;
       return data ?? [];
     },
   });
 
   const { data: seats = [] } = useQuery({
-    queryKey: ["staff-onibus-seats", excursao?.id],
+    queryKey: ["staff-onibus-seats", excursao?.id, onibusId],
     enabled: !!excursao?.id,
     queryFn: async () => {
-      const { data, error } = await supabase
+      let q = supabase
         .from("seats")
-        .select("id,seat_number,occupied,passageiro_id")
+        .select("id,seat_number,occupied,passageiro_id,onibus_id")
         .eq("excursao_id", excursao!.id);
+      if (onibusId) q = q.eq("onibus_id", onibusId);
+      const { data, error } = await q;
       if (error) throw error;
       return data ?? [];
     },
   });
 
   useRealtimeSync(
-    `staff-onibus-${excursao?.id ?? "none"}`,
+    `staff-onibus-${excursao?.id ?? "none"}-${onibusId ?? "all"}`,
     excursao?.id
       ? [
           { table: "passageiros", filter: `excursao_id=eq.${excursao.id}` },
@@ -50,8 +54,8 @@ function OnibusStaff() {
         ]
       : [],
     [
-      ["staff-onibus-pax", excursao?.id],
-      ["staff-onibus-seats", excursao?.id],
+      ["staff-onibus-pax", excursao?.id, onibusId],
+      ["staff-onibus-seats", excursao?.id, onibusId],
     ],
   );
 
@@ -66,7 +70,7 @@ function OnibusStaff() {
   }, [seats, passageiros]);
 
   const ocupadas = Object.keys(taken).length;
-  const total = excursao?.total_vagas ?? 0;
+  const total = onibus?.capacidade ?? (seats as any[]).length ?? excursao?.total_vagas ?? 0;
   const livres = Math.max(0, total - ocupadas);
 
   return (
