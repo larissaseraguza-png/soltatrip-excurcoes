@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useParams } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, Plus, Loader2, Trash2, QrCode, UserCheck, Search, MapPin, Armchair, Edit3, X } from "lucide-react";
+import { ArrowLeft, Plus, Loader2, Trash2, QrCode, UserCheck, Search, MapPin, Armchair, Edit3, X, DollarSign, Wallet, Trash } from "lucide-react";
 import { useState, useMemo } from "react";
 import { SeatMap } from "@/components/SeatMap";
 import { useRealtimeSync } from "@/hooks/use-realtime-sync";
