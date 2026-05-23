@@ -61,8 +61,10 @@ function AuthPage() {
 
   // Já autenticado: retoma convite pendente ou vai para a área do papel.
   if (!busy && user && role) {
-    const pending = typeof window !== "undefined" ? localStorage.getItem("pending_staff_invite") : null;
-    if (pending) return <Navigate to="/invite/staff/$token" params={{ token: pending }} />;
+    const pendingStaff = typeof window !== "undefined" ? localStorage.getItem("pending_staff_invite") : null;
+    if (pendingStaff) return <Navigate to="/invite/staff/$token" params={{ token: pendingStaff }} />;
+    const pendingPax = typeof window !== "undefined" ? localStorage.getItem("pending_pax_invite") : null;
+    if (pendingPax) return <Navigate to="/invite/passageiro/$token" params={{ token: pendingPax }} />;
     return <Navigate to={roleHome[role]} />;
   }
 
