@@ -121,7 +121,6 @@ function MinhasViagens() {
           comprador_id: user.id,
           nome: e.nome.trim(),
           email: e.email.trim(),
-          telefone: e.telefone.trim() || null,
           status: "pendente",
           total_price: Number(modalEx.preco) || 0,
           payment_status: "pending_payment",
