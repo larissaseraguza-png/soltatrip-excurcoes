@@ -21,6 +21,7 @@ import { Route as PassageiroIndexRouteImport } from './routes/passageiro.index'
 import { Route as ExcursionistaIndexRouteImport } from './routes/excursionista.index'
 import { Route as AppIndexRouteImport } from './routes/app.index'
 import { Route as StaffSuporteRouteImport } from './routes/staff.suporte'
+import { Route as StaffPerfilRouteImport } from './routes/staff.perfil'
 import { Route as StaffPassageirosRouteImport } from './routes/staff.passageiros'
 import { Route as StaffOnibusRouteImport } from './routes/staff.onibus'
 import { Route as StaffMensagensRouteImport } from './routes/staff.mensagens'
@@ -116,6 +117,11 @@ const AppIndexRoute = AppIndexRouteImport.update({
 const StaffSuporteRoute = StaffSuporteRouteImport.update({
   id: '/suporte',
   path: '/suporte',
+  getParentRoute: () => StaffRoute,
+} as any)
+const StaffPerfilRoute = StaffPerfilRouteImport.update({
+  id: '/perfil',
+  path: '/perfil',
   getParentRoute: () => StaffRoute,
 } as any)
 const StaffPassageirosRoute = StaffPassageirosRouteImport.update({
@@ -330,6 +336,7 @@ export interface FileRoutesByFullPath {
   '/staff/mensagens': typeof StaffMensagensRoute
   '/staff/onibus': typeof StaffOnibusRoute
   '/staff/passageiros': typeof StaffPassageirosRoute
+  '/staff/perfil': typeof StaffPerfilRoute
   '/staff/suporte': typeof StaffSuporteRoute
   '/app/': typeof AppIndexRoute
   '/excursionista/': typeof ExcursionistaIndexRoute
@@ -376,6 +383,7 @@ export interface FileRoutesByTo {
   '/staff/mensagens': typeof StaffMensagensRoute
   '/staff/onibus': typeof StaffOnibusRoute
   '/staff/passageiros': typeof StaffPassageirosRoute
+  '/staff/perfil': typeof StaffPerfilRoute
   '/staff/suporte': typeof StaffSuporteRoute
   '/app': typeof AppIndexRoute
   '/excursionista': typeof ExcursionistaIndexRoute
@@ -426,6 +434,7 @@ export interface FileRoutesById {
   '/staff/mensagens': typeof StaffMensagensRoute
   '/staff/onibus': typeof StaffOnibusRoute
   '/staff/passageiros': typeof StaffPassageirosRoute
+  '/staff/perfil': typeof StaffPerfilRoute
   '/staff/suporte': typeof StaffSuporteRoute
   '/app/': typeof AppIndexRoute
   '/excursionista/': typeof ExcursionistaIndexRoute
@@ -478,6 +487,7 @@ export interface FileRouteTypes {
     | '/staff/mensagens'
     | '/staff/onibus'
     | '/staff/passageiros'
+    | '/staff/perfil'
     | '/staff/suporte'
     | '/app/'
     | '/excursionista/'
@@ -524,6 +534,7 @@ export interface FileRouteTypes {
     | '/staff/mensagens'
     | '/staff/onibus'
     | '/staff/passageiros'
+    | '/staff/perfil'
     | '/staff/suporte'
     | '/app'
     | '/excursionista'
@@ -573,6 +584,7 @@ export interface FileRouteTypes {
     | '/staff/mensagens'
     | '/staff/onibus'
     | '/staff/passageiros'
+    | '/staff/perfil'
     | '/staff/suporte'
     | '/app/'
     | '/excursionista/'
@@ -691,6 +703,13 @@ declare module '@tanstack/react-router' {
       path: '/suporte'
       fullPath: '/staff/suporte'
       preLoaderRoute: typeof StaffSuporteRouteImport
+      parentRoute: typeof StaffRoute
+    }
+    '/staff/perfil': {
+      id: '/staff/perfil'
+      path: '/perfil'
+      fullPath: '/staff/perfil'
+      preLoaderRoute: typeof StaffPerfilRouteImport
       parentRoute: typeof StaffRoute
     }
     '/staff/passageiros': {
@@ -1052,6 +1071,7 @@ interface StaffRouteChildren {
   StaffMensagensRoute: typeof StaffMensagensRoute
   StaffOnibusRoute: typeof StaffOnibusRoute
   StaffPassageirosRoute: typeof StaffPassageirosRoute
+  StaffPerfilRoute: typeof StaffPerfilRoute
   StaffSuporteRoute: typeof StaffSuporteRoute
   StaffIndexRoute: typeof StaffIndexRoute
   StaffPassageiroIdRoute: typeof StaffPassageiroIdRoute
@@ -1065,6 +1085,7 @@ const StaffRouteChildren: StaffRouteChildren = {
   StaffMensagensRoute: StaffMensagensRoute,
   StaffOnibusRoute: StaffOnibusRoute,
   StaffPassageirosRoute: StaffPassageirosRoute,
+  StaffPerfilRoute: StaffPerfilRoute,
   StaffSuporteRoute: StaffSuporteRoute,
   StaffIndexRoute: StaffIndexRoute,
   StaffPassageiroIdRoute: StaffPassageiroIdRoute,

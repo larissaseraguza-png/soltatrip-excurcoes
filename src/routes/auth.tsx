@@ -47,6 +47,7 @@ function AuthPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
+  const [phone, setPhone] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -89,11 +90,13 @@ function AuthPage() {
     setBusy(true);
     try {
       if (mode === "signup") {
+        const cleanPhone = phone.replace(/\D/g, "");
+        if (cleanPhone.length < 10) throw new Error("Telefone inválido. Inclua DDD.");
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
           options: {
-            data: { full_name: fullName },
+            data: { full_name: fullName, phone: cleanPhone },
             emailRedirectTo: `${window.location.origin}/auth`,
           },
         });
@@ -105,6 +108,13 @@ function AuthPage() {
           .from("user_roles")
           .insert({ user_id: data.user.id, role: selectedRole });
         if (roleErr) throw roleErr;
+
+        // Garante telefone no profile (caso trigger não tenha rodado)
+        await supabase.from("profiles").upsert({
+          id: data.user.id,
+          full_name: fullName,
+          phone: cleanPhone,
+        }, { onConflict: "id" });
 
         if (data.session) {
           const pendingStaff = localStorage.getItem("pending_staff_invite");
@@ -251,7 +261,9 @@ function AuthPage() {
 
               <form onSubmit={handleSubmit} className="space-y-3">
                 {mode === "signup" && (
-                  <Field label="Nome completo" value={fullName} onChange={setFullName} required placeholder="Como te chamam?" />
+                  <>
+                    <Field label="Nome completo" value={fullName} onChange={setFullName} required placeholder="Como te chamam?" />
+                  </>
                 )}
                 <Field
                   label="E-mail"
@@ -262,6 +274,16 @@ function AuthPage() {
                   required
                   placeholder="voce@email.com"
                 />
+                {mode === "signup" && (
+                  <Field
+                    label="Telefone (com DDD)"
+                    type="tel"
+                    value={phone}
+                    onChange={setPhone}
+                    required
+                    placeholder="(11) 99999-0000"
+                  />
+                )}
                 <Field
                   label="Senha"
                   type="password"
