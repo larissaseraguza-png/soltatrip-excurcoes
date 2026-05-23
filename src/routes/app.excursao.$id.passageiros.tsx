@@ -373,6 +373,109 @@ function Chip({ children, active, onClick }: { children: React.ReactNode; active
   );
 }
 
+function EditChoicesModal({
+  passageiro,
+  pontos,
+  seats,
+  totalVagas,
+  taken,
+  saving,
+  onClose,
+  onSave,
+}: {
+  passageiro: Passageiro;
+  pontos: Ponto[];
+  seats: Seat[];
+  totalVagas: number;
+  taken: Record<string, { pago: boolean; nome: string }>;
+  saving: boolean;
+  onClose: () => void;
+  onSave: (seatId: string | null, pontoId: string | null) => void;
+}) {
+  const currentSeatNumber = passageiro.assento ?? seats.find((s) => s.id === passageiro.seat_id)?.seat_number ?? "";
+  const [selectedSeatNumber, setSelectedSeatNumber] = useState(currentSeatNumber);
+  const [selectedPontoId, setSelectedPontoId] = useState(passageiro.ponto_embarque_id ?? "");
+  const selectedSeat = seats.find((s) => s.seat_number === selectedSeatNumber);
+  const selectedPonto = pontos.find((p) => p.id === selectedPontoId);
+
+  return (
+    <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur flex items-end sm:items-center justify-center p-4 overflow-y-auto" onClick={onClose}>
+      <div onClick={(e) => e.stopPropagation()} className="glass rounded-3xl p-5 w-full max-w-lg border border-border my-4">
+        <div className="flex items-start justify-between gap-3 mb-4">
+          <div>
+            <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">Editar reserva</p>
+            <h2 className="font-display text-xl font-black">{passageiro.nome}</h2>
+          </div>
+          <button type="button" onClick={onClose} className="h-9 w-9 rounded-xl bg-secondary grid place-items-center">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-1">
+          <section>
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[10px] uppercase tracking-wider font-bold text-muted-foreground">Editar poltrona</span>
+              <span className="text-xs font-bold text-neon-pink">{selectedSeatNumber ? `Selecionada: ${selectedSeatNumber}` : "Selecione"}</span>
+            </div>
+            <SeatMap
+              total={Math.max(totalVagas, seats.length)}
+              taken={taken}
+              selected={selectedSeatNumber || null}
+              onSelect={(assento) => setSelectedSeatNumber(assento)}
+            />
+          </section>
+
+          <section>
+            <span className="text-[10px] uppercase tracking-wider font-bold text-muted-foreground">Editar embarque</span>
+            {pontos.length === 0 ? (
+              <p className="mt-2 text-xs text-muted-foreground italic">Nenhum ponto de embarque cadastrado.</p>
+            ) : (
+              <div className="mt-2 space-y-2">
+                {pontos.map((ponto) => {
+                  const selected = selectedPontoId === ponto.id;
+                  return (
+                    <button
+                      key={ponto.id}
+                      type="button"
+                      onClick={() => setSelectedPontoId(ponto.id)}
+                      className={`w-full text-left rounded-2xl p-3 border transition ${
+                        selected ? "bg-neon-pink/10 border-neon-pink/60" : "bg-background/40 border-border hover:border-neon-pink/40"
+                      }`}
+                    >
+                      <p className="font-bold text-sm">{ponto.nome}</p>
+                      {ponto.horario && <p className="text-[11px] text-neon-pink">⏰ {ponto.horario}</p>}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </section>
+
+          {(selectedSeatNumber || selectedPonto) && (
+            <div className="rounded-2xl bg-background/40 border border-border p-3 text-xs text-muted-foreground">
+              {selectedSeatNumber && <p>Sua poltrona foi alterada para {selectedSeatNumber}.</p>}
+              {selectedPonto && <p>Seu embarque foi alterado para {selectedPonto.nome}{selectedPonto.horario ? ` - ${selectedPonto.horario}` : ""}.</p>}
+            </div>
+          )}
+        </div>
+
+        <div className="flex gap-2 mt-5">
+          <button type="button" onClick={onClose} className="flex-1 h-11 rounded-xl bg-secondary font-semibold">Cancelar</button>
+          <button
+            type="button"
+            disabled={saving || !selectedSeat}
+            onClick={() => onSave(selectedSeat?.id ?? null, selectedPontoId || null)}
+            className="flex-1 h-11 rounded-xl bg-gradient-to-r from-neon-pink to-neon-purple text-primary-foreground font-bold disabled:opacity-50 inline-flex items-center justify-center gap-2"
+          >
+            {saving && <Loader2 className="h-4 w-4 animate-spin" />}
+            Salvar alteração
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function NewPassageiroModal({
   excursaoId,
   pontos,
