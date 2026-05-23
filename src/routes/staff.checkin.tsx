@@ -7,7 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useStaffExcursao } from "@/hooks/use-staff-excursao";
 import { useRealtimeSync } from "@/hooks/use-realtime-sync";
-import { CheckCircle2, XCircle, UserCheck, Loader2, Search, Camera, X, AlertTriangle } from "lucide-react";
+import { CheckCircle2, XCircle, UserCheck, Loader2, Search, Camera, X, AlertTriangle, Bus } from "lucide-react";
 
 export const Route = createFileRoute("/staff/checkin")({
   component: CheckinStaff,
