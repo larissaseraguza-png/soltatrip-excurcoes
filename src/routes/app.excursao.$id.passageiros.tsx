@@ -281,10 +281,16 @@ function PassageirosPage() {
                     <span className="text-xs text-muted-foreground truncate">
                       {displayedPonto ?? "sem ponto"}
                     </span>
-                  </div>
+                {p.observacao_interna && (
+                  <p className="mt-1.5 text-[11px] text-amber-300 bg-amber-500/10 border border-amber-500/30 rounded-lg px-2 py-1 truncate" title={p.observacao_interna}>
+                    📝 {p.observacao_interna}
+                  </p>
                 )}
-                {pontos.length === 0 && p.ponto_embarque_id && (
-                  <p className="text-xs text-muted-foreground mt-0.5">📍 {pontoNome(p.ponto_embarque_id)}</p>
+                {(p.payment_status === "partial_payment" || p.payment_status === "paid") && p.total_price > 0 && (
+                  <p className="text-[10px] text-muted-foreground mt-1">
+                    R$ {Number(p.amount_paid).toFixed(2)} / R$ {Number(p.total_price).toFixed(2)}
+                    {p.payment_status === "paid" ? " · pago" : " · parcial"}
+                  </p>
                 )}
               </div>
               <div className="flex items-center gap-1 shrink-0">
