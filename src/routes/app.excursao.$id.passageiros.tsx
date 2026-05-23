@@ -330,6 +330,7 @@ function PassageirosPage() {
           pontos={pontos}
           totalVagas={excursao?.total_vagas ?? 0}
           taken={taken}
+          seats={seats}
           onClose={() => setOpen(false)}
         />
       )}
