@@ -373,7 +373,7 @@ function ReservaDetalhes() {
                   podeEscolher={podeEscolher}
                   isVinculadoOuComprador={isVinculadoOuComprador}
                   pago={pago}
-                  onSelect={(pontoId) => escolherPonto(p.id, pontoId)}
+                  onSelect={(pontoId: string) => escolherPonto(p.id, pontoId)}
                 />
 
                 {/* QR Code */}
