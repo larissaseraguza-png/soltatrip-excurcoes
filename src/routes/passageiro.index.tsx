@@ -41,9 +41,10 @@ function MinhasViagens() {
   const [tab, setTab] = useState<"minhas" | "disponiveis">("minhas");
   const [reservando, setReservando] = useState(false);
   const [modalEx, setModalEx] = useState<Excursao | null>(null);
-  const [step, setStep] = useState<"qtd" | "pax">("qtd");
+  const [step, setStep] = useState<"onibus" | "qtd" | "pax">("onibus");
   const [qtd, setQtd] = useState(1);
   const [paxs, setPaxs] = useState<Pax[]>([]);
+  const [onibusId, setOnibusId] = useState<string | null>(null);
 
   const { data: reservas = [], isLoading: loadingMinhas } = useQuery({
     queryKey: ["minhas-reservas", user?.id],
@@ -70,6 +71,39 @@ function MinhasViagens() {
       return (data ?? []) as Excursao[];
     },
   });
+
+  const { data: onibusDaExcursao = [] } = useQuery({
+    queryKey: ["onibus-publicos", modalEx?.id],
+    enabled: !!modalEx,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("onibus")
+        .select("id, nome, capacidade, horario_saida, horario_retorno, ponto_partida, ativo, ordem")
+        .eq("excursao_id", modalEx!.id)
+        .eq("ativo", true)
+        .order("ordem", { ascending: true });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const { data: ocupacaoOnibus = {} } = useQuery({
+    queryKey: ["onibus-ocupacao-publica", modalEx?.id],
+    enabled: !!modalEx,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("passageiros")
+        .select("onibus_id, status")
+        .eq("excursao_id", modalEx!.id);
+      const map: Record<string, number> = {};
+      (data ?? []).forEach((p: any) => {
+        if (p.status === "cancelado" || !p.onibus_id) return;
+        map[p.onibus_id] = (map[p.onibus_id] ?? 0) + 1;
+      });
+      return map;
+    },
+  });
+
   useRealtimeSync(
     `minhas-reservas-${user?.id ?? "anon"}`,
     user
@@ -85,7 +119,8 @@ function MinhasViagens() {
 
   function openReserva(ex: Excursao) {
     setModalEx(ex);
-    setStep("qtd");
+    setStep("onibus");
+    setOnibusId(null);
     setQtd(1);
     setPaxs([
       {
@@ -111,6 +146,11 @@ function MinhasViagens() {
 
   async function confirmar() {
     if (!user || !modalEx) return;
+    if (onibusDaExcursao.length > 0 && !onibusId) {
+      alert("Escolha um ônibus para a reserva.");
+      setStep("onibus");
+      return;
+    }
     for (let i = 0; i < paxs.length; i++) {
       const p = paxs[i];
       if (!p.nome.trim() || !p.email.trim()) {
@@ -127,7 +167,8 @@ function MinhasViagens() {
           email: p.email.trim(),
           titular: p.titular,
         })),
-      });
+        p_onibus_id: onibusId,
+      } as any);
       if (error) throw error;
       qc.invalidateQueries({ queryKey: ["minhas-reservas"] });
       setModalEx(null);
