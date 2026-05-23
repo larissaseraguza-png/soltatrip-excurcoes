@@ -232,26 +232,41 @@ function OnibusFormModal({
           .eq("id", onibus.id);
         if (upErr) throw upErr;
 
-        // Se aumentou capacidade, gera as poltronas que faltam
-        if (cap > onibus.capacidade) {
-          const novos = [];
-          for (let i = onibus.capacidade + 1; i <= cap; i++) {
-            novos.push({ excursao_id: excursaoId, onibus_id: onibus.id, seat_number: String(i) });
+        // Garante poltronas 1..cap para o ônibus (idempotente)
+        const { data: existentes } = await supabase
+          .from("seats")
+          .select("seat_number")
+          .eq("onibus_id", onibus.id);
+        const jaTem = new Set((existentes ?? []).map((s: any) => String(s.seat_number)));
+        const faltam: any[] = [];
+        for (let i = 1; i <= cap; i++) {
+          if (!jaTem.has(String(i))) {
+            faltam.push({ excursao_id: excursaoId, onibus_id: onibus.id, seat_number: String(i) });
           }
-          if (novos.length) await supabase.from("seats").insert(novos);
         }
+        if (faltam.length) await supabase.from("seats").insert(faltam);
       } else {
-        const { error: insErr } = await supabase.from("onibus").insert({
-          excursao_id: excursaoId,
-          nome: nome.trim(),
-          capacidade: cap,
-          horario_saida: horarioSaida || null,
-          horario_retorno: horarioRetorno || null,
-          ponto_partida: pontoPartida || null,
-          ativo,
-          ordem: nextOrdem,
-        });
+        const { data: novoOnibus, error: insErr } = await supabase
+          .from("onibus")
+          .insert({
+            excursao_id: excursaoId,
+            nome: nome.trim(),
+            capacidade: cap,
+            horario_saida: horarioSaida || null,
+            horario_retorno: horarioRetorno || null,
+            ponto_partida: pontoPartida || null,
+            ativo,
+            ordem: nextOrdem,
+          })
+          .select("id")
+          .single();
         if (insErr) throw insErr;
+
+        const novosSeats = [];
+        for (let i = 1; i <= cap; i++) {
+          novosSeats.push({ excursao_id: excursaoId, onibus_id: novoOnibus!.id, seat_number: String(i) });
+        }
+        if (novosSeats.length) await supabase.from("seats").insert(novosSeats);
       }
 
       qc.invalidateQueries({ queryKey: ["onibus", excursaoId] });
