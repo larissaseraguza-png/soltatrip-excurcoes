@@ -85,7 +85,7 @@ function MinhasViagens() {
     const adicionais = clamped - 1;
     setExtras((prev) => {
       const next = [...prev];
-      while (next.length < adicionais) next.push({ nome: "", email: "", telefone: "" });
+      while (next.length < adicionais) next.push({ nome: "", email: "" });
       next.length = adicionais;
       return next;
     });
