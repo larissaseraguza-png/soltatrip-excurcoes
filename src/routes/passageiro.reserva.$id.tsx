@@ -66,7 +66,7 @@ function ReservaDetalhes() {
       const { data, error } = await supabase
         .from("passageiros")
         .select(
-          "id, nome, email, status, qr_code, seat_id, assento, ponto_embarque_id, convite_token, user_id, embarcado_em",
+          "id, nome, email, status, qr_code, seat_id, assento, ponto_embarque_id, convite_token, user_id, embarcado_em, onibus_id, onibus:onibus(id, nome, horario_saida, horario_retorno, ponto_partida, capacidade)",
         )
         .eq("reserva_id", id)
         .order("created_at", { ascending: true });
@@ -75,32 +75,40 @@ function ReservaDetalhes() {
     },
   });
 
+  const onibusId = (passageiros as any[])[0]?.onibus_id ?? null;
+  const onibusInfo = (passageiros as any[])[0]?.onibus ?? null;
+
   const { data: seats = [] } = useQuery({
-    queryKey: ["reserva-seats", reserva?.excursao?.id],
+    queryKey: ["reserva-seats", reserva?.excursao?.id, onibusId],
     enabled: !!reserva?.excursao?.id,
     queryFn: async () => {
-      const { data, error } = await supabase
+      let q = supabase
         .from("seats")
-        .select("id, seat_number")
+        .select("id, seat_number, onibus_id")
         .eq("excursao_id", reserva!.excursao.id);
+      if (onibusId) q = q.eq("onibus_id", onibusId);
+      const { data, error } = await q;
       if (error) throw error;
       return data ?? [];
     },
   });
 
   const { data: pontos = [] } = useQuery({
-    queryKey: ["reserva-pontos", reserva?.excursao?.id],
+    queryKey: ["reserva-pontos", reserva?.excursao?.id, onibusId],
     enabled: !!reserva?.excursao?.id,
     queryFn: async () => {
-      const { data, error } = await supabase
+      let q = supabase
         .from("pontos_embarque")
-        .select("id, nome, endereco, referencia, horario, ordem")
+        .select("id, nome, endereco, referencia, horario, ordem, onibus_id")
         .eq("excursao_id", reserva!.excursao.id)
         .order("ordem", { ascending: true });
+      if (onibusId) q = q.eq("onibus_id", onibusId);
+      const { data, error } = await q;
       if (error) throw error;
       return data ?? [];
     },
   });
+
 
   const { data: pagamentos = [] } = useQuery({
     queryKey: ["reserva-pagamentos", id],
