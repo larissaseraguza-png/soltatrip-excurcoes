@@ -63,12 +63,6 @@ function ExcursaoDetalhe() {
         <Info icon={DollarSign} label="Preço" value={`R$ ${Number(data.preco).toFixed(2)}`} />
       </div>
 
-      {data.ponto_embarque && (
-        <div className="glass rounded-2xl p-4 mb-4">
-          <p className="text-xs uppercase tracking-wider text-muted-foreground font-bold mb-1">Ponto de embarque</p>
-          <p className="font-semibold">{data.ponto_embarque}</p>
-        </div>
-      )}
 
       {data.descricao && (
         <div className="glass rounded-2xl p-4 mb-6">
