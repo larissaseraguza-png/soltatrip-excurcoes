@@ -2,11 +2,18 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
-import { ArrowLeft, Loader2, AlertCircle } from "lucide-react";
+import { ArrowLeft, Loader2, AlertCircle, Plus, Trash2, MapPin } from "lucide-react";
 
 export const Route = createFileRoute("/app/excursao/nova")({
   component: NovaExcursao,
 });
+
+type Ponto = {
+  nome: string;
+  endereco: string;
+  horario: string;
+  referencia: string;
+};
 
 function NovaExcursao() {
   const { user } = useAuth();
@@ -20,14 +27,26 @@ function NovaExcursao() {
     data_evento: "",
     horario_saida: "",
     horario_retorno: "",
-    ponto_embarque: "",
     preco: "",
     total_vagas: "",
     cor: "#a855f7",
   });
+  const [pontos, setPontos] = useState<Ponto[]>([
+    { nome: "", endereco: "", horario: "", referencia: "" },
+  ]);
 
   function set<K extends keyof typeof form>(k: K, v: string) {
     setForm((f) => ({ ...f, [k]: v }));
+  }
+
+  function updatePonto(idx: number, patch: Partial<Ponto>) {
+    setPontos((arr) => arr.map((p, i) => (i === idx ? { ...p, ...patch } : p)));
+  }
+  function addPonto() {
+    setPontos((arr) => [...arr, { nome: "", endereco: "", horario: "", referencia: "" }]);
+  }
+  function removePonto(idx: number) {
+    setPontos((arr) => (arr.length === 1 ? arr : arr.filter((_, i) => i !== idx)));
   }
 
   async function handleSubmit(e: FormEvent) {
@@ -36,6 +55,19 @@ function NovaExcursao() {
     setError(null);
     setBusy(true);
     try {
+      const validPontos = pontos
+        .map((p) => ({
+          nome: p.nome.trim(),
+          endereco: p.endereco.trim(),
+          horario: p.horario.trim(),
+          referencia: p.referencia.trim(),
+        }))
+        .filter((p) => p.nome.length > 0);
+
+      if (validPontos.length === 0) {
+        throw new Error("Adicione pelo menos um ponto de embarque.");
+      }
+
       const { data, error } = await supabase
         .from("excursoes")
         .insert({
@@ -46,7 +78,7 @@ function NovaExcursao() {
           data_evento: form.data_evento,
           horario_saida: form.horario_saida || null,
           horario_retorno: form.horario_retorno || null,
-          ponto_embarque: form.ponto_embarque.trim() || null,
+          ponto_embarque: null,
           preco: Number(form.preco) || 0,
           total_vagas: Number(form.total_vagas) || 0,
           cor: form.cor,
@@ -55,6 +87,18 @@ function NovaExcursao() {
         .select("id")
         .single();
       if (error) throw error;
+
+      const rows = validPontos.map((p, i) => ({
+        excursao_id: data.id,
+        nome: p.nome,
+        endereco: p.endereco || null,
+        horario: p.horario || null,
+        referencia: p.referencia || null,
+        ordem: i,
+      }));
+      const { error: pErr } = await supabase.from("pontos_embarque").insert(rows);
+      if (pErr) throw pErr;
+
       navigate({ to: "/app/excursao/$id", params: { id: data.id } });
     } catch (err: any) {
       setError(err.message ?? "Erro ao criar excursão");
@@ -85,10 +129,76 @@ function NovaExcursao() {
           <Field label="Saída" type="time" value={form.horario_saida} onChange={(v) => set("horario_saida", v)} />
           <Field label="Retorno" type="time" value={form.horario_retorno} onChange={(v) => set("horario_retorno", v)} />
         </div>
-        <Field label="Ponto de embarque" value={form.ponto_embarque} onChange={(v) => set("ponto_embarque", v)} placeholder="Av. Paulista, 1578" />
+
         <div className="grid grid-cols-2 gap-3">
           <Field label="Preço (R$)" type="number" required value={form.preco} onChange={(v) => set("preco", v)} placeholder="350" />
           <Field label="Total de vagas" type="number" required value={form.total_vagas} onChange={(v) => set("total_vagas", v)} placeholder="46" />
+        </div>
+
+        {/* Pontos de embarque (lista dinâmica) */}
+        <div className="pt-2">
+          <div className="flex items-center justify-between mb-2">
+            <div>
+              <p className="text-sm font-bold">Pontos de embarque</p>
+              <p className="text-xs text-muted-foreground">O passageiro escolherá um na reserva.</p>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            {pontos.map((p, idx) => (
+              <div key={idx} className="rounded-2xl border border-border bg-background/40 p-3 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="inline-flex items-center gap-1 text-xs font-bold text-neon-pink">
+                    <MapPin className="h-3.5 w-3.5" /> Ponto {idx + 1}
+                  </span>
+                  {pontos.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => removePonto(idx)}
+                      className="h-7 w-7 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 flex items-center justify-center"
+                      aria-label="Remover ponto"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  )}
+                </div>
+                <div className="grid grid-cols-[1fr_110px] gap-2">
+                  <input
+                    placeholder="Nome do local *"
+                    value={p.nome}
+                    onChange={(e) => updatePonto(idx, { nome: e.target.value })}
+                    className="h-10 px-3 rounded-xl bg-secondary/40 border border-border text-sm focus:border-primary focus:outline-none"
+                  />
+                  <input
+                    type="time"
+                    value={p.horario}
+                    onChange={(e) => updatePonto(idx, { horario: e.target.value })}
+                    className="h-10 px-2 rounded-xl bg-secondary/40 border border-border text-sm focus:border-primary focus:outline-none"
+                  />
+                </div>
+                <input
+                  placeholder="Endereço"
+                  value={p.endereco}
+                  onChange={(e) => updatePonto(idx, { endereco: e.target.value })}
+                  className="w-full h-10 px-3 rounded-xl bg-secondary/40 border border-border text-sm focus:border-primary focus:outline-none"
+                />
+                <input
+                  placeholder="Referência (opcional)"
+                  value={p.referencia}
+                  onChange={(e) => updatePonto(idx, { referencia: e.target.value })}
+                  className="w-full h-10 px-3 rounded-xl bg-secondary/40 border border-border text-sm focus:border-primary focus:outline-none"
+                />
+              </div>
+            ))}
+          </div>
+
+          <button
+            type="button"
+            onClick={addPonto}
+            className="mt-3 w-full h-11 rounded-xl border border-dashed border-border text-sm font-semibold flex items-center justify-center gap-1.5 hover:border-primary hover:text-primary transition"
+          >
+            <Plus className="h-4 w-4" /> Adicionar ponto de embarque
+          </button>
         </div>
 
         {error && (
