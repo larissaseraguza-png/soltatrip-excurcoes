@@ -298,6 +298,13 @@ function PassageirosPage() {
               </div>
               <div className="flex items-center gap-1 shrink-0">
                 <button
+                  title="Financeiro do passageiro"
+                  onClick={() => setFinanceiroPax(p)}
+                  className="h-8 w-8 rounded-lg bg-neon-green/10 text-neon-green hover:bg-neon-green/20 flex items-center justify-center"
+                >
+                  <DollarSign className="h-4 w-4" />
+                </button>
+                <button
                   title="Editar poltrona e embarque"
                   onClick={() => setEditing(p)}
                   className="h-8 w-8 rounded-lg bg-neon-purple/10 text-neon-purple hover:bg-neon-purple/20 flex items-center justify-center"
