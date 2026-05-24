@@ -317,6 +317,15 @@ function ReservaDetalhes() {
         <Info4 icon={Users} label="Passageiros" value={String(reserva.quantidade)} />
       </div>
 
+      {/* Ingresso / combo vinculado à reserva */}
+      {pedidosItens.length > 0 && (
+        <ReservaIngressosCard
+          pedidos={pedidosItens as any[]}
+          pago={pago}
+          onChanged={() => qc.invalidateQueries({ queryKey: ["reserva-pedidos-itens", id, user?.id, reserva?.excursao?.id] })}
+        />
+      )}
+
 
       {/* Grupo WhatsApp — liberado após primeiro pagamento */}
       {pago > 0 && (() => {
