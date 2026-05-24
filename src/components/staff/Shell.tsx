@@ -60,7 +60,6 @@ function StaffBottomNav() {
     { to: "/staff/passageiros", icon: Users, label: "Pax" },
     { to: "/staff/checkin", icon: QrCode, label: "Check-in" },
     { to: "/staff/onibus", icon: Bus, label: "Ônibus" },
-    { to: "/staff/mensagens", icon: MessageCircle, label: "Msg" },
   ];
   return (
     <nav className="fixed bottom-0 inset-x-0 z-40 px-4 pb-4">
