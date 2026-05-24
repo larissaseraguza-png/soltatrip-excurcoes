@@ -161,15 +161,27 @@ function Pagamentos() {
       });
       if (error) throw error;
       setValor("");
-      qc.invalidateQueries({ queryKey: ["pagamentos"] });
-      qc.invalidateQueries({ queryKey: ["reservas-pagto"] });
-      qc.invalidateQueries({ queryKey: ["pagto-passageiros"] });
+      await Promise.all([
+        qc.invalidateQueries({ queryKey: ["pagamentos"] }),
+        qc.invalidateQueries({ queryKey: ["reservas-pagto"] }),
+        qc.invalidateQueries({ queryKey: ["pagto-passageiros"] }),
+      ]);
+      // Fluxo automático: após primeiro pagamento, avançar para poltrona/embarque
+      const novoPago = pago + v;
+      const aindaFalta = faltamPoltronas || faltamEmbarques;
+      if (novoPago > 0 && aindaFalta) {
+        navigate({
+          to: "/passageiro/reserva/$id",
+          params: { id: reservaAtiva.id },
+        });
+      }
     } catch (err: any) {
       alert(err.message ?? "Erro ao registrar pagamento");
     } finally {
       setSubmitting(false);
     }
   }
+
 
   const statusLabel: Record<string, { tone: any; label: string }> = {
     pending_payment: { tone: "yellow", label: "Aguardando pagamento" },
