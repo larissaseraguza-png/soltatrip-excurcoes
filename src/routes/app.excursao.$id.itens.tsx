@@ -410,6 +410,22 @@ function ItemEditor({
             />
             Item ativo
           </label>
+
+          <label className="flex items-start gap-2 text-sm cursor-pointer p-3 rounded-xl border border-neon-pink/30 bg-neon-pink/5">
+            <input
+              type="checkbox"
+              checked={incluiExcursao}
+              onChange={(e) => setIncluiExcursao(e.target.checked)}
+              className="h-4 w-4 mt-0.5"
+            />
+            <span>
+              <span className="font-bold">Inclui excursão (combo)</span>
+              <span className="block text-[11px] text-muted-foreground mt-0.5">
+                Cria automaticamente a reserva da excursão ao comprar — passageiro escolhe ônibus,
+                poltrona, embarque e usa QR Code de check-in.
+              </span>
+            </span>
+          </label>
         </div>
 
         <div className="flex items-center gap-2 mt-5">
