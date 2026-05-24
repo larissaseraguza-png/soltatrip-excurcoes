@@ -8,6 +8,8 @@ import {
   Loader2,
   Mail,
   Lock,
+  Eye,
+  EyeOff,
   AlertCircle,
   Crown,
   Shield,
@@ -102,6 +104,7 @@ function AuthPage() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -388,8 +391,23 @@ function AuthPage() {
                 )}
                 <Field
                   label="Senha"
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   icon={<Lock className="h-4 w-4" />}
+                  actionIcon={
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword((s) => !s)}
+                      className="p-1 rounded-md hover:bg-secondary/60 transition focus:outline-none"
+                      aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
+                      tabIndex={-1}
+                    >
+                      {showPassword ? (
+                        <EyeOff className="h-4 w-4 text-muted-foreground" />
+                      ) : (
+                        <Eye className="h-4 w-4 text-muted-foreground" />
+                      )}
+                    </button>
+                  }
                   value={password}
                   onChange={setPassword}
                   required
@@ -431,6 +449,7 @@ function Field({
   required,
   placeholder,
   icon,
+  actionIcon,
   minLength,
 }: {
   label: string;
@@ -440,6 +459,7 @@ function Field({
   required?: boolean;
   placeholder?: string;
   icon?: React.ReactNode;
+  actionIcon?: React.ReactNode;
   minLength?: number;
 }) {
   return (
@@ -458,8 +478,13 @@ function Field({
           placeholder={placeholder}
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className={`w-full h-11 rounded-xl bg-secondary/40 border border-border focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 transition text-sm ${icon ? "pl-10 pr-3" : "px-3"}`}
+          className={`w-full h-11 rounded-xl bg-secondary/40 border border-border focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 transition text-sm ${icon ? "pl-10" : "pl-3"} ${actionIcon ? "pr-10" : "pr-3"}`}
         />
+        {actionIcon && (
+          <span className="absolute right-2 top-1/2 -translate-y-1/2">
+            {actionIcon}
+          </span>
+        )}
       </div>
     </label>
   );
