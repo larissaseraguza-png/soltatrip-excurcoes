@@ -323,6 +323,28 @@ function MinhasViagens() {
               </button>
             </div>
 
+            {selectedItem && step !== "experiencia" && (
+              <div className="px-5 pt-3">
+                <div className="flex items-center gap-2 rounded-2xl bg-gradient-to-r from-neon-pink/20 to-neon-purple/20 border border-neon-pink/40 px-3 py-2">
+                  <Package className="size-4 text-neon-pink shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[10px] uppercase tracking-widest text-neon-pink font-black">Combo selecionado</p>
+                    <p className="text-xs font-bold truncate">{selectedItem.nome}</p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setSelectedItem(null);
+                      setStep("experiencia");
+                    }}
+                    className="text-[10px] text-muted-foreground hover:text-foreground underline"
+                  >
+                    trocar
+                  </button>
+                </div>
+              </div>
+            )}
+
+
             {step === "experiencia" ? (
               <ExperienciaStep
                 excursao={modalEx}
