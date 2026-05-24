@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Loader2, Save, Upload, User as UserIcon, Phone, Mail, MapPin, Instagram, Globe, Building2, FileText } from "lucide-react";
+import { Loader2, Save, Upload, User as UserIcon, Phone, Mail, MapPin, Instagram, Globe, Building2, FileText, Bus, Users as UsersIcon, CalendarClock, DollarSign } from "lucide-react";
 
 export const Route = createFileRoute("/app/perfil")({
   head: () => ({ meta: [{ title: "Meu perfil — SoltaTrip" }, { name: "robots", content: "noindex" }] }),
@@ -38,6 +38,39 @@ function Perfil() {
         .maybeSingle();
       if (error) throw error;
       return (data ?? null) as Profile | null;
+    },
+  });
+
+  const { data: stats } = useQuery({
+    queryKey: ["profile-stats", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const today = new Date().toISOString().slice(0, 10);
+      const { data: exs } = await supabase
+        .from("excursoes")
+        .select("id,data_evento,status")
+        .eq("organizer_id", user!.id);
+      const ids = (exs ?? []).map((e) => e.id);
+      const total = exs?.length ?? 0;
+      const futuras = (exs ?? []).filter((e) => e.data_evento >= today && e.status !== "encerrada").length;
+      const realizadas = total - futuras;
+
+      let pax = 0;
+      let receita = 0;
+      if (ids.length) {
+        const { count } = await supabase
+          .from("passageiros")
+          .select("id", { count: "exact", head: true })
+          .in("excursao_id", ids);
+        pax = count ?? 0;
+        const { data: pays } = await supabase
+          .from("pagamentos")
+          .select("valor,status")
+          .in("excursao_id", ids)
+          .eq("status", "confirmado");
+        receita = (pays ?? []).reduce((s, p) => s + Number(p.valor || 0), 0);
+      }
+      return { total, futuras, realizadas, pax, receita };
     },
   });
 
@@ -137,6 +170,14 @@ function Perfil() {
         </div>
       </div>
 
+      <div className="grid grid-cols-2 gap-3 mb-4">
+        <StatCard icon={Bus} label="Excursões realizadas" value={String(stats?.realizadas ?? 0)} hint={`${stats?.total ?? 0} no total`} />
+        <StatCard icon={CalendarClock} label="Próximas excursões" value={String(stats?.futuras ?? 0)} hint="agendadas" />
+        <StatCard icon={UsersIcon} label="Passageiros" value={String(stats?.pax ?? 0)} hint="transportados" />
+        <StatCard icon={DollarSign} label="Receita total" value={`R$ ${Number(stats?.receita ?? 0).toLocaleString("pt-BR", { maximumFractionDigits: 0 })}`} hint="pagamentos confirmados" />
+      </div>
+
+
       <Section title="Dados pessoais">
         <Field icon={UserIcon} label="Nome completo" value={form.full_name ?? ""} onChange={(v) => setForm({ ...form, full_name: v })} />
         <Field icon={Phone} label="Telefone" value={form.phone ?? ""} onChange={(v) => setForm({ ...form, phone: v })} placeholder="(11) 99999-9999" />
@@ -197,5 +238,18 @@ function Field({ icon: Icon, label, value, onChange, placeholder }: { icon: type
         className="mt-1 w-full bg-input rounded-xl px-4 h-11 text-sm outline-none border border-border focus:border-neon-pink"
       />
     </label>
+  );
+}
+
+function StatCard({ icon: Icon, label, value, hint }: { icon: typeof UserIcon; label: string; value: string; hint?: string }) {
+  return (
+    <div className="glass rounded-2xl p-4">
+      <div className="flex items-center gap-2 text-muted-foreground">
+        <Icon className="h-4 w-4" />
+        <span className="text-[10px] uppercase tracking-wider font-semibold">{label}</span>
+      </div>
+      <p className="font-display text-2xl font-black mt-1">{value}</p>
+      {hint && <p className="text-[10px] text-muted-foreground mt-0.5">{hint}</p>}
+    </div>
   );
 }
