@@ -266,6 +266,9 @@ function ItemEditor({
   const [qtd, setQtd] = useState(item?.quantidade_total != null ? String(item.quantidade_total) : "");
   const [status, setStatus] = useState(item?.status ?? "disponivel");
   const [ativo, setAtivo] = useState(item?.ativo ?? true);
+  const [incluiExcursao, setIncluiExcursao] = useState<boolean>(
+    (item as any)?.inclui_excursao ?? false,
+  );
   const [busy, setBusy] = useState(false);
 
   async function save() {
