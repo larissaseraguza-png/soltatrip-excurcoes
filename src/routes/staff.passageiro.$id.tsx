@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { StaffShell, Pill } from "@/components/staff/Shell";
 import { supabase } from "@/integrations/supabase/client";
 import { useRealtimeSync } from "@/hooks/use-realtime-sync";
-import { ArrowLeft, Loader2, Phone, Mail, MapPin, Armchair, Wallet, QrCode, Lock } from "lucide-react";
+import { ArrowLeft, Loader2, Phone, Mail, MapPin, Armchair, Wallet, QrCode, Lock, Ticket, CheckCircle2, Clock, AlertCircle } from "lucide-react";
 
 export const Route = createFileRoute("/staff/passageiro/$id")({
   component: PassageiroDetalhe,
