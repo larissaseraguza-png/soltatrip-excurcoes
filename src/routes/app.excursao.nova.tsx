@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useRef, useState, type FormEvent } from "react";
+import { useMemo, useRef, useState, type FormEvent } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { ArrowLeft, Loader2, AlertCircle, Plus, Trash2, MapPin, ImagePlus, X } from "lucide-react";
@@ -15,11 +15,26 @@ type Ponto = {
   referencia: string;
 };
 
+type FieldErrors = {
+  titulo?: string;
+  destino?: string;
+  descricao?: string;
+  data_evento?: string;
+  horario_saida?: string;
+  horario_retorno?: string;
+  preco?: string;
+  total_vagas?: string;
+  banner?: string;
+  pontos?: string;
+  pontosItems?: Array<{ nome?: string; endereco?: string; horario?: string }>;
+};
+
 function NovaExcursao() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showErrors, setShowErrors] = useState(false);
   const [form, setForm] = useState({
     titulo: "",
     destino: "",
@@ -58,24 +73,53 @@ function NovaExcursao() {
     setPontos((arr) => (arr.length === 1 ? arr : arr.filter((_, i) => i !== idx)));
   }
 
+  const errors: FieldErrors = useMemo(() => {
+    const e: FieldErrors = {};
+    if (!form.titulo.trim()) e.titulo = "Informe o nome da excursão";
+    if (!form.destino.trim()) e.destino = "Informe a cidade/local";
+    if (!form.descricao.trim()) e.descricao = "Adicione uma descrição";
+    if (!form.data_evento) e.data_evento = "Selecione a data";
+    if (!form.horario_saida) e.horario_saida = "Informe o horário de saída";
+    if (!form.horario_retorno) e.horario_retorno = "Informe o horário de retorno";
+    const preco = Number(form.preco);
+    if (!form.preco || isNaN(preco) || preco <= 0) e.preco = "Informe um valor válido";
+    const vagas = Number(form.total_vagas);
+    if (!form.total_vagas || isNaN(vagas) || vagas <= 0)
+      e.total_vagas = "Informe a quantidade de vagas (mínimo 1)";
+    if (!bannerFile) e.banner = "Envie uma imagem de capa";
+
+    const pontosItems = pontos.map((p) => {
+      const item: { nome?: string; endereco?: string; horario?: string } = {};
+      if (!p.nome.trim()) item.nome = "Nome obrigatório";
+      if (!p.endereco.trim()) item.endereco = "Endereço obrigatório";
+      if (!p.horario.trim()) item.horario = "Horário obrigatório";
+      return item;
+    });
+    const hasPontoErr = pontosItems.some((it) => Object.keys(it).length > 0);
+    if (pontos.length === 0) e.pontos = "Adicione pelo menos um ponto de embarque";
+    if (hasPontoErr) e.pontosItems = pontosItems;
+    return e;
+  }, [form, pontos, bannerFile]);
+
+  const isValid = Object.keys(errors).length === 0;
+
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     if (!user) return;
     setError(null);
+    if (!isValid) {
+      setShowErrors(true);
+      setError("Preencha todos os campos obrigatórios antes de publicar.");
+      return;
+    }
     setBusy(true);
     try {
-      const validPontos = pontos
-        .map((p) => ({
-          nome: p.nome.trim(),
-          endereco: p.endereco.trim(),
-          horario: p.horario.trim(),
-          referencia: p.referencia.trim(),
-        }))
-        .filter((p) => p.nome.length > 0);
-
-      if (validPontos.length === 0) {
-        throw new Error("Adicione pelo menos um ponto de embarque.");
-      }
+      const validPontos = pontos.map((p) => ({
+        nome: p.nome.trim(),
+        endereco: p.endereco.trim(),
+        horario: p.horario.trim(),
+        referencia: p.referencia.trim(),
+      }));
 
       const { data, error } = await supabase
         .from("excursoes")
@@ -133,6 +177,8 @@ function NovaExcursao() {
     }
   }
 
+  const show = showErrors;
+
   return (
     <div>
       <Link to="/app" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4">
@@ -140,14 +186,14 @@ function NovaExcursao() {
       </Link>
 
       <h1 className="font-display text-3xl font-bold mb-1">Nova excursão</h1>
-      <p className="text-sm text-muted-foreground mb-6">Preencha os dados básicos. Você pode editar depois.</p>
+      <p className="text-sm text-muted-foreground mb-6">Todos os campos marcados com * são obrigatórios para publicar.</p>
 
-      <form onSubmit={handleSubmit} className="glass rounded-3xl p-6 space-y-4">
+      <form onSubmit={handleSubmit} noValidate className="glass rounded-3xl p-6 space-y-4">
         {/* Banner upload */}
         <div>
-          <span className="text-xs font-semibold text-muted-foreground mb-1.5 block">Imagem de capa</span>
+          <span className="text-xs font-semibold text-muted-foreground mb-1.5 block">Imagem de capa *</span>
           <div
-            className="relative h-40 rounded-2xl overflow-hidden border border-dashed border-border bg-secondary/30 cursor-pointer hover:border-primary transition"
+            className={`relative h-40 rounded-2xl overflow-hidden border border-dashed bg-secondary/30 cursor-pointer hover:border-primary transition ${show && errors.banner ? "border-red-500" : "border-border"}`}
             style={
               bannerPreview
                 ? { backgroundImage: `url(${bannerPreview})`, backgroundSize: "cover", backgroundPosition: "center" }
@@ -172,6 +218,7 @@ function NovaExcursao() {
               </button>
             )}
           </div>
+          {show && errors.banner && <p className="mt-1 text-xs text-red-400">{errors.banner}</p>}
           <input
             ref={fileRef}
             type="file"
@@ -181,80 +228,94 @@ function NovaExcursao() {
           />
         </div>
 
-        <Field label="Título" required value={form.titulo} onChange={(v) => set("titulo", v)} placeholder="Ex: Tomorrowland 2026" />
-        <Field label="Destino" required value={form.destino} onChange={(v) => set("destino", v)} placeholder="Itu, SP" />
-        <Field label="Descrição" textarea value={form.descricao} onChange={(v) => set("descricao", v)} placeholder="Detalhes da viagem (opcional)" />
+        <Field label="Nome da festa/excursão" required value={form.titulo} onChange={(v) => set("titulo", v)} placeholder="Ex: Tomorrowland 2026" error={show ? errors.titulo : undefined} />
+        <Field label="Cidade/Local" required value={form.destino} onChange={(v) => set("destino", v)} placeholder="Itu, SP" error={show ? errors.destino : undefined} />
+        <Field label="Descrição" required textarea value={form.descricao} onChange={(v) => set("descricao", v)} placeholder="Detalhes da viagem" error={show ? errors.descricao : undefined} />
 
         <div className="grid grid-cols-2 gap-3">
-          <Field label="Data" type="date" required value={form.data_evento} onChange={(v) => set("data_evento", v)} />
+          <Field label="Data" type="date" required value={form.data_evento} onChange={(v) => set("data_evento", v)} error={show ? errors.data_evento : undefined} />
           <Field label="Cor" type="color" value={form.cor} onChange={(v) => set("cor", v)} />
         </div>
         <div className="grid grid-cols-2 gap-3">
-          <Field label="Saída" type="time" value={form.horario_saida} onChange={(v) => set("horario_saida", v)} />
-          <Field label="Retorno" type="time" value={form.horario_retorno} onChange={(v) => set("horario_retorno", v)} />
+          <Field label="Saída" type="time" required value={form.horario_saida} onChange={(v) => set("horario_saida", v)} error={show ? errors.horario_saida : undefined} />
+          <Field label="Retorno" type="time" required value={form.horario_retorno} onChange={(v) => set("horario_retorno", v)} error={show ? errors.horario_retorno : undefined} />
         </div>
 
         <div className="grid grid-cols-2 gap-3">
-          <Field label="Preço (R$)" type="number" required value={form.preco} onChange={(v) => set("preco", v)} placeholder="350" />
-          <Field label="Total de vagas" type="number" required value={form.total_vagas} onChange={(v) => set("total_vagas", v)} placeholder="46" />
+          <Field label="Preço (R$)" type="number" required value={form.preco} onChange={(v) => set("preco", v)} placeholder="350" error={show ? errors.preco : undefined} />
+          <Field label="Total de vagas" type="number" required value={form.total_vagas} onChange={(v) => set("total_vagas", v)} placeholder="46" error={show ? errors.total_vagas : undefined} />
         </div>
 
         {/* Pontos de embarque (lista dinâmica) */}
         <div className="pt-2">
           <div className="flex items-center justify-between mb-2">
             <div>
-              <p className="text-sm font-bold">Pontos de embarque</p>
+              <p className="text-sm font-bold">Pontos de embarque *</p>
               <p className="text-xs text-muted-foreground">O passageiro escolherá um na reserva.</p>
             </div>
           </div>
 
           <div className="space-y-3">
-            {pontos.map((p, idx) => (
-              <div key={idx} className="rounded-2xl border border-border bg-background/40 p-3 space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="inline-flex items-center gap-1 text-xs font-bold text-neon-pink">
-                    <MapPin className="h-3.5 w-3.5" /> Ponto {idx + 1}
-                  </span>
-                  {pontos.length > 1 && (
-                    <button
-                      type="button"
-                      onClick={() => removePonto(idx)}
-                      className="h-7 w-7 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 flex items-center justify-center"
-                      aria-label="Remover ponto"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </button>
-                  )}
-                </div>
-                <div className="grid grid-cols-[1fr_110px] gap-2">
+            {pontos.map((p, idx) => {
+              const itemErr = show ? errors.pontosItems?.[idx] : undefined;
+              return (
+                <div key={idx} className="rounded-2xl border border-border bg-background/40 p-3 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="inline-flex items-center gap-1 text-xs font-bold text-neon-pink">
+                      <MapPin className="h-3.5 w-3.5" /> Ponto {idx + 1}
+                    </span>
+                    {pontos.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => removePonto(idx)}
+                        className="h-7 w-7 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 flex items-center justify-center"
+                        aria-label="Remover ponto"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    )}
+                  </div>
+                  <div className="grid grid-cols-[1fr_110px] gap-2">
+                    <div>
+                      <input
+                        placeholder="Nome do local *"
+                        value={p.nome}
+                        onChange={(e) => updatePonto(idx, { nome: e.target.value })}
+                        className={`w-full h-10 px-3 rounded-xl bg-secondary/40 border text-sm focus:border-primary focus:outline-none ${itemErr?.nome ? "border-red-500" : "border-border"}`}
+                      />
+                      {itemErr?.nome && <p className="mt-1 text-[11px] text-red-400">{itemErr.nome}</p>}
+                    </div>
+                    <div>
+                      <input
+                        type="time"
+                        value={p.horario}
+                        onChange={(e) => updatePonto(idx, { horario: e.target.value })}
+                        className={`w-full h-10 px-2 rounded-xl bg-secondary/40 border text-sm focus:border-primary focus:outline-none ${itemErr?.horario ? "border-red-500" : "border-border"}`}
+                      />
+                      {itemErr?.horario && <p className="mt-1 text-[11px] text-red-400">{itemErr.horario}</p>}
+                    </div>
+                  </div>
+                  <div>
+                    <input
+                      placeholder="Endereço *"
+                      value={p.endereco}
+                      onChange={(e) => updatePonto(idx, { endereco: e.target.value })}
+                      className={`w-full h-10 px-3 rounded-xl bg-secondary/40 border text-sm focus:border-primary focus:outline-none ${itemErr?.endereco ? "border-red-500" : "border-border"}`}
+                    />
+                    {itemErr?.endereco && <p className="mt-1 text-[11px] text-red-400">{itemErr.endereco}</p>}
+                  </div>
                   <input
-                    placeholder="Nome do local *"
-                    value={p.nome}
-                    onChange={(e) => updatePonto(idx, { nome: e.target.value })}
-                    className="h-10 px-3 rounded-xl bg-secondary/40 border border-border text-sm focus:border-primary focus:outline-none"
-                  />
-                  <input
-                    type="time"
-                    value={p.horario}
-                    onChange={(e) => updatePonto(idx, { horario: e.target.value })}
-                    className="h-10 px-2 rounded-xl bg-secondary/40 border border-border text-sm focus:border-primary focus:outline-none"
+                    placeholder="Referência (opcional)"
+                    value={p.referencia}
+                    onChange={(e) => updatePonto(idx, { referencia: e.target.value })}
+                    className="w-full h-10 px-3 rounded-xl bg-secondary/40 border border-border text-sm focus:border-primary focus:outline-none"
                   />
                 </div>
-                <input
-                  placeholder="Endereço"
-                  value={p.endereco}
-                  onChange={(e) => updatePonto(idx, { endereco: e.target.value })}
-                  className="w-full h-10 px-3 rounded-xl bg-secondary/40 border border-border text-sm focus:border-primary focus:outline-none"
-                />
-                <input
-                  placeholder="Referência (opcional)"
-                  value={p.referencia}
-                  onChange={(e) => updatePonto(idx, { referencia: e.target.value })}
-                  className="w-full h-10 px-3 rounded-xl bg-secondary/40 border border-border text-sm focus:border-primary focus:outline-none"
-                />
-              </div>
-            ))}
+              );
+            })}
           </div>
+
+          {show && errors.pontos && <p className="mt-2 text-xs text-red-400">{errors.pontos}</p>}
 
           <button
             type="button"
@@ -276,41 +337,44 @@ function NovaExcursao() {
           disabled={busy}
           className="w-full h-12 rounded-xl bg-primary text-primary-foreground font-semibold glow-primary hover:opacity-90 transition flex items-center justify-center gap-2 disabled:opacity-50"
         >
-          {busy && <Loader2 className="h-4 w-4 animate-spin" />} Criar excursão
+          {busy && <Loader2 className="h-4 w-4 animate-spin" />} Publicar excursão
         </button>
+        <p className="text-[11px] text-center text-muted-foreground">
+          Você poderá adicionar ônibus e staff após criar a excursão.
+        </p>
       </form>
     </div>
   );
 }
 
 function Field({
-  label, value, onChange, type = "text", required, placeholder, textarea,
+  label, value, onChange, type = "text", required, placeholder, textarea, error,
 }: {
   label: string; value: string; onChange: (v: string) => void;
-  type?: string; required?: boolean; placeholder?: string; textarea?: boolean;
+  type?: string; required?: boolean; placeholder?: string; textarea?: boolean; error?: string;
 }) {
+  const errCls = error ? "border-red-500 focus:border-red-500 focus:ring-red-500/30" : "border-border focus:border-primary focus:ring-primary/30";
   return (
     <label className="block">
       <span className="text-xs font-semibold text-muted-foreground mb-1.5 block">{label}{required && " *"}</span>
       {textarea ? (
         <textarea
-          required={required}
           placeholder={placeholder}
           value={value}
           onChange={(e) => onChange(e.target.value)}
           rows={3}
-          className="w-full rounded-xl bg-secondary/40 border border-border focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 transition text-sm px-3 py-2.5 resize-none"
+          className={`w-full rounded-xl bg-secondary/40 border focus:outline-none focus:ring-2 transition text-sm px-3 py-2.5 resize-none ${errCls}`}
         />
       ) : (
         <input
           type={type}
-          required={required}
           placeholder={placeholder}
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="w-full h-11 rounded-xl bg-secondary/40 border border-border focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 transition text-sm px-3"
+          className={`w-full h-11 rounded-xl bg-secondary/40 border focus:outline-none focus:ring-2 transition text-sm px-3 ${errCls}`}
         />
       )}
+      {error && <p className="mt-1 text-xs text-red-400">{error}</p>}
     </label>
   );
 }
