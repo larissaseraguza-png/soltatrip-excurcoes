@@ -178,6 +178,7 @@ function ReservaDetalhes() {
         ? [
             { table: "seats", filter: `excursao_id=eq.${reserva.excursao.id}` },
             { table: "pontos_embarque", filter: `excursao_id=eq.${reserva.excursao.id}` },
+            { table: "pedidos_itens", filter: `excursao_id=eq.${reserva.excursao.id}` },
           ]
         : []),
     ],
@@ -187,9 +188,11 @@ function ReservaDetalhes() {
       ["reserva-pagamentos", id],
       ["reserva-seats", reserva?.excursao?.id],
       ["reserva-pontos", reserva?.excursao?.id],
+      ["reserva-pedidos-itens", id, user?.id, reserva?.excursao?.id],
     ],
     notifyTripChange,
   );
+
 
   if (authLoading || isLoading) {
     return (
