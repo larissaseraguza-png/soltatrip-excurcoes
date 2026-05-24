@@ -20,8 +20,6 @@ import {
   Users,
   Bus,
   MessageCircle,
-  Ticket,
-  ChevronRight,
 } from "lucide-react";
 
 
