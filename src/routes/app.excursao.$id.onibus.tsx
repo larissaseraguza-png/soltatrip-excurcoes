@@ -32,7 +32,7 @@ function OnibusListPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("onibus")
-        .select("id, nome, capacidade, horario_saida, horario_retorno, ponto_partida, ordem, ativo")
+        .select("id, nome, capacidade, horario_saida, horario_retorno, ponto_partida, ordem, ativo, whatsapp_group_url")
         .eq("excursao_id", id)
         .order("ordem", { ascending: true })
         .order("created_at", { ascending: true });
