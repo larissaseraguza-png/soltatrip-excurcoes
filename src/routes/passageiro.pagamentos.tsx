@@ -5,7 +5,7 @@ import { Shell, Pill } from "@/components/passageiro/Shell";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useRealtimeSync } from "@/hooks/use-realtime-sync";
-import { Copy, Loader2, CheckCircle2, Armchair } from "lucide-react";
+import { Copy, Loader2, CheckCircle2, Armchair, QrCode, ExternalLink, CreditCard } from "lucide-react";
 
 type Search = { reserva?: string };
 
@@ -15,8 +15,6 @@ export const Route = createFileRoute("/passageiro/pagamentos")({
   }),
   component: Pagamentos,
 });
-
-const PIX_KEY = "soltatrip@pix.com.br";
 
 function brl(v: number) {
   return v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
