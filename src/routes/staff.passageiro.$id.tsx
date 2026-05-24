@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { StaffShell, Pill } from "@/components/staff/Shell";
 import { supabase } from "@/integrations/supabase/client";
 import { useRealtimeSync } from "@/hooks/use-realtime-sync";
-import { ArrowLeft, Loader2, Phone, Mail, MapPin, Armchair, Wallet, QrCode, Lock } from "lucide-react";
+import { ArrowLeft, Loader2, Phone, Mail, MapPin, Armchair, Wallet, QrCode, Lock, Ticket, CheckCircle2, Clock, AlertCircle } from "lucide-react";
 
 export const Route = createFileRoute("/staff/passageiro/$id")({
   component: PassageiroDetalhe,
@@ -72,15 +72,32 @@ function PassageiroDetalhe() {
     },
   });
 
+  const { data: pedidos = [] } = useQuery({
+    queryKey: ["staff-pax-pedidos", id, pax?.excursao_id],
+    enabled: !!pax?.excursao_id,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("pedidos_itens")
+        .select("id,quantidade,valor_total,status,enviado_em,recebido_em,nao_recebido_em,item:excursao_itens(nome,tipo)")
+        .eq("excursao_id", pax!.excursao_id)
+        .eq("passageiro_id", id)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
   useRealtimeSync(
     `staff-pax-${id}`,
     [
       { table: "passageiros", filter: `id=eq.${id}` },
       { table: "pagamentos", filter: `passageiro_id=eq.${id}` },
+      { table: "pedidos_itens", filter: `passageiro_id=eq.${id}` },
     ],
     [
       ["staff-pax-detalhe", id],
       ["staff-pax-pgto", id],
+      ["staff-pax-pedidos", id],
     ],
   );
 
@@ -186,6 +203,43 @@ function PassageiroDetalhe() {
                   </Pill>
                 </div>
               ))
+            )}
+          </Section>
+
+          <Section title="Ingressos / Combos">
+            {pedidos.length === 0 ? (
+              <div className="p-3 text-xs text-muted-foreground">Nenhum ingresso vinculado.</div>
+            ) : (
+              pedidos.map((p: any) => {
+                const naoRecebido = !!p.nao_recebido_em;
+                const recebido = !!p.recebido_em;
+                const enviado = !!p.enviado_em;
+                const StatusIcon = naoRecebido ? AlertCircle : recebido ? CheckCircle2 : enviado ? Ticket : Clock;
+                const tone = naoRecebido ? "red" : recebido ? "green" : enviado ? "yellow" : "muted";
+                const label = naoRecebido
+                  ? "não recebido"
+                  : recebido
+                    ? "recebido"
+                    : enviado
+                      ? "enviado"
+                      : p.status === "confirmado"
+                        ? "confirmado"
+                        : "pendente";
+                return (
+                  <div key={p.id} className="p-3 flex items-center gap-3">
+                    <StatusIcon className={`size-4 ${naoRecebido ? "text-red-400" : recebido ? "text-neon-green" : "text-neon-purple"}`} />
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-semibold truncate">
+                        {p.item?.nome ?? "Item"}{p.quantidade > 1 ? ` ×${p.quantidade}` : ""}
+                      </div>
+                      <div className="text-[10px] text-muted-foreground">
+                        {(p.item?.tipo ?? "ingresso").toUpperCase()} · {brl(Number(p.valor_total))}
+                      </div>
+                    </div>
+                    <Pill tone={tone as any}>{label}</Pill>
+                  </div>
+                );
+              })
             )}
           </Section>
         </>

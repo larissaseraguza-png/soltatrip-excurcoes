@@ -4,7 +4,7 @@ import { StaffShell, Pill } from "@/components/staff/Shell";
 import { supabase } from "@/integrations/supabase/client";
 import { useStaffExcursao } from "@/hooks/use-staff-excursao";
 import { useRealtimeSync } from "@/hooks/use-realtime-sync";
-import { Search, Loader2, MapPin, Armchair, Phone, Bus } from "lucide-react";
+import { Search, Loader2, MapPin, Armchair, Phone, Bus, Ticket, AlertCircle } from "lucide-react";
 import { useMemo, useState } from "react";
 
 export const Route = createFileRoute("/staff/passageiros")({
@@ -74,6 +74,19 @@ function PassageirosStaff() {
   });
 
 
+  const { data: pedidos = [] } = useQuery({
+    queryKey: ["staff-pax-pedidos-list", excursao?.id],
+    enabled: !!excursao?.id,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("pedidos_itens")
+        .select("id,passageiro_id,status,enviado_em,recebido_em,nao_recebido_em")
+        .eq("excursao_id", excursao!.id);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
   useRealtimeSync(
     `staff-passageiros-${excursao?.id ?? "none"}-${onibusId ?? "all"}`,
     excursao?.id
@@ -81,17 +94,31 @@ function PassageirosStaff() {
           { table: "passageiros", filter: `excursao_id=eq.${excursao.id}` },
           { table: "seats", filter: `excursao_id=eq.${excursao.id}` },
           { table: "pontos_embarque", filter: `excursao_id=eq.${excursao.id}` },
+          { table: "pedidos_itens", filter: `excursao_id=eq.${excursao.id}` },
         ]
       : [],
     [
       ["staff-passageiros", excursao?.id, onibusId],
       ["staff-seats", excursao?.id, onibusId],
       ["staff-pontos", excursao?.id, onibusId],
+      ["staff-pax-pedidos-list", excursao?.id],
     ],
   );
 
   const seatById = useMemo(() => new Map((seats as any[]).map((s) => [s.id, s.seat_number])), [seats]);
   const pontoById = useMemo(() => new Map(pontos.map((p) => [p.id, p])), [pontos]);
+  const pedidosByPax = useMemo(() => {
+    const m = new Map<string, { total: number; pendentes: number; naoRecebidos: number }>();
+    (pedidos as any[]).forEach((p) => {
+      if (!p.passageiro_id) return;
+      const cur = m.get(p.passageiro_id) ?? { total: 0, pendentes: 0, naoRecebidos: 0 };
+      cur.total += 1;
+      if (p.nao_recebido_em) cur.naoRecebidos += 1;
+      else if (!p.recebido_em && !p.enviado_em) cur.pendentes += 1;
+      m.set(p.passageiro_id, cur);
+    });
+    return m;
+  }, [pedidos]);
   const filtered = passageiros.filter((p) =>
     p.nome.toLowerCase().includes(search.toLowerCase()) || (p.telefone ?? "").includes(search),
   );
@@ -123,6 +150,7 @@ function PassageirosStaff() {
           {filtered.map((p) => {
             const ponto = p.ponto_embarque_id ? pontoById.get(p.ponto_embarque_id) : null;
             const seat = p.assento ?? (p.seat_id ? seatById.get(p.seat_id) : null) ?? "—";
+            const ped = pedidosByPax.get(p.id);
             return (
               <Link key={p.id} to="/staff/passageiro/$id" params={{ id: p.id }} className="glass rounded-2xl p-4 block hover:border-neon-green/50 border border-transparent transition">
                 <div className="flex items-center gap-3">
@@ -130,9 +158,17 @@ function PassageirosStaff() {
                     {p.nome.split(" ").map((n) => n[0]).slice(0, 2).join("")}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
+                    <div className="flex items-center gap-2 mb-1 flex-wrap">
                       <p className="font-semibold truncate">{p.nome}</p>
                       <Pill tone={p.status === "confirmado" ? "green" : "yellow"}>{p.status}</Pill>
+                      {ped && ped.naoRecebidos > 0 && (
+                        <Pill tone="red"><AlertCircle className="size-3 inline mr-0.5" />{ped.naoRecebidos} não recebido</Pill>
+                      )}
+                      {ped && ped.total > 0 && ped.naoRecebidos === 0 && (
+                        <Pill tone={ped.pendentes > 0 ? "yellow" : "green"}>
+                          <Ticket className="size-3 inline mr-0.5" />{ped.total}
+                        </Pill>
+                      )}
                     </div>
                     <div className="grid gap-1 text-xs text-muted-foreground">
                       <span className="flex items-center gap-1"><Phone className="size-3" /> {p.telefone ?? "sem telefone"}</span>
