@@ -391,8 +391,23 @@ function AuthPage() {
                 )}
                 <Field
                   label="Senha"
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   icon={<Lock className="h-4 w-4" />}
+                  actionIcon={
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword((s) => !s)}
+                      className="p-1 rounded-md hover:bg-secondary/60 transition focus:outline-none"
+                      aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
+                      tabIndex={-1}
+                    >
+                      {showPassword ? (
+                        <EyeOff className="h-4 w-4 text-muted-foreground" />
+                      ) : (
+                        <Eye className="h-4 w-4 text-muted-foreground" />
+                      )}
+                    </button>
+                  }
                   value={password}
                   onChange={setPassword}
                   required
