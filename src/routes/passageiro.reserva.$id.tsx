@@ -20,6 +20,12 @@ import {
   Users,
   Bus,
   MessageCircle,
+  Package,
+  Mail,
+  ThumbsUp,
+  AlertTriangle,
+  CircleDot,
+  Ticket,
 } from "lucide-react";
 
 
@@ -128,6 +134,22 @@ function ReservaDetalhes() {
     },
   });
 
+  const { data: pedidosItens = [] } = useQuery({
+    queryKey: ["reserva-pedidos-itens", id, user?.id, reserva?.excursao?.id],
+    enabled: !!reserva && !!user,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("pedidos_itens")
+        .select("*, item:excursao_itens(id, nome, tipo)")
+        .eq("excursao_id", reserva!.excursao.id)
+        .eq("comprador_id", user!.id)
+        .ilike("observacao", `%${id}%`)
+        .order("created_at", { ascending: false });
+      return data ?? [];
+    },
+  });
+
+
   const notifyTripChange = useCallback(
     (payload: { table: string; eventType: string; new: Record<string, any>; old: Record<string, any> }) => {
       if (payload.table !== "passageiros" || payload.eventType !== "UPDATE") return;
@@ -162,6 +184,7 @@ function ReservaDetalhes() {
         ? [
             { table: "seats", filter: `excursao_id=eq.${reserva.excursao.id}` },
             { table: "pontos_embarque", filter: `excursao_id=eq.${reserva.excursao.id}` },
+            { table: "pedidos_itens", filter: `excursao_id=eq.${reserva.excursao.id}` },
           ]
         : []),
     ],
@@ -171,9 +194,11 @@ function ReservaDetalhes() {
       ["reserva-pagamentos", id],
       ["reserva-seats", reserva?.excursao?.id],
       ["reserva-pontos", reserva?.excursao?.id],
+      ["reserva-pedidos-itens", id, user?.id, reserva?.excursao?.id],
     ],
     notifyTripChange,
   );
+
 
   if (authLoading || isLoading) {
     return (
@@ -297,6 +322,15 @@ function ReservaDetalhes() {
         <Info4 icon={Clock} label="Saída" value={onibusInfo?.horario_saida ?? ex?.horario_saida ?? "—"} />
         <Info4 icon={Users} label="Passageiros" value={String(reserva.quantidade)} />
       </div>
+
+      {/* Ingresso / combo vinculado à reserva */}
+      {pedidosItens.length > 0 && (
+        <ReservaIngressosCard
+          pedidos={pedidosItens as any[]}
+          pago={pago}
+          onChanged={() => qc.invalidateQueries({ queryKey: ["reserva-pedidos-itens", id, user?.id, reserva?.excursao?.id] })}
+        />
+      )}
 
 
       {/* Grupo WhatsApp — liberado após primeiro pagamento */}
@@ -705,4 +739,147 @@ function EmbarqueSection({
       )}
     </div>
   );
+}
+
+function ReservaIngressosCard({
+  pedidos,
+  pago,
+  onChanged,
+}: {
+  pedidos: any[];
+  pago: number;
+  onChanged: () => void;
+}) {
+  return (
+    <div className="glass rounded-3xl p-5 mb-5 border border-neon-pink/30">
+      <div className="flex items-center gap-2 mb-3">
+        <Ticket className="size-5 text-neon-pink" />
+        <h3 className="font-display font-bold">Ingresso / Combo</h3>
+      </div>
+      <ul className="space-y-3">
+        {pedidos.map((p) => (
+          <PedidoTimeline key={p.id} pedido={p} pago={pago > 0} onChanged={onChanged} />
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function PedidoTimeline({ pedido, pago, onChanged }: { pedido: any; pago: boolean; onChanged: () => void }) {
+  const [busy, setBusy] = useState(false);
+  const status = pedido.status as string;
+  const jaEnviado = ["enviado", "emitido", "recebido", "nao_recebido"].includes(status);
+  const finalizado = status === "recebido";
+  const naoRecebido = status === "nao_recebido";
+  const pagoConfirmado = jaEnviado || pago;
+  const podeConfirmar = status === "enviado" || status === "emitido";
+
+  async function marcar(novo: "recebido" | "nao_recebido") {
+    setBusy(true);
+    try {
+      const patch: any = { status: novo };
+      if (novo === "recebido") patch.recebido_em = new Date().toISOString();
+      else patch.nao_recebido_em = new Date().toISOString();
+      const { error } = await supabase.from("pedidos_itens").update(patch).eq("id", pedido.id);
+      if (error) throw error;
+      toast.success(novo === "recebido" ? "Recebimento confirmado." : "Aviso enviado ao organizador.");
+      onChanged();
+    } catch (e: any) {
+      toast.error(e.message ?? "Erro ao atualizar.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const steps = [
+    { key: "pedido", label: "Pedido feito", icon: CheckCircle2, done: true },
+    { key: "pago", label: "Pagamento confirmado", icon: Wallet, done: pagoConfirmado },
+    { key: "enviado", label: "Ingresso enviado", icon: Mail, done: jaEnviado, ts: pedido.enviado_em },
+    { key: "recebido", label: "Ingresso recebido", icon: ThumbsUp, done: finalizado, alert: naoRecebido, ts: pedido.recebido_em },
+  ];
+
+  return (
+    <li className="rounded-2xl bg-background/40 p-4">
+      <div className="flex items-start gap-3 mb-3">
+        <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-neon-purple to-neon-pink grid place-items-center shrink-0">
+          <Package className="size-5" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="font-bold text-sm leading-tight truncate">{pedido.item?.nome ?? "Item"}</p>
+          <p className="text-xs text-muted-foreground">
+            {pedido.quantidade}× · R$ {Number(pedido.valor_total).toFixed(2)}
+          </p>
+        </div>
+        <StatusPill status={status} />
+      </div>
+
+      <ol className="space-y-1.5 mb-3">
+        {steps.map((s) => {
+          const Icon = s.alert ? AlertTriangle : s.done ? s.icon : CircleDot;
+          const cls = s.alert
+            ? "text-red-400"
+            : s.done
+            ? "text-neon-green"
+            : "text-muted-foreground/60";
+          return (
+            <li key={s.key} className="flex items-center gap-2 text-xs">
+              <Icon className={`h-3.5 w-3.5 shrink-0 ${cls}`} />
+              <span className={s.done || s.alert ? "text-foreground" : "text-muted-foreground"}>{s.label}</span>
+              {s.ts && (
+                <span className="text-[10px] text-muted-foreground ml-auto">
+                  {new Date(s.ts).toLocaleDateString("pt-BR")}
+                </span>
+              )}
+            </li>
+          );
+        })}
+      </ol>
+
+      {podeConfirmar && (
+        <div className="grid grid-cols-2 gap-2">
+          <button
+            onClick={() => marcar("recebido")}
+            disabled={busy}
+            className="h-9 rounded-xl bg-gradient-to-r from-neon-green/80 to-neon-green text-background font-bold text-xs flex items-center justify-center gap-1 disabled:opacity-50"
+          >
+            <ThumbsUp className="h-3.5 w-3.5" /> Recebi ingresso
+          </button>
+          <button
+            onClick={() => marcar("nao_recebido")}
+            disabled={busy}
+            className="h-9 rounded-xl bg-red-500/15 text-red-400 border border-red-500/30 font-bold text-xs flex items-center justify-center gap-1 disabled:opacity-50"
+          >
+            <AlertTriangle className="h-3.5 w-3.5" /> Não recebi
+          </button>
+        </div>
+      )}
+
+      {naoRecebido && (
+        <div className="rounded-xl bg-red-500/10 border border-red-500/30 px-3 py-2 text-[11px] text-red-300">
+          O organizador foi avisado. Em breve entrarão em contato.
+          <button onClick={() => marcar("recebido")} disabled={busy} className="ml-2 underline font-bold">
+            Recebi agora
+          </button>
+        </div>
+      )}
+
+      {finalizado && (
+        <p className="text-[11px] text-neon-green flex items-center gap-1">
+          <CheckCircle2 className="h-3 w-3" /> Recebimento confirmado por você.
+        </p>
+      )}
+    </li>
+  );
+}
+
+function StatusPill({ status }: { status: string }) {
+  const map: Record<string, { tone: string; label: string }> = {
+    pendente: { tone: "bg-yellow-500/15 text-yellow-400", label: "Aguardando" },
+    emitido: { tone: "bg-neon-purple/15 text-neon-purple", label: "Emitido" },
+    enviado: { tone: "bg-neon-green/15 text-neon-green", label: "Enviado" },
+    recebido: { tone: "bg-neon-green/20 text-neon-green", label: "Recebido" },
+    nao_recebido: { tone: "bg-red-500/15 text-red-400", label: "Não recebido" },
+  };
+  const s = map[status] ?? map.pendente;
+  return <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${s.tone}`}>{s.label}</span>;
 }
