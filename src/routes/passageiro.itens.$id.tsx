@@ -144,29 +144,67 @@ function ItensPassageiro() {
 
 function ItemCard({ item, excursaoId, userId }: { item: any; excursaoId: string; userId?: string }) {
   const qc = useQueryClient();
+  const navigate = useNavigate();
   const meta = TIPOS[item.tipo] ?? TIPOS.outro;
   const Icon = meta.icon;
   const [qtd, setQtd] = useState(1);
   const [busy, setBusy] = useState(false);
+  const ehCombo = !!item.inclui_excursao;
 
   const restante =
     item.quantidade_total != null ? Math.max(0, item.quantidade_total - item.quantidade_vendida) : null;
   const esgotado = item.status === "esgotado" || (restante != null && restante <= 0);
 
   async function pedir() {
-    if (!userId) return toast.success("Faça login para pedir.");
+    if (!userId) return toast.error("Faça login para pedir.");
     if (qtd < 1) return;
-    if (restante != null && qtd > restante) return toast.success("Quantidade indisponível.");
+    if (restante != null && qtd > restante) return toast.error("Quantidade indisponível.");
     setBusy(true);
     try {
-      // tenta vincular ao passageiro do comprador, se houver
-      const { data: pax } = await supabase
+      // procura passageiro/reserva existente do comprador nesta excursão
+      let { data: pax } = await supabase
         .from("passageiros")
-        .select("id")
+        .select("id, reserva_id")
         .eq("excursao_id", excursaoId)
         .eq("comprador_id", userId)
         .limit(1)
         .maybeSingle();
+
+      let novaReservaId: string | null = null;
+
+      // COMBO: se inclui excursão e ainda não há reserva, cria uma automática
+      if (ehCombo && !pax) {
+        const { data: u } = await supabase.auth.getUser();
+        const meta = u?.user?.user_metadata ?? {};
+        const nome =
+          (meta.full_name as string) ||
+          (meta.name as string) ||
+          (u?.user?.email?.split("@")[0] ?? "Passageiro");
+        const email = u?.user?.email ?? null;
+
+        const passageiros = Array.from({ length: qtd }).map((_, i) => ({
+          nome: i === 0 ? nome : `${nome} (acompanhante ${i})`,
+          email: i === 0 ? email : null,
+          titular: i === 0,
+        }));
+
+        const { data: novaId, error: errRpc } = await supabase.rpc("criar_reserva_grupo", {
+          p_excursao_id: excursaoId,
+          p_passageiros: passageiros,
+        });
+        if (errRpc) throw errRpc;
+        novaReservaId = novaId as string;
+
+        const { data: paxCriado } = await supabase
+          .from("passageiros")
+          .select("id, reserva_id")
+          .eq("reserva_id", novaReservaId)
+          .eq("comprador_id", userId)
+          .order("created_at", { ascending: true })
+          .limit(1)
+          .maybeSingle();
+        pax = paxCriado ?? null;
+      }
 
       const valor_total = Number(item.valor) * qtd;
       const { error } = await supabase.from("pedidos_itens").insert({
@@ -180,7 +218,6 @@ function ItemCard({ item, excursaoId, userId }: { item: any; excursaoId: string;
         status: "pendente",
       });
       if (error) throw error;
-      // atualiza contador de vendidos
       await supabase
         .from("excursao_itens")
         .update({ quantidade_vendida: item.quantidade_vendida + qtd })
@@ -188,8 +225,18 @@ function ItemCard({ item, excursaoId, userId }: { item: any; excursaoId: string;
 
       qc.invalidateQueries({ queryKey: ["pax-itens", excursaoId] });
       qc.invalidateQueries({ queryKey: ["pax-pedidos", excursaoId, userId] });
+      qc.invalidateQueries({ queryKey: ["minhas-reservas", userId] });
       setQtd(1);
-      toast.success("Pedido enviado! O organizador irá confirmar o pagamento e emitir.");
+
+      if (ehCombo) {
+        const reservaId = novaReservaId ?? pax?.reserva_id;
+        toast.success("Combo reservado! Agora escolha ônibus, poltrona e embarque.");
+        if (reservaId) {
+          navigate({ to: "/passageiro/reserva/$id", params: { id: reservaId } });
+        }
+      } else {
+        toast.success("Pedido enviado! O organizador irá confirmar o pagamento e emitir.");
+      }
     } catch (err: any) {
       toast.error(err.message ?? "Erro ao pedir.");
     } finally {
