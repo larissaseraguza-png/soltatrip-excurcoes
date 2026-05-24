@@ -74,6 +74,19 @@ function PassageirosStaff() {
   });
 
 
+  const { data: pedidos = [] } = useQuery({
+    queryKey: ["staff-pax-pedidos-list", excursao?.id],
+    enabled: !!excursao?.id,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("pedidos_itens")
+        .select("id,passageiro_id,status,enviado_em,recebido_em,nao_recebido_em")
+        .eq("excursao_id", excursao!.id);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
   useRealtimeSync(
     `staff-passageiros-${excursao?.id ?? "none"}-${onibusId ?? "all"}`,
     excursao?.id
@@ -81,12 +94,14 @@ function PassageirosStaff() {
           { table: "passageiros", filter: `excursao_id=eq.${excursao.id}` },
           { table: "seats", filter: `excursao_id=eq.${excursao.id}` },
           { table: "pontos_embarque", filter: `excursao_id=eq.${excursao.id}` },
+          { table: "pedidos_itens", filter: `excursao_id=eq.${excursao.id}` },
         ]
       : [],
     [
       ["staff-passageiros", excursao?.id, onibusId],
       ["staff-seats", excursao?.id, onibusId],
       ["staff-pontos", excursao?.id, onibusId],
+      ["staff-pax-pedidos-list", excursao?.id],
     ],
   );
 
