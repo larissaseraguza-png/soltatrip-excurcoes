@@ -166,6 +166,8 @@ function Perfil() {
             <p className="font-display text-xl font-bold truncate">{form.full_name || "Sem nome"}</p>
             <p className="text-xs text-muted-foreground flex items-center gap-1"><Mail className="h-3 w-3" /> {user?.email}</p>
             {form.company_name && <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5"><Building2 className="h-3 w-3" /> {form.company_name}</p>}
+          </div>
+        </div>
       </div>
 
       <div className="grid grid-cols-2 gap-3 mb-4">
@@ -175,7 +177,6 @@ function Perfil() {
         <StatCard icon={DollarSign} label="Receita total" value={`R$ ${Number(stats?.receita ?? 0).toLocaleString("pt-BR", { maximumFractionDigits: 0 })}`} hint="pagamentos confirmados" />
       </div>
 
-      </div>
 
       <Section title="Dados pessoais">
         <Field icon={UserIcon} label="Nome completo" value={form.full_name ?? ""} onChange={(v) => setForm({ ...form, full_name: v })} />
