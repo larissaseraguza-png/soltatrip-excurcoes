@@ -449,6 +449,7 @@ function Field({
   required,
   placeholder,
   icon,
+  actionIcon,
   minLength,
 }: {
   label: string;
@@ -458,6 +459,7 @@ function Field({
   required?: boolean;
   placeholder?: string;
   icon?: React.ReactNode;
+  actionIcon?: React.ReactNode;
   minLength?: number;
 }) {
   return (
@@ -476,8 +478,13 @@ function Field({
           placeholder={placeholder}
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className={`w-full h-11 rounded-xl bg-secondary/40 border border-border focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 transition text-sm ${icon ? "pl-10 pr-3" : "px-3"}`}
+          className={`w-full h-11 rounded-xl bg-secondary/40 border border-border focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 transition text-sm ${icon ? "pl-10" : "pl-3"} ${actionIcon ? "pr-10" : "pr-3"}`}
         />
+        {actionIcon && (
+          <span className="absolute right-2 top-1/2 -translate-y-1/2">
+            {actionIcon}
+          </span>
+        )}
       </div>
     </label>
   );
