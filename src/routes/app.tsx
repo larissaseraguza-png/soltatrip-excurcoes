@@ -45,7 +45,7 @@ function AppLayout() {
                 return (
                   <Link
                     key={t.to}
-                    to={t.to}
+                    to={t.to as "/app"}
                     className={`flex items-center gap-1.5 px-3 sm:px-4 py-2.5 text-xs sm:text-sm font-semibold whitespace-nowrap border-b-2 transition ${
                       active
                         ? "border-primary text-foreground"
