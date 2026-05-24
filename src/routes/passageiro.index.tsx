@@ -188,9 +188,28 @@ function MinhasViagens() {
         p_onibus_id: onibusId,
       } as any);
       if (error) throw error;
+      const reservaId = data as unknown as string;
+
+      // Se escolheu combo (excursão + ingresso), cria o pedido do ingresso vinculado
+      if (selectedItem) {
+        const valorUnit = Number(selectedItem.valor) || 0;
+        const { error: pedErr } = await supabase.from("pedidos_itens").insert({
+          excursao_id: modalEx.id,
+          item_id: selectedItem.id,
+          comprador_id: user.id,
+          quantidade: qtd,
+          valor_unitario: valorUnit,
+          valor_total: valorUnit * qtd,
+          status: "pendente",
+          observacao: `Combo vinculado à reserva ${reservaId}`,
+        } as any);
+        if (pedErr) {
+          toast.warning("Reserva criada, mas houve um problema ao registrar o combo. Você pode finalizar pelo evento.");
+        }
+      }
+
       qc.invalidateQueries({ queryKey: ["minhas-reservas"] });
       setModalEx(null);
-      const reservaId = data as unknown as string;
       navigate({ to: "/passageiro/pagamentos", search: { reserva: reservaId } as any });
     } catch (err: any) {
       toast.error(err.message ?? "Erro ao reservar");
