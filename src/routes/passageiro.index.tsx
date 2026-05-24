@@ -135,7 +135,7 @@ function MinhasViagens() {
 
   function openReserva(ex: Excursao) {
     setModalEx(ex);
-    setStep("onibus");
+    setStep("experiencia");
     setOnibusId(null);
     setQtd(1);
     setPaxs([
