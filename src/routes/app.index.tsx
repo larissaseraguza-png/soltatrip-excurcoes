@@ -3,7 +3,10 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useRealtimeSync } from "@/hooks/use-realtime-sync";
-import { Plus, Calendar, MapPin, Users, Loader2, Sparkles } from "lucide-react";
+import {
+  Plus, Calendar, MapPin, Users, Loader2, Sparkles, TrendingUp,
+  Wallet, AlertCircle, Bus, ArrowRight,
+} from "lucide-react";
 
 export const Route = createFileRoute("/app/")({
   component: Dashboard,
@@ -17,23 +20,45 @@ type Excursao = {
   status: string;
   preco: number;
   total_vagas: number;
+  custo_onibus: number;
   cor: string | null;
   banner_url: string | null;
 };
 
+type PaxRow = { excursao_id: string; total_price: number; amount_paid: number; status: string };
+
+const brl = (n: number) =>
+  n.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
+
 function Dashboard() {
   const { user } = useAuth();
-  const { data, isLoading } = useQuery({
+
+  const { data: excursoes, isLoading } = useQuery({
     queryKey: ["excursoes", user?.id],
     enabled: !!user,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("excursoes")
-        .select("id,titulo,destino,data_evento,status,preco,total_vagas,cor,banner_url")
+        .select("id,titulo,destino,data_evento,status,preco,total_vagas,custo_onibus,cor,banner_url")
         .eq("organizer_id", user!.id)
         .order("data_evento", { ascending: true });
       if (error) throw error;
-      return data as Excursao[];
+      return (data ?? []) as Excursao[];
+    },
+  });
+
+  const ids = excursoes?.map((e) => e.id) ?? [];
+
+  const { data: pax } = useQuery({
+    queryKey: ["dashboard-pax", user?.id, ids.length],
+    enabled: !!user && ids.length > 0,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("passageiros")
+        .select("excursao_id,total_price,amount_paid,status")
+        .in("excursao_id", ids);
+      if (error) throw error;
+      return (data ?? []) as PaxRow[];
     },
   });
 
@@ -43,16 +68,27 @@ function Dashboard() {
     [["excursoes", user?.id]],
   );
 
-  const total = data?.length ?? 0;
-  const ativas = data?.filter((e) => e.status !== "cancelada").length ?? 0;
-  const arrecadacaoEstimada = data?.reduce((s, e) => s + Number(e.preco) * e.total_vagas, 0) ?? 0;
+  const total = excursoes?.length ?? 0;
+  const hoje = new Date().toISOString().slice(0, 10);
+  const proximas = (excursoes ?? []).filter((e) => e.data_evento >= hoje && e.status !== "cancelada");
+  const ativas = proximas.length;
+
+  const pagos = (pax ?? []).filter((p) => p.status !== "cancelada");
+  const receita = pagos.reduce((s, p) => s + Number(p.amount_paid || 0), 0);
+  const pendente = pagos.reduce(
+    (s, p) => s + Math.max(0, Number(p.total_price || 0) - Number(p.amount_paid || 0)),
+    0,
+  );
+  const custos = (excursoes ?? []).reduce((s, e) => s + Number(e.custo_onibus || 0), 0);
+  const lucro = receita - custos;
+  const passageiros = pagos.length;
 
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="font-display text-3xl font-bold">Minhas excursões</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">Gerencie suas viagens.</p>
+          <h1 className="font-display text-3xl font-bold">Painel do organizador</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">Visão geral da sua operação.</p>
         </div>
         <Link
           to="/app/excursao/nova"
@@ -62,25 +98,45 @@ function Dashboard() {
         </Link>
       </div>
 
+      {/* Hero financeiro */}
+      <div className="glass rounded-3xl p-5 mb-4 relative overflow-hidden">
+        <div className="absolute -top-10 -right-10 size-40 rounded-full bg-neon-pink/30 blur-3xl pointer-events-none" />
+        <p className="text-xs text-muted-foreground uppercase tracking-wider">Receita total</p>
+        <p className="font-display text-4xl font-black text-gradient mt-1">{brl(receita)}</p>
+        <div className="flex items-center gap-1 mt-2 text-neon-green text-xs font-medium">
+          <TrendingUp className="size-3.5" /> {passageiros} passageiros confirmados
+        </div>
+        <div className="grid grid-cols-3 gap-3 mt-5">
+          <Mini label="Pendente" value={brl(pendente)} tone="text-yellow-300" icon={AlertCircle} />
+          <Mini label="Custos" value={brl(custos)} tone="text-neon-pink" icon={Wallet} />
+          <Mini label="Lucro" value={brl(lucro)} tone={lucro >= 0 ? "text-neon-green" : "text-red-400"} icon={TrendingUp} />
+        </div>
+      </div>
+
+      {/* Cards operacionais */}
       <div className="grid grid-cols-3 gap-3 mb-6">
-        <Stat label="Total" value={total} />
-        <Stat label="Ativas" value={ativas} tone="green" />
-        <Stat
-          label="Potencial"
-          value={`R$ ${arrecadacaoEstimada.toLocaleString("pt-BR", { minimumFractionDigits: 0 })}`}
-          tone="pink"
-        />
+        <Stat label="Excursões" value={total} icon={Bus} />
+        <Stat label="Próximas" value={ativas} tone="green" />
+        <Stat label="Passageiros" value={passageiros} tone="pink" />
+      </div>
+
+      {/* Próximas excursões */}
+      <div className="flex items-center justify-between mb-3">
+        <h2 className="font-display text-xl font-bold">Próximas excursões</h2>
+        <Link to="/app/historico" className="text-xs font-semibold text-muted-foreground hover:text-foreground inline-flex items-center gap-1">
+          Ver histórico <ArrowRight className="h-3 w-3" />
+        </Link>
       </div>
 
       {isLoading ? (
         <div className="flex justify-center py-20">
           <Loader2 className="h-6 w-6 animate-spin text-primary" />
         </div>
-      ) : !data?.length ? (
+      ) : !proximas.length ? (
         <EmptyState />
       ) : (
         <div className="grid sm:grid-cols-2 gap-4">
-          {data.map((e) => <ExcursaoCard key={e.id} ex={e} />)}
+          {proximas.map((e) => <ExcursaoCard key={e.id} ex={e} />)}
         </div>
       )}
 
@@ -95,12 +151,26 @@ function Dashboard() {
   );
 }
 
-function Stat({ label, value, tone }: { label: string; value: React.ReactNode; tone?: "green" | "pink" }) {
+function Stat({ label, value, tone, icon: Icon }: { label: string; value: React.ReactNode; tone?: "green" | "pink"; icon?: typeof Bus }) {
   const color = tone === "green" ? "text-neon-green" : tone === "pink" ? "text-neon-pink" : "text-foreground";
   return (
     <div className="glass rounded-2xl p-4">
-      <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">{label}</p>
+      <div className="flex items-center justify-between">
+        <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">{label}</p>
+        {Icon && <Icon className="h-3.5 w-3.5 text-muted-foreground" />}
+      </div>
       <p className={`font-display text-xl sm:text-2xl font-bold mt-1 ${color}`}>{value}</p>
+    </div>
+  );
+}
+
+function Mini({ label, value, tone, icon: Icon }: { label: string; value: string; tone: string; icon: typeof Wallet }) {
+  return (
+    <div className="rounded-2xl bg-background/40 border border-border/60 p-3">
+      <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-muted-foreground">
+        <Icon className="h-3 w-3" /> {label}
+      </div>
+      <p className={`font-display font-bold text-sm sm:text-base mt-0.5 ${tone}`}>{value}</p>
     </div>
   );
 }
@@ -139,7 +209,7 @@ function ExcursaoCard({ ex }: { ex: Excursao }) {
         </div>
         <div className="space-y-1 text-xs text-muted-foreground">
           <div className="flex items-center gap-1.5"><MapPin className="h-3.5 w-3.5" /> {ex.destino}</div>
-          <div className="flex items-center gap-1.5"><Calendar className="h-3.5 w-3.5" /> {new Date(ex.data_evento).toLocaleDateString("pt-BR")}</div>
+          <div className="flex items-center gap-1.5"><Calendar className="h-3.5 w-3.5" /> {new Date(ex.data_evento + "T00:00:00").toLocaleDateString("pt-BR")}</div>
           <div className="flex items-center gap-1.5"><Users className="h-3.5 w-3.5" /> {ex.total_vagas} vagas · R$ {Number(ex.preco).toFixed(2)}</div>
         </div>
       </div>
@@ -153,9 +223,9 @@ function EmptyState() {
       <div className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-neon-purple/30 to-neon-pink/30 mb-4">
         <Sparkles className="h-6 w-6 text-neon-pink" />
       </div>
-      <h3 className="font-display text-xl font-bold">Nenhuma excursão ainda</h3>
+      <h3 className="font-display text-xl font-bold">Nenhuma excursão futura</h3>
       <p className="text-sm text-muted-foreground mt-1 max-w-xs mx-auto">
-        Comece criando sua primeira viagem. Leva menos de um minuto.
+        Crie sua próxima viagem ou consulte o histórico para ver as anteriores.
       </p>
       <Link
         to="/app/excursao/nova"
