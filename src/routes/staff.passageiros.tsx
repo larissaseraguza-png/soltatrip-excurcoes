@@ -4,7 +4,7 @@ import { StaffShell, Pill } from "@/components/staff/Shell";
 import { supabase } from "@/integrations/supabase/client";
 import { useStaffExcursao } from "@/hooks/use-staff-excursao";
 import { useRealtimeSync } from "@/hooks/use-realtime-sync";
-import { Search, Loader2, MapPin, Armchair, Phone, Bus } from "lucide-react";
+import { Search, Loader2, MapPin, Armchair, Phone, Bus, Ticket, AlertCircle } from "lucide-react";
 import { useMemo, useState } from "react";
 
 export const Route = createFileRoute("/staff/passageiros")({
