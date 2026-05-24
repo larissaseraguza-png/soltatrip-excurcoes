@@ -199,6 +199,7 @@ function OnibusFormModal({
   const [horarioRetorno, setHorarioRetorno] = useState(onibus?.horario_retorno ?? "");
   const [pontoPartida, setPontoPartida] = useState(onibus?.ponto_partida ?? "");
   const [ativo, setAtivo] = useState(onibus?.ativo ?? true);
+  const [whatsapp, setWhatsapp] = useState(onibus?.whatsapp_group_url ?? "");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
