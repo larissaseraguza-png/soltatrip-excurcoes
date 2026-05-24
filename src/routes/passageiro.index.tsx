@@ -42,7 +42,7 @@ function MinhasViagens() {
   const [tab, setTab] = useState<"minhas" | "disponiveis">("minhas");
   const [reservando, setReservando] = useState(false);
   const [modalEx, setModalEx] = useState<Excursao | null>(null);
-  const [step, setStep] = useState<"onibus" | "qtd" | "pax">("onibus");
+  const [step, setStep] = useState<"experiencia" | "onibus" | "qtd" | "pax">("experiencia");
   const [qtd, setQtd] = useState(1);
   const [paxs, setPaxs] = useState<Pax[]>([]);
   const [onibusId, setOnibusId] = useState<string | null>(null);
