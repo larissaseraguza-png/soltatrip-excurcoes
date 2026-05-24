@@ -340,3 +340,124 @@ function Status({ status }: { status: string }) {
     return <span className="text-[10px] px-2 py-0.5 rounded-full bg-neon-purple/15 text-neon-purple font-bold inline-flex items-center gap-1"><CheckCircle2 className="h-3 w-3" />Emitido</span>;
   return <span className="text-[10px] px-2 py-0.5 rounded-full bg-yellow-500/15 text-yellow-400 font-bold inline-flex items-center gap-1"><Clock className="h-3 w-3" />Pendente</span>;
 }
+
+function PaymentPanel({ payInfo }: { payInfo: any }) {
+  const [metodo, setMetodo] = useState<"pix" | "cartao">("pix");
+  const [copied, setCopied] = useState(false);
+
+  const links = (payInfo?.payment_links ?? []) as { label: string; url: string }[];
+  const semInfo = !payInfo?.pix_key && !payInfo?.pix_qr_url && links.length === 0;
+
+  return (
+    <div className="glass rounded-2xl p-4 mb-6 border border-neon-pink/20">
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="font-display font-bold text-sm">Como pagar</h3>
+        {payInfo?.organizer_name && (
+          <span className="text-[10px] text-muted-foreground">para {payInfo.organizer_name}</span>
+        )}
+      </div>
+
+      <div className="grid grid-cols-2 gap-2 mb-3">
+        <button
+          onClick={() => setMetodo("pix")}
+          className={`py-2 rounded-xl text-xs font-bold transition ${
+            metodo === "pix"
+              ? "bg-gradient-to-br from-neon-purple/30 to-neon-pink/20 text-neon-pink border border-neon-pink/40"
+              : "bg-background/40 text-muted-foreground"
+          }`}
+        >
+          PIX
+        </button>
+        <button
+          onClick={() => setMetodo("cartao")}
+          className={`py-2 rounded-xl text-xs font-bold transition ${
+            metodo === "cartao"
+              ? "bg-gradient-to-br from-neon-purple/30 to-neon-pink/20 text-neon-pink border border-neon-pink/40"
+              : "bg-background/40 text-muted-foreground"
+          }`}
+        >
+          Cartão / Link externo
+        </button>
+      </div>
+
+      {semInfo && (
+        <p className="text-xs text-yellow-300 rounded-xl border border-yellow-500/30 bg-yellow-500/10 p-3">
+          O organizador ainda não cadastrou formas de pagamento. Entre em contato pelo WhatsApp da excursão.
+        </p>
+      )}
+
+      {metodo === "pix" && (
+        <div className="space-y-3">
+          {payInfo?.pix_qr_url && (
+            <div className="bg-background/50 rounded-2xl p-3 flex flex-col items-center">
+              <img
+                src={payInfo.pix_qr_url}
+                alt="QR Code Pix"
+                className="size-40 object-contain rounded-xl bg-white p-2"
+              />
+              <p className="text-[10px] text-muted-foreground mt-2 flex items-center gap-1">
+                <QrCode className="h-3 w-3" /> Escaneie no app do banco
+              </p>
+            </div>
+          )}
+          {payInfo?.pix_key && (
+            <div className="bg-background/50 rounded-2xl px-3 py-2">
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
+                Chave Pix
+              </p>
+              <div className="flex items-center justify-between gap-2">
+                <code className="text-xs font-mono truncate">{payInfo.pix_key}</code>
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(payInfo.pix_key!);
+                    setCopied(true);
+                    toast.success("Chave Pix copiada");
+                    setTimeout(() => setCopied(false), 1500);
+                  }}
+                  className="h-8 w-8 grid place-items-center rounded-lg bg-gradient-to-br from-neon-purple to-neon-pink text-primary-foreground shrink-0"
+                >
+                  <Copy className="h-4 w-4" />
+                </button>
+              </div>
+              {copied && <p className="text-[10px] text-neon-green mt-1">Copiado!</p>}
+            </div>
+          )}
+        </div>
+      )}
+
+      {metodo === "cartao" && (
+        <div className="space-y-2">
+          {links.length > 0 ? (
+            links.map((l, i) => (
+              <a
+                key={i}
+                href={l.url}
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center justify-between gap-2 rounded-xl bg-background/50 px-3 py-2.5 border border-border hover:border-neon-pink/50 transition"
+              >
+                <span className="flex items-center gap-2 text-sm font-semibold">
+                  <CreditCard className="h-4 w-4 text-neon-pink" />
+                  {l.label || "Pagar com cartão"}
+                </span>
+                <ExternalLink className="h-4 w-4 text-muted-foreground" />
+              </a>
+            ))
+          ) : (
+            !semInfo && (
+              <p className="text-xs text-muted-foreground rounded-xl bg-background/40 p-3">
+                Nenhum link de cartão cadastrado. Use o PIX ou fale com o organizador.
+              </p>
+            )
+          )}
+        </div>
+      )}
+
+      <p className="text-[10px] text-muted-foreground mt-3 leading-relaxed">
+        Após pagar, envie o comprovante ao organizador pelo WhatsApp da excursão.
+        A emissão do ingresso é feita manualmente após a confirmação.
+      </p>
+    </div>
+  );
+}
+
