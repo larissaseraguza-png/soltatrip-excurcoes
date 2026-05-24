@@ -177,6 +177,7 @@ function ExcursaoDetalhe() {
         <NavCard to="/app/excursao/$id/passageiros" id={id} icon={Users} title="Passageiros" desc="Cadastrar, confirmar e gerenciar a lista" />
         <NavCard to="/app/excursao/$id/pontos" id={id} icon={MapPinned} title="Pontos de embarque" desc="Definir locais e horários de embarque" />
         <NavCard to="/app/excursao/$id/financeiro" id={id} icon={Wallet} title="Financeiro" desc="Lançar pagamentos e acompanhar entradas" />
+        <NavCard to="/app/excursao/$id/itens" id={id} icon={Ticket} title="Promoter · Itens da festa" desc="Ingressos, camping, VIP, combos e pedidos" />
         <NavCard to="/app/excursao/$id/checkin" id={id} icon={QrCode} title="Check-in QR" desc="Embarcar passageiros com leitor de QR" />
         <NavCard to="/app/excursao/$id/equipe" id={id} icon={UserCog} title="Equipe / Staff" desc="Convidar e gerenciar staff desta excursão" />
       </div>
