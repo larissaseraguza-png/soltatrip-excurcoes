@@ -44,11 +44,9 @@ function EditTrip() {
         <Field label="Placa" value="GHF-2025" />
       </Section>
 
-      <Section icon={MessageSquare} title="Mensagens automáticas">
-        <Toggle label="Confirmação de pagamento" on />
-        <Toggle label="Lembrete 24h antes" on />
-        <Toggle label="Aviso de embarque" on />
-        <Toggle label="Pesquisa pós-evento" />
+      <Section icon={MessageSquare} title="Grupos de WhatsApp">
+        <Field label="Link do grupo dos passageiros" value="https://chat.whatsapp.com/..." />
+        <Field label="Link do grupo da staff" value="https://chat.whatsapp.com/..." />
       </Section>
 
       <Section icon={FileText} title="Regras">
