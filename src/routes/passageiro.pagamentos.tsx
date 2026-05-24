@@ -263,10 +263,15 @@ function Pagamentos() {
         </button>
       )}
       {passageiros.length > 0 && passageirosList.every((p) => p.seat_id && p.ponto_embarque_id) && (
-        <div className="w-full mb-5 flex items-center justify-center gap-2 h-14 rounded-2xl font-display font-bold bg-neon-green/15 text-neon-green border border-neon-green/30">
+        <button
+          onClick={() =>
+            navigate({ to: "/passageiro/reserva/$id", params: { id: reservaAtiva.id } })
+          }
+          className="w-full mb-5 flex items-center justify-center gap-2 h-14 rounded-2xl font-display font-bold bg-neon-green/15 text-neon-green border border-neon-green/30 hover:bg-neon-green/25 transition"
+        >
           <Armchair className="size-5" />
-          Poltronas e embarques confirmados
-        </div>
+          Ver poltronas e embarques
+        </button>
       )}
 
       {/* Form de pagamento */}
