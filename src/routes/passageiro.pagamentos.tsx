@@ -144,10 +144,6 @@ function Pagamentos() {
       alert(`Valor máximo: ${brl(restante)}`);
       return;
     }
-    if (pago > 0 && v >= restante - 0.001 && (faltamPoltronas || faltamEmbarques)) {
-      alert("Confirme as poltronas e os pontos de embarque antes de finalizar o pagamento.");
-      return;
-    }
     setSubmitting(true);
     try {
       const { error } = await supabase.from("pagamentos").insert({
@@ -156,8 +152,7 @@ function Pagamentos() {
         valor: v,
         metodo,
         parcelas: metodo === "credito" ? parcelas : 1,
-        status: "confirmado",
-        pago_em: new Date().toISOString(),
+        status: "pendente",
       });
       if (error) throw error;
       setValor("");
@@ -166,10 +161,9 @@ function Pagamentos() {
         qc.invalidateQueries({ queryKey: ["reservas-pagto"] }),
         qc.invalidateQueries({ queryKey: ["pagto-passageiros"] }),
       ]);
-      // Fluxo automático: após primeiro pagamento, avançar para poltrona/embarque
-      const novoPago = pago + v;
-      const aindaFalta = faltamPoltronas || faltamEmbarques;
-      if (novoPago > 0 && aindaFalta) {
+      alert("Pagamento enviado! Aguardando confirmação manual do organizador.");
+      // Fluxo automático: avançar para poltrona/embarque mesmo aguardando confirmação
+      if (faltamPoltronas || faltamEmbarques) {
         navigate({
           to: "/passageiro/reserva/$id",
           params: { id: reservaAtiva.id },
@@ -190,6 +184,11 @@ function Pagamentos() {
     cancelled: { tone: "muted", label: "Cancelado" },
   };
   const s = statusLabel[status] ?? statusLabel.pending_payment;
+  const pendentesConfirmacao = (pagamentos as any[]).filter((p) => p.status === "pendente");
+  const valorPendenteConfirmacao = pendentesConfirmacao.reduce((sum, p) => sum + Number(p.valor || 0), 0);
+  const displayStatus = pendentesConfirmacao.length > 0 && status !== "paid"
+    ? { tone: "yellow" as any, label: "Aguardando confirmação" }
+    : s;
 
   return (
     <Shell title="Pagamentos" subtitle={reservaAtiva.excursao.titulo}>
@@ -198,7 +197,7 @@ function Pagamentos() {
         <div className="absolute -right-10 -top-10 size-40 rounded-full bg-neon-green/20 blur-3xl" />
         <div className="flex items-center justify-between mb-2">
           <p className="text-xs uppercase tracking-widest text-muted-foreground">Total da viagem</p>
-          <Pill tone={s.tone}>{s.label}</Pill>
+          <Pill tone={displayStatus.tone}>{displayStatus.label}</Pill>
         </div>
         <p className="font-display font-black text-4xl bg-gradient-to-r from-neon-pink to-neon-green bg-clip-text text-transparent">
           {brl(total)}
@@ -213,12 +212,28 @@ function Pagamentos() {
           <span className="text-sm font-bold text-neon-green">{pct}%</span>
         </div>
         <p className="text-xs text-muted-foreground mt-2">
-          {brl(pago)} pagos · {brl(restante)} restantes
+          {brl(pago)} confirmados · {brl(restante)} restantes
         </p>
+        {pendentesConfirmacao.length > 0 && (
+          <p className="text-xs text-yellow-300 mt-1">
+            {brl(valorPendenteConfirmacao)} aguardando confirmação do organizador
+          </p>
+        )}
       </div>
 
+      {/* Aviso sobre confirmação manual */}
+      {pendentesConfirmacao.length > 0 && (
+        <div className="mb-5 rounded-2xl border border-yellow-500/30 bg-yellow-500/10 p-4">
+          <p className="text-sm font-bold text-yellow-300 mb-1">Pagamento em análise</p>
+          <p className="text-xs text-muted-foreground">
+            Seu pagamento foi enviado e será validado manualmente pelo organizador.
+            Sua poltrona e embarque continuam reservados. O QR Code de embarque será liberado após a confirmação.
+          </p>
+        </div>
+      )}
+
       {/* Botão poltrona — abre a reserva centralizada com todos os passageiros */}
-      {pago > 0 && status !== "cancelled" && (faltamPoltronas || faltamEmbarques) && (
+      {(pago > 0 || pendentesConfirmacao.length > 0) && status !== "cancelled" && (faltamPoltronas || faltamEmbarques) && (
         <button
           onClick={() =>
             navigate({ to: "/passageiro/reserva/$id", params: { id: reservaAtiva.id } })

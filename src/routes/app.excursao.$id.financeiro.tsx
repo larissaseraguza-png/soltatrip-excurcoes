@@ -117,6 +117,20 @@ function FinanceiroPage() {
         <span className="text-sm font-bold ml-auto">R$ {pendente.toFixed(2)}</span>
       </div>
 
+      {pagamentos.filter((p) => p.status === "pendente").length > 0 && (
+        <div className="glass rounded-2xl p-4 mb-3 border border-yellow-500/30 bg-yellow-500/5">
+          <div className="flex items-center gap-2 mb-1">
+            <Clock className="h-4 w-4 text-yellow-400" />
+            <p className="text-sm font-bold text-yellow-300">
+              {pagamentos.filter((p) => p.status === "pendente").length} pagamento(s) aguardando confirmação
+            </p>
+          </div>
+          <p className="text-[11px] text-muted-foreground">
+            Confirme cada pagamento manualmente para liberar o QR Code e check-in do passageiro.
+          </p>
+        </div>
+      )}
+
       {!onibusId && <CustoOnibusEditor excursaoId={id} valorAtual={custoOnibus} />}
 
       {isLoading ? (
@@ -128,12 +142,21 @@ function FinanceiroPage() {
       ) : (
         <ul className="space-y-2">
           {pagamentos.map((p) => (
-            <li key={p.id} className="glass rounded-2xl p-4 flex items-center gap-3">
+            <li key={p.id} className={`glass rounded-2xl p-4 flex items-center gap-3 ${p.status === "pendente" ? "border border-yellow-500/30" : ""}`}>
               <div className="flex-1 min-w-0">
                 <p className="font-semibold truncate">{nomeMap.get(p.passageiro_id) ?? "—"}</p>
                 <p className="text-xs text-muted-foreground uppercase tracking-wider">{p.metodo}</p>
               </div>
               <p className="font-display font-black text-lg">R$ {Number(p.valor).toFixed(2)}</p>
+              {p.status === "pendente" && (
+                <button
+                  onClick={() => updateStatus.mutate({ pid: p.id, status: "pago" })}
+                  className="text-[10px] uppercase tracking-wider font-bold px-2.5 py-1.5 rounded-full bg-neon-green/20 text-neon-green border border-neon-green/40 hover:bg-neon-green/30"
+                  title="Confirmar pagamento"
+                >
+                  Confirmar
+                </button>
+              )}
               <select
                 value={p.status}
                 onChange={(e) => updateStatus.mutate({ pid: p.id, status: e.target.value })}
