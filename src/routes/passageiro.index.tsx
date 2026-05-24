@@ -592,10 +592,11 @@ function Loading() {
   return <div className="flex justify-center py-16"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>;
 }
 
-function Empty({ title, cta, onCta }: { title: string; cta?: string; onCta?: () => void }) {
+function Empty({ title, subtitle, cta, onCta }: { title: string; subtitle?: string; cta?: string; onCta?: () => void }) {
   return (
     <div className="glass rounded-3xl p-10 text-center">
-      <p className="text-sm text-muted-foreground">{title}</p>
+      <p className="text-sm font-semibold text-foreground">{title}</p>
+      {subtitle && <p className="mt-2 text-xs text-muted-foreground leading-relaxed">{subtitle}</p>}
       {cta && (
         <button onClick={onCta} className="mt-4 inline-flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground glow-primary">
           {cta}
@@ -604,6 +605,7 @@ function Empty({ title, cta, onCta }: { title: string; cta?: string; onCta?: () 
     </div>
   );
 }
+
 
 const TIPO_ICON: Record<string, any> = {
   ingresso: Ticket,
