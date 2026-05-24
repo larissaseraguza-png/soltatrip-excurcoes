@@ -287,7 +287,13 @@ function MinhasViagens() {
             <div className="sticky top-0 bg-background/95 backdrop-blur p-5 flex items-center justify-between border-b border-border">
               <div>
                 <p className="text-xs text-muted-foreground">
-                  {step === "onibus" ? "Escolha o ônibus" : step === "qtd" ? "Reservar" : "Dados dos passageiros"}
+                  {step === "experiencia"
+                    ? "Escolha sua experiência"
+                    : step === "onibus"
+                    ? "Escolha o ônibus"
+                    : step === "qtd"
+                    ? "Reservar"
+                    : "Dados dos passageiros"}
                 </p>
                 <h3 className="font-display font-bold text-lg leading-tight">{modalEx.titulo}</h3>
               </div>
@@ -296,7 +302,17 @@ function MinhasViagens() {
               </button>
             </div>
 
-            {step === "onibus" ? (
+            {step === "experiencia" ? (
+              <ExperienciaStep
+                excursao={modalEx}
+                itens={itensEx as any[]}
+                onApenasExcursao={() => setStep("onibus")}
+                onItem={() => {
+                  setModalEx(null);
+                  navigate({ to: "/passageiro/itens/$id", params: { id: modalEx.id } });
+                }}
+              />
+            ) : step === "onibus" ? (
               <div className="p-5 space-y-4">
                 {onibusDaExcursao.length === 0 ? (
                   <div className="rounded-2xl bg-yellow-500/10 border border-yellow-500/30 p-4 text-sm text-yellow-200">
