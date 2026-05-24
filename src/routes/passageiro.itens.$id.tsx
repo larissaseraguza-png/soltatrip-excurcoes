@@ -7,7 +7,8 @@ import { useAuth } from "@/hooks/use-auth";
 import { useRealtimeSync } from "@/hooks/use-realtime-sync";
 import {
   ArrowLeft, Loader2, Plus, Minus, ShoppingBag, Ticket, Tent, HeartHandshake,
-  Crown, KeyRound, Package, Clock, CheckCircle2, Mail,
+  Crown, KeyRound, Package, Clock, CheckCircle2, Mail, Copy, QrCode,
+  CreditCard, ExternalLink,
 } from "lucide-react";
 import { Shell } from "@/components/passageiro/Shell";
 
