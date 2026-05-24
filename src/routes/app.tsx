@@ -9,12 +9,12 @@ export const Route = createFileRoute("/app")({
   component: AppLayout,
 });
 
-const tabs = [
+const tabs: { to: string; label: string; icon: typeof LayoutDashboard; exact?: boolean }[] = [
   { to: "/app", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { to: "/app/historico", label: "Histórico", icon: History },
   { to: "/app/relatorios", label: "Relatórios", icon: BarChart3 },
   { to: "/app/perfil", label: "Perfil", icon: UserCircle2 },
-] as const;
+];
 
 function AppLayout() {
   const { user, loading } = useAuth();
