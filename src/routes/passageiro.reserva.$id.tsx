@@ -128,6 +128,22 @@ function ReservaDetalhes() {
     },
   });
 
+  const { data: pedidosItens = [] } = useQuery({
+    queryKey: ["reserva-pedidos-itens", id, user?.id, reserva?.excursao?.id],
+    enabled: !!reserva && !!user,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("pedidos_itens")
+        .select("*, item:excursao_itens(id, nome, tipo)")
+        .eq("excursao_id", reserva!.excursao.id)
+        .eq("comprador_id", user!.id)
+        .ilike("observacao", `%${id}%`)
+        .order("created_at", { ascending: false });
+      return data ?? [];
+    },
+  });
+
+
   const notifyTripChange = useCallback(
     (payload: { table: string; eventType: string; new: Record<string, any>; old: Record<string, any> }) => {
       if (payload.table !== "passageiros" || payload.eventType !== "UPDATE") return;
