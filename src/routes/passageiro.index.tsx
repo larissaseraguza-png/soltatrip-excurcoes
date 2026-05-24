@@ -277,7 +277,11 @@ function MinhasViagens() {
       ) : loadingDisp ? (
         <Loading />
       ) : disponiveis.length === 0 ? (
-        <Empty title="Nenhuma excursão publicada no momento" />
+        <Empty
+          title="Nenhuma excursão disponível"
+          subtitle="Você ainda não está vinculado a nenhum organizador. Peça o link de convite ao seu excursionista para liberar as viagens dele."
+        />
+
       ) : (
         <ul className="space-y-4">
           {disponiveis.map((ex) => (
