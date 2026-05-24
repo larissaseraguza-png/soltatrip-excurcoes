@@ -83,7 +83,23 @@ function Dashboard() {
   const lucro = receita - custos;
   const passageiros = pagos.length;
 
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="font-display text-3xl font-bold">Painel do organizador</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">Visão geral da sua operação.</p>
+        </div>
+        <Link
+          to="/app/excursao/nova"
+          className="hidden sm:inline-flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground glow-primary hover:opacity-90 transition"
+        >
+          <Plus className="h-4 w-4" /> Nova excursão
+        </Link>
+      </div>
+
       {/* Hero financeiro */}
+
       <Link to="/app/relatorios" className="block glass rounded-3xl p-5 mb-4 relative overflow-hidden hover:border-primary/50 transition">
         <div className="absolute -top-10 -right-10 size-40 rounded-full bg-neon-pink/30 blur-3xl pointer-events-none" />
         <p className="text-xs text-muted-foreground uppercase tracking-wider">Receita total</p>
