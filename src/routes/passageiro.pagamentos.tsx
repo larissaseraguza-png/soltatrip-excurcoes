@@ -144,10 +144,6 @@ function Pagamentos() {
       alert(`Valor máximo: ${brl(restante)}`);
       return;
     }
-    if (pago > 0 && v >= restante - 0.001 && (faltamPoltronas || faltamEmbarques)) {
-      alert("Confirme as poltronas e os pontos de embarque antes de finalizar o pagamento.");
-      return;
-    }
     setSubmitting(true);
     try {
       const { error } = await supabase.from("pagamentos").insert({
@@ -156,8 +152,7 @@ function Pagamentos() {
         valor: v,
         metodo,
         parcelas: metodo === "credito" ? parcelas : 1,
-        status: "confirmado",
-        pago_em: new Date().toISOString(),
+        status: "pendente",
       });
       if (error) throw error;
       setValor("");
@@ -166,10 +161,9 @@ function Pagamentos() {
         qc.invalidateQueries({ queryKey: ["reservas-pagto"] }),
         qc.invalidateQueries({ queryKey: ["pagto-passageiros"] }),
       ]);
-      // Fluxo automático: após primeiro pagamento, avançar para poltrona/embarque
-      const novoPago = pago + v;
-      const aindaFalta = faltamPoltronas || faltamEmbarques;
-      if (novoPago > 0 && aindaFalta) {
+      alert("Pagamento enviado! Aguardando confirmação manual do organizador.");
+      // Fluxo automático: avançar para poltrona/embarque mesmo aguardando confirmação
+      if (faltamPoltronas || faltamEmbarques) {
         navigate({
           to: "/passageiro/reserva/$id",
           params: { id: reservaAtiva.id },
@@ -190,6 +184,11 @@ function Pagamentos() {
     cancelled: { tone: "muted", label: "Cancelado" },
   };
   const s = statusLabel[status] ?? statusLabel.pending_payment;
+  const pendentesConfirmacao = (pagamentos as any[]).filter((p) => p.status === "pendente");
+  const valorPendenteConfirmacao = pendentesConfirmacao.reduce((sum, p) => sum + Number(p.valor || 0), 0);
+  const displayStatus = pendentesConfirmacao.length > 0 && status !== "paid"
+    ? { tone: "yellow" as any, label: "Aguardando confirmação" }
+    : s;
 
   return (
     <Shell title="Pagamentos" subtitle={reservaAtiva.excursao.titulo}>
