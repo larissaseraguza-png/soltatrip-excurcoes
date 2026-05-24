@@ -54,6 +54,7 @@ import { Route as PassageiroReservaIdRouteImport } from './routes/passageiro.res
 import { Route as PassageiroItensIdRouteImport } from './routes/passageiro.itens.$id'
 import { Route as InviteStaffTokenRouteImport } from './routes/invite.staff.$token'
 import { Route as InvitePassageiroTokenRouteImport } from './routes/invite.passageiro.$token'
+import { Route as InviteExcursionistaIdRouteImport } from './routes/invite.excursionista.$id'
 import { Route as ExcursionistaExcursaoIdRouteImport } from './routes/excursionista.excursao.$id'
 import { Route as AppExcursaoNovaRouteImport } from './routes/app.excursao.nova'
 import { Route as AppExcursaoIdRouteImport } from './routes/app.excursao.$id'
@@ -293,6 +294,11 @@ const InvitePassageiroTokenRoute = InvitePassageiroTokenRouteImport.update({
   path: '/invite/passageiro/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
+const InviteExcursionistaIdRoute = InviteExcursionistaIdRouteImport.update({
+  id: '/invite/excursionista/$id',
+  path: '/invite/excursionista/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ExcursionistaExcursaoIdRoute = ExcursionistaExcursaoIdRouteImport.update({
   id: '/excursao/$id',
   path: '/excursao/$id',
@@ -399,6 +405,7 @@ export interface FileRoutesByFullPath {
   '/app/excursao/$id': typeof AppExcursaoIdRouteWithChildren
   '/app/excursao/nova': typeof AppExcursaoNovaRoute
   '/excursionista/excursao/$id': typeof ExcursionistaExcursaoIdRoute
+  '/invite/excursionista/$id': typeof InviteExcursionistaIdRoute
   '/invite/passageiro/$token': typeof InvitePassageiroTokenRoute
   '/invite/staff/$token': typeof InviteStaffTokenRoute
   '/passageiro/itens/$id': typeof PassageiroItensIdRoute
@@ -453,6 +460,7 @@ export interface FileRoutesByTo {
   '/staff': typeof StaffIndexRoute
   '/app/excursao/nova': typeof AppExcursaoNovaRoute
   '/excursionista/excursao/$id': typeof ExcursionistaExcursaoIdRoute
+  '/invite/excursionista/$id': typeof InviteExcursionistaIdRoute
   '/invite/passageiro/$token': typeof InvitePassageiroTokenRoute
   '/invite/staff/$token': typeof InviteStaffTokenRoute
   '/passageiro/itens/$id': typeof PassageiroItensIdRoute
@@ -513,6 +521,7 @@ export interface FileRoutesById {
   '/app/excursao/$id': typeof AppExcursaoIdRouteWithChildren
   '/app/excursao/nova': typeof AppExcursaoNovaRoute
   '/excursionista/excursao/$id': typeof ExcursionistaExcursaoIdRoute
+  '/invite/excursionista/$id': typeof InviteExcursionistaIdRoute
   '/invite/passageiro/$token': typeof InvitePassageiroTokenRoute
   '/invite/staff/$token': typeof InviteStaffTokenRoute
   '/passageiro/itens/$id': typeof PassageiroItensIdRoute
@@ -574,6 +583,7 @@ export interface FileRouteTypes {
     | '/app/excursao/$id'
     | '/app/excursao/nova'
     | '/excursionista/excursao/$id'
+    | '/invite/excursionista/$id'
     | '/invite/passageiro/$token'
     | '/invite/staff/$token'
     | '/passageiro/itens/$id'
@@ -628,6 +638,7 @@ export interface FileRouteTypes {
     | '/staff'
     | '/app/excursao/nova'
     | '/excursionista/excursao/$id'
+    | '/invite/excursionista/$id'
     | '/invite/passageiro/$token'
     | '/invite/staff/$token'
     | '/passageiro/itens/$id'
@@ -687,6 +698,7 @@ export interface FileRouteTypes {
     | '/app/excursao/$id'
     | '/app/excursao/nova'
     | '/excursionista/excursao/$id'
+    | '/invite/excursionista/$id'
     | '/invite/passageiro/$token'
     | '/invite/staff/$token'
     | '/passageiro/itens/$id'
@@ -712,6 +724,7 @@ export interface RootRouteChildren {
   PassageiroRoute: typeof PassageiroRouteWithChildren
   SelecionarPerfilRoute: typeof SelecionarPerfilRoute
   StaffRoute: typeof StaffRouteWithChildren
+  InviteExcursionistaIdRoute: typeof InviteExcursionistaIdRoute
   InvitePassageiroTokenRoute: typeof InvitePassageiroTokenRoute
   InviteStaffTokenRoute: typeof InviteStaffTokenRoute
 }
@@ -1033,6 +1046,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof InvitePassageiroTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/invite/excursionista/$id': {
+      id: '/invite/excursionista/$id'
+      path: '/invite/excursionista/$id'
+      fullPath: '/invite/excursionista/$id'
+      preLoaderRoute: typeof InviteExcursionistaIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/excursionista/excursao/$id': {
       id: '/excursionista/excursao/$id'
       path: '/excursao/$id'
@@ -1279,19 +1299,10 @@ const rootRouteChildren: RootRouteChildren = {
   PassageiroRoute: PassageiroRouteWithChildren,
   SelecionarPerfilRoute: SelecionarPerfilRoute,
   StaffRoute: StaffRouteWithChildren,
+  InviteExcursionistaIdRoute: InviteExcursionistaIdRoute,
   InvitePassageiroTokenRoute: InvitePassageiroTokenRoute,
   InviteStaffTokenRoute: InviteStaffTokenRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
