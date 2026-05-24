@@ -266,6 +266,9 @@ function ItemEditor({
   const [qtd, setQtd] = useState(item?.quantidade_total != null ? String(item.quantidade_total) : "");
   const [status, setStatus] = useState(item?.status ?? "disponivel");
   const [ativo, setAtivo] = useState(item?.ativo ?? true);
+  const [incluiExcursao, setIncluiExcursao] = useState<boolean>(
+    (item as any)?.inclui_excursao ?? false,
+  );
   const [busy, setBusy] = useState(false);
 
   async function save() {
@@ -286,6 +289,7 @@ function ItemEditor({
         quantidade_total: q,
         status,
         ativo,
+        inclui_excursao: incluiExcursao,
       };
       if (item) {
         const { error } = await supabase.from("excursao_itens").update(payload).eq("id", item.id);
@@ -405,6 +409,22 @@ function ItemEditor({
               className="h-4 w-4"
             />
             Item ativo
+          </label>
+
+          <label className="flex items-start gap-2 text-sm cursor-pointer p-3 rounded-xl border border-neon-pink/30 bg-neon-pink/5">
+            <input
+              type="checkbox"
+              checked={incluiExcursao}
+              onChange={(e) => setIncluiExcursao(e.target.checked)}
+              className="h-4 w-4 mt-0.5"
+            />
+            <span>
+              <span className="font-bold">Inclui excursão (combo)</span>
+              <span className="block text-[11px] text-muted-foreground mt-0.5">
+                Cria automaticamente a reserva da excursão ao comprar — passageiro escolhe ônibus,
+                poltrona, embarque e usa QR Code de check-in.
+              </span>
+            </span>
           </label>
         </div>
 

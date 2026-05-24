@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useParams } from "@tanstack/react-router";
+import { createFileRoute, Link, useParams, useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
@@ -144,29 +144,67 @@ function ItensPassageiro() {
 
 function ItemCard({ item, excursaoId, userId }: { item: any; excursaoId: string; userId?: string }) {
   const qc = useQueryClient();
+  const navigate = useNavigate();
   const meta = TIPOS[item.tipo] ?? TIPOS.outro;
   const Icon = meta.icon;
   const [qtd, setQtd] = useState(1);
   const [busy, setBusy] = useState(false);
+  const ehCombo = !!item.inclui_excursao;
 
   const restante =
     item.quantidade_total != null ? Math.max(0, item.quantidade_total - item.quantidade_vendida) : null;
   const esgotado = item.status === "esgotado" || (restante != null && restante <= 0);
 
   async function pedir() {
-    if (!userId) return toast.success("Faça login para pedir.");
+    if (!userId) return toast.error("Faça login para pedir.");
     if (qtd < 1) return;
-    if (restante != null && qtd > restante) return toast.success("Quantidade indisponível.");
+    if (restante != null && qtd > restante) return toast.error("Quantidade indisponível.");
     setBusy(true);
     try {
-      // tenta vincular ao passageiro do comprador, se houver
-      const { data: pax } = await supabase
+      // procura passageiro/reserva existente do comprador nesta excursão
+      let { data: pax } = await supabase
         .from("passageiros")
-        .select("id")
+        .select("id, reserva_id")
         .eq("excursao_id", excursaoId)
         .eq("comprador_id", userId)
         .limit(1)
         .maybeSingle();
+
+      let novaReservaId: string | null = null;
+
+      // COMBO: se inclui excursão e ainda não há reserva, cria uma automática
+      if (ehCombo && !pax) {
+        const { data: u } = await supabase.auth.getUser();
+        const userMeta = u?.user?.user_metadata ?? {};
+        const nome =
+          (userMeta.full_name as string) ||
+          (userMeta.name as string) ||
+          (u?.user?.email?.split("@")[0] ?? "Passageiro");
+        const email = u?.user?.email ?? null;
+
+        const passageiros = Array.from({ length: qtd }).map((_, i) => ({
+          nome: i === 0 ? nome : `${nome} (acompanhante ${i})`,
+          email: i === 0 ? email : null,
+          titular: i === 0,
+        }));
+
+        const { data: novaId, error: errRpc } = await supabase.rpc("criar_reserva_grupo", {
+          p_excursao_id: excursaoId,
+          p_passageiros: passageiros,
+        });
+        if (errRpc) throw errRpc;
+        novaReservaId = novaId as string;
+
+        const { data: paxCriado } = await supabase
+          .from("passageiros")
+          .select("id, reserva_id")
+          .eq("reserva_id", novaReservaId)
+          .eq("comprador_id", userId)
+          .order("created_at", { ascending: true })
+          .limit(1)
+          .maybeSingle();
+        pax = paxCriado ?? null;
+      }
 
       const valor_total = Number(item.valor) * qtd;
       const { error } = await supabase.from("pedidos_itens").insert({
@@ -180,7 +218,6 @@ function ItemCard({ item, excursaoId, userId }: { item: any; excursaoId: string;
         status: "pendente",
       });
       if (error) throw error;
-      // atualiza contador de vendidos
       await supabase
         .from("excursao_itens")
         .update({ quantidade_vendida: item.quantidade_vendida + qtd })
@@ -188,8 +225,18 @@ function ItemCard({ item, excursaoId, userId }: { item: any; excursaoId: string;
 
       qc.invalidateQueries({ queryKey: ["pax-itens", excursaoId] });
       qc.invalidateQueries({ queryKey: ["pax-pedidos", excursaoId, userId] });
+      qc.invalidateQueries({ queryKey: ["minhas-reservas", userId] });
       setQtd(1);
-      toast.success("Pedido enviado! O organizador irá confirmar o pagamento e emitir.");
+
+      if (ehCombo) {
+        const reservaId = novaReservaId ?? pax?.reserva_id;
+        toast.success("Combo reservado! Agora escolha ônibus, poltrona e embarque.");
+        if (reservaId) {
+          navigate({ to: "/passageiro/reserva/$id", params: { id: reservaId } });
+        }
+      } else {
+        toast.success("Pedido enviado! O organizador irá confirmar o pagamento e emitir.");
+      }
     } catch (err: any) {
       toast.error(err.message ?? "Erro ao pedir.");
     } finally {
@@ -207,6 +254,11 @@ function ItemCard({ item, excursaoId, userId }: { item: any; excursaoId: string;
           <div className="flex items-center gap-2 flex-wrap">
             <span className="font-semibold">{item.nome}</span>
             <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">{meta.label}</span>
+            {ehCombo && (
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-gradient-to-r from-neon-purple to-neon-pink text-primary-foreground font-bold">
+                COMBO • INCLUI EXCURSÃO
+              </span>
+            )}
             {esgotado && (
               <span className="text-[10px] px-2 py-0.5 rounded-full bg-red-500/15 text-red-400 font-bold">
                 ESGOTADO
@@ -246,7 +298,7 @@ function ItemCard({ item, excursaoId, userId }: { item: any; excursaoId: string;
             className="flex-1 h-9 rounded-xl bg-gradient-to-r from-neon-purple to-neon-pink text-primary-foreground font-bold text-sm flex items-center justify-center gap-2 disabled:opacity-50"
           >
             {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShoppingBag className="h-4 w-4" />}
-            Pedir {brl(Number(item.valor) * qtd)}
+            {ehCombo ? "Reservar combo" : "Pedir"} {brl(Number(item.valor) * qtd)}
           </button>
         </div>
       )}

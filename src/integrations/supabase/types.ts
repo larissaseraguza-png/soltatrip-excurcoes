@@ -121,6 +121,7 @@ export type Database = {
           descricao: string | null
           excursao_id: string
           id: string
+          inclui_excursao: boolean
           nome: string
           ordem: number
           quantidade_total: number | null
@@ -136,6 +137,7 @@ export type Database = {
           descricao?: string | null
           excursao_id: string
           id?: string
+          inclui_excursao?: boolean
           nome: string
           ordem?: number
           quantidade_total?: number | null
@@ -151,6 +153,7 @@ export type Database = {
           descricao?: string | null
           excursao_id?: string
           id?: string
+          inclui_excursao?: boolean
           nome?: string
           ordem?: number
           quantidade_total?: number | null
