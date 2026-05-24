@@ -557,9 +557,7 @@ function ReservaDetalhes() {
                       Escolher
                     </button>
                   ) : (
-                    <span className="text-xs text-muted-foreground">
-                      {pago === 0 ? "Pague para liberar" : "—"}
-                    </span>
+                    <span className="text-xs text-muted-foreground">—</span>
                   )}
                 </div>
 
