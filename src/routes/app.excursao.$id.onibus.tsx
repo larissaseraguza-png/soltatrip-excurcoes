@@ -349,6 +349,17 @@ function OnibusFormModal({
               className="w-full h-10 px-3 rounded-xl bg-secondary/40 border border-border text-sm focus:border-primary focus:outline-none"
             />
           </Field>
+          <Field label="Link grupo WhatsApp deste ônibus (opcional)">
+            <input
+              value={whatsapp}
+              onChange={(e) => setWhatsapp(e.target.value)}
+              placeholder="https://chat.whatsapp.com/..."
+              className="w-full h-10 px-3 rounded-xl bg-secondary/40 border border-border text-sm focus:border-primary focus:outline-none"
+            />
+            <p className="text-[10px] text-muted-foreground mt-1">
+              Se vazio, os passageiros deste ônibus verão o grupo geral da excursão.
+            </p>
+          </Field>
           <label className="flex items-center gap-2 text-sm">
             <input
               type="checkbox"
