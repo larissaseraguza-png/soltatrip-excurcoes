@@ -139,6 +139,7 @@ function MinhasViagens() {
     setStep("experiencia");
     setOnibusId(null);
     setQtd(1);
+    setSelectedItem(null);
     setPaxs([
       {
         nome: user?.user_metadata?.full_name || user?.email || "",
