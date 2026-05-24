@@ -99,7 +99,8 @@ function Dashboard() {
       </div>
 
       {/* Hero financeiro */}
-      <div className="glass rounded-3xl p-5 mb-4 relative overflow-hidden">
+
+      <Link to="/app/relatorios" className="block glass rounded-3xl p-5 mb-4 relative overflow-hidden hover:border-primary/50 transition">
         <div className="absolute -top-10 -right-10 size-40 rounded-full bg-neon-pink/30 blur-3xl pointer-events-none" />
         <p className="text-xs text-muted-foreground uppercase tracking-wider">Receita total</p>
         <p className="font-display text-4xl font-black text-gradient mt-1">{brl(receita)}</p>
@@ -107,17 +108,17 @@ function Dashboard() {
           <TrendingUp className="size-3.5" /> {passageiros} passageiros confirmados
         </div>
         <div className="grid grid-cols-3 gap-3 mt-5">
-          <Mini label="Pendente" value={brl(pendente)} tone="text-yellow-300" icon={AlertCircle} />
-          <Mini label="Custos" value={brl(custos)} tone="text-neon-pink" icon={Wallet} />
-          <Mini label="Lucro" value={brl(lucro)} tone={lucro >= 0 ? "text-neon-green" : "text-red-400"} icon={TrendingUp} />
+          <MiniLink to="/app/pendentes" label="Pendente" value={brl(pendente)} tone="text-yellow-300" icon={AlertCircle} />
+          <MiniLink to="/app/custos" label="Custos" value={brl(custos)} tone="text-neon-pink" icon={Wallet} />
+          <MiniLink to="/app/relatorios" label="Lucro" value={brl(lucro)} tone={lucro >= 0 ? "text-neon-green" : "text-red-400"} icon={TrendingUp} />
         </div>
-      </div>
+      </Link>
 
       {/* Cards operacionais */}
       <div className="grid grid-cols-3 gap-3 mb-6">
-        <Stat label="Excursões" value={total} icon={Bus} />
-        <Stat label="Próximas" value={ativas} tone="green" />
-        <Stat label="Passageiros" value={passageiros} tone="pink" />
+        <StatLink to="/app/historico" label="Excursões" value={total} icon={Bus} />
+        <StatLink to="/app/historico" label="Próximas" value={ativas} tone="green" />
+        <StatLink to="/app/passageiros" label="Passageiros" value={passageiros} tone="pink" />
       </div>
 
       {/* Próximas excursões */}
@@ -151,29 +152,34 @@ function Dashboard() {
   );
 }
 
-function Stat({ label, value, tone, icon: Icon }: { label: string; value: React.ReactNode; tone?: "green" | "pink"; icon?: typeof Bus }) {
+function StatLink({ to, label, value, tone, icon: Icon }: { to: string; label: string; value: React.ReactNode; tone?: "green" | "pink"; icon?: typeof Bus }) {
   const color = tone === "green" ? "text-neon-green" : tone === "pink" ? "text-neon-pink" : "text-foreground";
   return (
-    <div className="glass rounded-2xl p-4">
+    <Link to={to as "/app/historico"} className="glass rounded-2xl p-4 hover:border-primary/50 transition block">
       <div className="flex items-center justify-between">
         <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">{label}</p>
         {Icon && <Icon className="h-3.5 w-3.5 text-muted-foreground" />}
       </div>
       <p className={`font-display text-xl sm:text-2xl font-bold mt-1 ${color}`}>{value}</p>
-    </div>
+    </Link>
   );
 }
 
-function Mini({ label, value, tone, icon: Icon }: { label: string; value: string; tone: string; icon: typeof Wallet }) {
+function MiniLink({ to, label, value, tone, icon: Icon }: { to: string; label: string; value: string; tone: string; icon: typeof Wallet }) {
   return (
-    <div className="rounded-2xl bg-background/40 border border-border/60 p-3">
+    <Link
+      to={to as "/app/pendentes"}
+      onClick={(e) => e.stopPropagation()}
+      className="rounded-2xl bg-background/40 border border-border/60 p-3 hover:border-primary/50 transition block"
+    >
       <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-muted-foreground">
         <Icon className="h-3 w-3" /> {label}
       </div>
       <p className={`font-display font-bold text-sm sm:text-base mt-0.5 ${tone}`}>{value}</p>
-    </div>
+    </Link>
   );
 }
+
 
 function ExcursaoCard({ ex }: { ex: Excursao }) {
   const statusColor: Record<string, string> = {

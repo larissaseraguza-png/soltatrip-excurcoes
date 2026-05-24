@@ -42,7 +42,10 @@ import { Route as ExcursionistaEditarRouteImport } from './routes/excursionista.
 import { Route as ExcursionistaCheckinRouteImport } from './routes/excursionista.checkin'
 import { Route as AppRelatoriosRouteImport } from './routes/app.relatorios'
 import { Route as AppPerfilRouteImport } from './routes/app.perfil'
+import { Route as AppPendentesRouteImport } from './routes/app.pendentes'
+import { Route as AppPassageirosRouteImport } from './routes/app.passageiros'
 import { Route as AppHistoricoRouteImport } from './routes/app.historico'
+import { Route as AppCustosRouteImport } from './routes/app.custos'
 import { Route as StaffPassageiroIdRouteImport } from './routes/staff.passageiro.$id'
 import { Route as PassageiroViagemIdRouteImport } from './routes/passageiro.viagem.$id'
 import { Route as PassageiroReservaIdRouteImport } from './routes/passageiro.reserva.$id'
@@ -226,9 +229,24 @@ const AppPerfilRoute = AppPerfilRouteImport.update({
   path: '/perfil',
   getParentRoute: () => AppRoute,
 } as any)
+const AppPendentesRoute = AppPendentesRouteImport.update({
+  id: '/pendentes',
+  path: '/pendentes',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppPassageirosRoute = AppPassageirosRouteImport.update({
+  id: '/passageiros',
+  path: '/passageiros',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppHistoricoRoute = AppHistoricoRouteImport.update({
   id: '/historico',
   path: '/historico',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppCustosRoute = AppCustosRouteImport.update({
+  id: '/custos',
+  path: '/custos',
   getParentRoute: () => AppRoute,
 } as any)
 const StaffPassageiroIdRoute = StaffPassageiroIdRouteImport.update({
@@ -322,7 +340,10 @@ export interface FileRoutesByFullPath {
   '/passageiro': typeof PassageiroRouteWithChildren
   '/selecionar-perfil': typeof SelecionarPerfilRoute
   '/staff': typeof StaffRouteWithChildren
+  '/app/custos': typeof AppCustosRoute
   '/app/historico': typeof AppHistoricoRoute
+  '/app/passageiros': typeof AppPassageirosRoute
+  '/app/pendentes': typeof AppPendentesRoute
   '/app/perfil': typeof AppPerfilRoute
   '/app/relatorios': typeof AppRelatoriosRoute
   '/excursionista/checkin': typeof ExcursionistaCheckinRoute
@@ -370,7 +391,10 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/selecionar-perfil': typeof SelecionarPerfilRoute
+  '/app/custos': typeof AppCustosRoute
   '/app/historico': typeof AppHistoricoRoute
+  '/app/passageiros': typeof AppPassageirosRoute
+  '/app/pendentes': typeof AppPendentesRoute
   '/app/perfil': typeof AppPerfilRoute
   '/app/relatorios': typeof AppRelatoriosRoute
   '/excursionista/checkin': typeof ExcursionistaCheckinRoute
@@ -422,7 +446,10 @@ export interface FileRoutesById {
   '/passageiro': typeof PassageiroRouteWithChildren
   '/selecionar-perfil': typeof SelecionarPerfilRoute
   '/staff': typeof StaffRouteWithChildren
+  '/app/custos': typeof AppCustosRoute
   '/app/historico': typeof AppHistoricoRoute
+  '/app/passageiros': typeof AppPassageirosRoute
+  '/app/pendentes': typeof AppPendentesRoute
   '/app/perfil': typeof AppPerfilRoute
   '/app/relatorios': typeof AppRelatoriosRoute
   '/excursionista/checkin': typeof ExcursionistaCheckinRoute
@@ -476,7 +503,10 @@ export interface FileRouteTypes {
     | '/passageiro'
     | '/selecionar-perfil'
     | '/staff'
+    | '/app/custos'
     | '/app/historico'
+    | '/app/passageiros'
+    | '/app/pendentes'
     | '/app/perfil'
     | '/app/relatorios'
     | '/excursionista/checkin'
@@ -524,7 +554,10 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/selecionar-perfil'
+    | '/app/custos'
     | '/app/historico'
+    | '/app/passageiros'
+    | '/app/pendentes'
     | '/app/perfil'
     | '/app/relatorios'
     | '/excursionista/checkin'
@@ -575,7 +608,10 @@ export interface FileRouteTypes {
     | '/passageiro'
     | '/selecionar-perfil'
     | '/staff'
+    | '/app/custos'
     | '/app/historico'
+    | '/app/passageiros'
+    | '/app/pendentes'
     | '/app/perfil'
     | '/app/relatorios'
     | '/excursionista/checkin'
@@ -865,11 +901,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppPerfilRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/pendentes': {
+      id: '/app/pendentes'
+      path: '/pendentes'
+      fullPath: '/app/pendentes'
+      preLoaderRoute: typeof AppPendentesRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/passageiros': {
+      id: '/app/passageiros'
+      path: '/passageiros'
+      fullPath: '/app/passageiros'
+      preLoaderRoute: typeof AppPassageirosRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/historico': {
       id: '/app/historico'
       path: '/historico'
       fullPath: '/app/historico'
       preLoaderRoute: typeof AppHistoricoRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/custos': {
+      id: '/app/custos'
+      path: '/custos'
+      fullPath: '/app/custos'
+      preLoaderRoute: typeof AppCustosRouteImport
       parentRoute: typeof AppRoute
     }
     '/staff/passageiro/$id': {
@@ -1023,7 +1080,10 @@ const AppExcursaoIdRouteWithChildren = AppExcursaoIdRoute._addFileChildren(
 )
 
 interface AppRouteChildren {
+  AppCustosRoute: typeof AppCustosRoute
   AppHistoricoRoute: typeof AppHistoricoRoute
+  AppPassageirosRoute: typeof AppPassageirosRoute
+  AppPendentesRoute: typeof AppPendentesRoute
   AppPerfilRoute: typeof AppPerfilRoute
   AppRelatoriosRoute: typeof AppRelatoriosRoute
   AppIndexRoute: typeof AppIndexRoute
@@ -1032,7 +1092,10 @@ interface AppRouteChildren {
 }
 
 const AppRouteChildren: AppRouteChildren = {
+  AppCustosRoute: AppCustosRoute,
   AppHistoricoRoute: AppHistoricoRoute,
+  AppPassageirosRoute: AppPassageirosRoute,
+  AppPendentesRoute: AppPendentesRoute,
   AppPerfilRoute: AppPerfilRoute,
   AppRelatoriosRoute: AppRelatoriosRoute,
   AppIndexRoute: AppIndexRoute,
