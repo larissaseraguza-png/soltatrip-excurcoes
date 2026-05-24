@@ -64,7 +64,6 @@ function ExcursaoDetalhe() {
       // Apaga dependentes (sem FK cascade)
       await supabase.from("checkins").delete().eq("excursao_id", id);
       await supabase.from("pagamentos").delete().eq("excursao_id", id);
-      await supabase.from("mensagens").delete().eq("excursao_id", id);
       await supabase.from("seats").delete().eq("excursao_id", id);
       await supabase.from("pontos_embarque").delete().eq("excursao_id", id);
       await supabase.from("passageiros").delete().eq("excursao_id", id);
