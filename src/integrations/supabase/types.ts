@@ -523,7 +523,11 @@ export type Database = {
           full_name: string | null
           id: string
           instagram_url: string | null
+          payment_links: Json
           phone: string | null
+          pix_key: string | null
+          pix_qr_url: string | null
+          pix_recipient: string | null
           updated_at: string
           website_url: string | null
         }
@@ -539,7 +543,11 @@ export type Database = {
           full_name?: string | null
           id: string
           instagram_url?: string | null
+          payment_links?: Json
           phone?: string | null
+          pix_key?: string | null
+          pix_qr_url?: string | null
+          pix_recipient?: string | null
           updated_at?: string
           website_url?: string | null
         }
@@ -555,7 +563,11 @@ export type Database = {
           full_name?: string | null
           id?: string
           instagram_url?: string | null
+          payment_links?: Json
           phone?: string | null
+          pix_key?: string | null
+          pix_qr_url?: string | null
+          pix_recipient?: string | null
           updated_at?: string
           website_url?: string | null
         }
@@ -705,6 +717,16 @@ export type Database = {
             }
             Returns: string
           }
+      get_excursao_payment_info: {
+        Args: { p_excursao_id: string }
+        Returns: {
+          organizer_name: string
+          payment_links: Json
+          pix_key: string
+          pix_qr_url: string
+          pix_recipient: string
+        }[]
+      }
       get_my_role: {
         Args: never
         Returns: Database["public"]["Enums"]["app_role"]

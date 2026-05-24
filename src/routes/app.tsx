@@ -1,6 +1,6 @@
 import { createFileRoute, Outlet, Navigate, Link, useLocation } from "@tanstack/react-router";
 import { useAuth } from "@/hooks/use-auth";
-import { Loader2, LayoutDashboard, History, BarChart3, UserCircle2 } from "lucide-react";
+import { Loader2, LayoutDashboard, History, BarChart3, UserCircle2, Wallet } from "lucide-react";
 import { RoleGuard } from "@/components/RoleGuard";
 import { RoleHeader } from "@/components/RoleHeader";
 
@@ -13,6 +13,7 @@ const tabs: { to: string; label: string; icon: typeof LayoutDashboard; exact?: b
   { to: "/app", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { to: "/app/historico", label: "Histórico", icon: History },
   { to: "/app/relatorios", label: "Relatórios", icon: BarChart3 },
+  { to: "/app/pagamentos-config", label: "Pagamentos", icon: Wallet },
   { to: "/app/perfil", label: "Perfil", icon: UserCircle2 },
 ];
 

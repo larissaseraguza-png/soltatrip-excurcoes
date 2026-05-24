@@ -44,6 +44,7 @@ import { Route as AppRelatoriosRouteImport } from './routes/app.relatorios'
 import { Route as AppPerfilRouteImport } from './routes/app.perfil'
 import { Route as AppPendentesRouteImport } from './routes/app.pendentes'
 import { Route as AppPassageirosRouteImport } from './routes/app.passageiros'
+import { Route as AppPagamentosConfigRouteImport } from './routes/app.pagamentos-config'
 import { Route as AppHistoricoRouteImport } from './routes/app.historico'
 import { Route as AppCustosRouteImport } from './routes/app.custos'
 import { Route as StaffPassageiroIdRouteImport } from './routes/staff.passageiro.$id'
@@ -239,6 +240,11 @@ const AppPassageirosRoute = AppPassageirosRouteImport.update({
   path: '/passageiros',
   getParentRoute: () => AppRoute,
 } as any)
+const AppPagamentosConfigRoute = AppPagamentosConfigRouteImport.update({
+  id: '/pagamentos-config',
+  path: '/pagamentos-config',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppHistoricoRoute = AppHistoricoRouteImport.update({
   id: '/historico',
   path: '/historico',
@@ -342,6 +348,7 @@ export interface FileRoutesByFullPath {
   '/staff': typeof StaffRouteWithChildren
   '/app/custos': typeof AppCustosRoute
   '/app/historico': typeof AppHistoricoRoute
+  '/app/pagamentos-config': typeof AppPagamentosConfigRoute
   '/app/passageiros': typeof AppPassageirosRoute
   '/app/pendentes': typeof AppPendentesRoute
   '/app/perfil': typeof AppPerfilRoute
@@ -393,6 +400,7 @@ export interface FileRoutesByTo {
   '/selecionar-perfil': typeof SelecionarPerfilRoute
   '/app/custos': typeof AppCustosRoute
   '/app/historico': typeof AppHistoricoRoute
+  '/app/pagamentos-config': typeof AppPagamentosConfigRoute
   '/app/passageiros': typeof AppPassageirosRoute
   '/app/pendentes': typeof AppPendentesRoute
   '/app/perfil': typeof AppPerfilRoute
@@ -448,6 +456,7 @@ export interface FileRoutesById {
   '/staff': typeof StaffRouteWithChildren
   '/app/custos': typeof AppCustosRoute
   '/app/historico': typeof AppHistoricoRoute
+  '/app/pagamentos-config': typeof AppPagamentosConfigRoute
   '/app/passageiros': typeof AppPassageirosRoute
   '/app/pendentes': typeof AppPendentesRoute
   '/app/perfil': typeof AppPerfilRoute
@@ -505,6 +514,7 @@ export interface FileRouteTypes {
     | '/staff'
     | '/app/custos'
     | '/app/historico'
+    | '/app/pagamentos-config'
     | '/app/passageiros'
     | '/app/pendentes'
     | '/app/perfil'
@@ -556,6 +566,7 @@ export interface FileRouteTypes {
     | '/selecionar-perfil'
     | '/app/custos'
     | '/app/historico'
+    | '/app/pagamentos-config'
     | '/app/passageiros'
     | '/app/pendentes'
     | '/app/perfil'
@@ -610,6 +621,7 @@ export interface FileRouteTypes {
     | '/staff'
     | '/app/custos'
     | '/app/historico'
+    | '/app/pagamentos-config'
     | '/app/passageiros'
     | '/app/pendentes'
     | '/app/perfil'
@@ -915,6 +927,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppPassageirosRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/pagamentos-config': {
+      id: '/app/pagamentos-config'
+      path: '/pagamentos-config'
+      fullPath: '/app/pagamentos-config'
+      preLoaderRoute: typeof AppPagamentosConfigRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/historico': {
       id: '/app/historico'
       path: '/historico'
@@ -1082,6 +1101,7 @@ const AppExcursaoIdRouteWithChildren = AppExcursaoIdRoute._addFileChildren(
 interface AppRouteChildren {
   AppCustosRoute: typeof AppCustosRoute
   AppHistoricoRoute: typeof AppHistoricoRoute
+  AppPagamentosConfigRoute: typeof AppPagamentosConfigRoute
   AppPassageirosRoute: typeof AppPassageirosRoute
   AppPendentesRoute: typeof AppPendentesRoute
   AppPerfilRoute: typeof AppPerfilRoute
@@ -1094,6 +1114,7 @@ interface AppRouteChildren {
 const AppRouteChildren: AppRouteChildren = {
   AppCustosRoute: AppCustosRoute,
   AppHistoricoRoute: AppHistoricoRoute,
+  AppPagamentosConfigRoute: AppPagamentosConfigRoute,
   AppPassageirosRoute: AppPassageirosRoute,
   AppPendentesRoute: AppPendentesRoute,
   AppPerfilRoute: AppPerfilRoute,

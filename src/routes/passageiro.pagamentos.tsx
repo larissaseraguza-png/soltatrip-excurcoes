@@ -5,7 +5,7 @@ import { Shell, Pill } from "@/components/passageiro/Shell";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useRealtimeSync } from "@/hooks/use-realtime-sync";
-import { Copy, Loader2, CheckCircle2, Armchair } from "lucide-react";
+import { Copy, Loader2, CheckCircle2, Armchair, QrCode, ExternalLink, CreditCard } from "lucide-react";
 
 type Search = { reserva?: string };
 
@@ -15,8 +15,6 @@ export const Route = createFileRoute("/passageiro/pagamentos")({
   }),
   component: Pagamentos,
 });
-
-const PIX_KEY = "soltatrip@pix.com.br";
 
 function brl(v: number) {
   return v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -79,6 +77,25 @@ function Pagamentos() {
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data ?? [];
+    },
+  });
+
+  const { data: payInfo } = useQuery({
+    queryKey: ["organizer-payment-info", reservaAtiva?.excursao?.id],
+    enabled: !!reservaAtiva?.excursao?.id,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("get_excursao_payment_info", {
+        p_excursao_id: reservaAtiva.excursao.id,
+      });
+      if (error) throw error;
+      const row = Array.isArray(data) ? data[0] : data;
+      return (row ?? null) as null | {
+        pix_key: string | null;
+        pix_recipient: string | null;
+        pix_qr_url: string | null;
+        payment_links: { label: string; url: string; provider?: string }[] | null;
+        organizer_name: string | null;
+      };
     },
   });
 
@@ -308,21 +325,74 @@ function Pagamentos() {
           />
 
           {(metodo === "pix" || metodo === "pix_parcelado") && (
-            <div className="bg-background/50 rounded-2xl px-4 py-3 mb-3 flex items-center justify-between">
-              <code className="text-sm font-mono truncate">{PIX_KEY}</code>
-              <button
-                onClick={() => {
-                  navigator.clipboard.writeText(PIX_KEY);
-                  setCopied(true);
-                  setTimeout(() => setCopied(false), 1500);
-                }}
-                className="ml-2 size-9 grid place-items-center rounded-xl bg-gradient-to-br from-neon-purple to-neon-pink text-primary-foreground"
-              >
-                <Copy className="size-4" />
-              </button>
+            <div className="space-y-3 mb-3">
+              {payInfo?.pix_qr_url && (
+                <div className="bg-background/50 rounded-2xl p-3 flex flex-col items-center">
+                  <img src={payInfo.pix_qr_url} alt="QR Code Pix" className="size-44 object-contain rounded-xl bg-white p-2" />
+                  <p className="text-[10px] text-muted-foreground mt-2 flex items-center gap-1">
+                    <QrCode className="size-3" /> Escaneie no app do banco
+                  </p>
+                </div>
+              )}
+              {payInfo?.pix_key ? (
+                <div className="bg-background/50 rounded-2xl px-4 py-3">
+                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
+                    Chave Pix {payInfo.pix_recipient ? `· ${payInfo.pix_recipient}` : ""}
+                  </p>
+                  <div className="flex items-center justify-between">
+                    <code className="text-sm font-mono truncate">{payInfo.pix_key}</code>
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(payInfo.pix_key!);
+                        setCopied(true);
+                        setTimeout(() => setCopied(false), 1500);
+                      }}
+                      className="ml-2 size-9 grid place-items-center rounded-xl bg-gradient-to-br from-neon-purple to-neon-pink text-primary-foreground shrink-0"
+                    >
+                      <Copy className="size-4" />
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                !payInfo?.pix_qr_url && (
+                  <div className="rounded-2xl border border-yellow-500/30 bg-yellow-500/10 p-3 text-xs text-yellow-200">
+                    O organizador ainda não cadastrou uma chave Pix. Entre em contato pelo WhatsApp da excursão.
+                  </div>
+                )
+              )}
             </div>
           )}
           {copied && <p className="text-xs text-neon-green mb-2">Chave copiada!</p>}
+
+          {(metodo === "debito" || metodo === "credito") && (
+            <div className="space-y-2 mb-3">
+              {(payInfo?.payment_links ?? []).length > 0 ? (
+                (payInfo!.payment_links ?? []).map((l, i) => (
+                  <a
+                    key={i}
+                    href={l.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex items-center justify-between gap-2 rounded-2xl bg-background/50 px-4 py-3 border border-border hover:border-neon-pink/50 transition"
+                  >
+                    <span className="flex items-center gap-2 text-sm font-semibold">
+                      <CreditCard className="size-4 text-neon-pink" />
+                      {l.label || "Pagar com cartão"}
+                    </span>
+                    <ExternalLink className="size-4 text-muted-foreground" />
+                  </a>
+                ))
+              ) : (
+                <div className="rounded-2xl border border-yellow-500/30 bg-yellow-500/10 p-3 text-xs text-yellow-200">
+                  O organizador ainda não cadastrou link para pagamento com cartão.
+                </div>
+              )}
+              <p className="text-[10px] text-muted-foreground">
+                Após pagar no link externo, registre o valor abaixo para o organizador confirmar.
+              </p>
+            </div>
+          )}
+
 
           <button
             onClick={pagar}
