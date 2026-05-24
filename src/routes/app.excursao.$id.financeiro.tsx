@@ -386,7 +386,10 @@ function PedidoCard({
   const onibus = pax?.onibus_id ? onibusById.get(pax.onibus_id) : null;
   const ponto = pax?.ponto_embarque_id ? pontoById.get(pax.ponto_embarque_id) : null;
 
-  const ingressosPendentes = row.pedidos.filter((p) => p.status !== "enviado" && p.status !== "cancelado");
+  const ingressosPendentes = row.pedidos.filter(
+    (p) => p.status !== "enviado" && p.status !== "recebido" && p.status !== "nao_recebido" && p.status !== "cancelado",
+  );
+  const naoRecebidos = row.pedidos.filter((p) => p.status === "nao_recebido");
   const precisaPag = pax && payStatus !== "paid" && totalGeral > 0;
 
   return (
