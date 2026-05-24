@@ -6,7 +6,7 @@ import { Shell, Pill } from "@/components/passageiro/Shell";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useRealtimeSync } from "@/hooks/use-realtime-sync";
-import { Calendar, MapPin, Loader2, Sparkles, Ticket, Compass, X, Plus, Minus, Users, Bus, Clock } from "lucide-react";
+import { Calendar, MapPin, Loader2, Sparkles, Ticket, Compass, X, Plus, Minus, Users, Bus, Clock, Package, Tent, Crown, HeartHandshake, KeyRound, Flame, ChevronRight } from "lucide-react";
 
 export const Route = createFileRoute("/passageiro/")({
   component: MinhasViagens,
@@ -42,7 +42,7 @@ function MinhasViagens() {
   const [tab, setTab] = useState<"minhas" | "disponiveis">("minhas");
   const [reservando, setReservando] = useState(false);
   const [modalEx, setModalEx] = useState<Excursao | null>(null);
-  const [step, setStep] = useState<"onibus" | "qtd" | "pax">("onibus");
+  const [step, setStep] = useState<"experiencia" | "onibus" | "qtd" | "pax">("experiencia");
   const [qtd, setQtd] = useState(1);
   const [paxs, setPaxs] = useState<Pax[]>([]);
   const [onibusId, setOnibusId] = useState<string | null>(null);
@@ -105,6 +105,21 @@ function MinhasViagens() {
     },
   });
 
+  const { data: itensEx = [] } = useQuery({
+    queryKey: ["itens-publicos", modalEx?.id],
+    enabled: !!modalEx,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("excursao_itens")
+        .select("*")
+        .eq("excursao_id", modalEx!.id)
+        .eq("ativo", true)
+        .neq("status", "oculto")
+        .order("ordem", { ascending: true });
+      return data ?? [];
+    },
+  });
+
   useRealtimeSync(
     `minhas-reservas-${user?.id ?? "anon"}`,
     user
@@ -120,7 +135,7 @@ function MinhasViagens() {
 
   function openReserva(ex: Excursao) {
     setModalEx(ex);
-    setStep("onibus");
+    setStep("experiencia");
     setOnibusId(null);
     setQtd(1);
     setPaxs([
@@ -272,7 +287,13 @@ function MinhasViagens() {
             <div className="sticky top-0 bg-background/95 backdrop-blur p-5 flex items-center justify-between border-b border-border">
               <div>
                 <p className="text-xs text-muted-foreground">
-                  {step === "onibus" ? "Escolha o ônibus" : step === "qtd" ? "Reservar" : "Dados dos passageiros"}
+                  {step === "experiencia"
+                    ? "Escolha sua experiência"
+                    : step === "onibus"
+                    ? "Escolha o ônibus"
+                    : step === "qtd"
+                    ? "Reservar"
+                    : "Dados dos passageiros"}
                 </p>
                 <h3 className="font-display font-bold text-lg leading-tight">{modalEx.titulo}</h3>
               </div>
@@ -281,7 +302,17 @@ function MinhasViagens() {
               </button>
             </div>
 
-            {step === "onibus" ? (
+            {step === "experiencia" ? (
+              <ExperienciaStep
+                excursao={modalEx}
+                itens={itensEx as any[]}
+                onApenasExcursao={() => setStep("onibus")}
+                onItem={() => {
+                  setModalEx(null);
+                  navigate({ to: "/passageiro/itens/$id", params: { id: modalEx.id } });
+                }}
+              />
+            ) : step === "onibus" ? (
               <div className="p-5 space-y-4">
                 {onibusDaExcursao.length === 0 ? (
                   <div className="rounded-2xl bg-yellow-500/10 border border-yellow-500/30 p-4 text-sm text-yellow-200">
@@ -515,6 +546,158 @@ function Empty({ title, cta, onCta }: { title: string; cta?: string; onCta?: () 
         <button onClick={onCta} className="mt-4 inline-flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground glow-primary">
           {cta}
         </button>
+      )}
+    </div>
+  );
+}
+
+const TIPO_ICON: Record<string, any> = {
+  ingresso: Ticket,
+  camping: Tent,
+  solidario: HeartHandshake,
+  vip: Crown,
+  backstage: KeyRound,
+  combo: Package,
+  outro: Package,
+};
+
+function ExperienciaStep({
+  excursao,
+  itens,
+  onApenasExcursao,
+  onItem,
+}: {
+  excursao: Excursao;
+  itens: any[];
+  onApenasExcursao: () => void;
+  onItem: () => void;
+}) {
+  // Se o organizador não usa promoter/itens, segue direto para a reserva.
+  if (!itens || itens.length === 0) {
+    return (
+      <div className="p-5 space-y-4">
+        <p className="text-sm text-muted-foreground">
+          Reserve sua vaga na excursão e siga para os próximos passos.
+        </p>
+        <button
+          onClick={onApenasExcursao}
+          className="w-full h-12 rounded-2xl font-bold bg-primary text-primary-foreground glow-primary"
+        >
+          Reservar excursão · R$ {Number(excursao.preco).toFixed(0)}
+        </button>
+      </div>
+    );
+  }
+
+  const combos = itens.filter((i) => i.tipo === "combo");
+  const ingressos = itens.filter((i) => i.tipo !== "combo");
+  const comboDestaque = combos[0];
+
+  return (
+    <div className="p-5 space-y-4">
+      <p className="text-xs text-muted-foreground">
+        Escolha como deseja participar. Você pode comprar a excursão, um ingresso ou aproveitar um combo promocional.
+      </p>
+
+      {/* COMBO em destaque */}
+      {comboDestaque && (
+        <button
+          onClick={onItem}
+          className="relative w-full text-left rounded-3xl p-5 overflow-hidden border-2 border-neon-pink/60 bg-gradient-to-br from-neon-purple/30 via-neon-pink/20 to-neon-green/10 glow-primary"
+        >
+          <div className="absolute -right-8 -top-8 size-32 rounded-full bg-neon-pink/30 blur-3xl" />
+          <div className="absolute top-3 right-3">
+            <span className="inline-flex items-center gap-1 text-[10px] uppercase tracking-widest font-black px-2 py-1 rounded-full bg-neon-pink text-primary-foreground">
+              <Flame className="size-3" /> Mais vantajoso
+            </span>
+          </div>
+          <div className="relative flex items-start gap-3">
+            <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-neon-purple to-neon-pink grid place-items-center shrink-0">
+              <Package className="size-6" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[10px] uppercase tracking-widest text-neon-pink font-black">Combo promocional</p>
+              <p className="font-display font-black text-lg leading-tight">{comboDestaque.nome}</p>
+              {comboDestaque.descricao && (
+                <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{comboDestaque.descricao}</p>
+              )}
+              <p className="font-display font-black text-2xl mt-2 bg-gradient-to-r from-neon-pink to-neon-green bg-clip-text text-transparent">
+                R$ {Number(comboDestaque.valor).toFixed(2)}
+              </p>
+            </div>
+            <ChevronRight className="size-5 shrink-0 text-neon-pink mt-1" />
+          </div>
+          {combos.length > 1 && (
+            <p className="relative text-[11px] text-neon-pink font-bold mt-3">
+              + {combos.length - 1} outro{combos.length > 2 ? "s" : ""} combo{combos.length > 2 ? "s" : ""} disponível{combos.length > 2 ? "is" : ""}
+            </p>
+          )}
+        </button>
+      )}
+
+      {/* Apenas excursão */}
+      <button
+        onClick={onApenasExcursao}
+        className="w-full text-left rounded-2xl p-4 bg-background/40 border border-border hover:border-neon-purple/50 transition flex items-center gap-3"
+      >
+        <div className="h-11 w-11 rounded-xl bg-gradient-to-br from-neon-purple to-neon-pink grid place-items-center shrink-0">
+          <Bus className="size-5" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="font-bold">Apenas excursão</p>
+          <p className="text-xs text-muted-foreground">Ida e volta · poltrona reservada</p>
+        </div>
+        <div className="text-right">
+          <p className="font-display font-black text-lg">R$ {Number(excursao.preco).toFixed(0)}</p>
+          <ChevronRight className="size-4 text-muted-foreground ml-auto" />
+        </div>
+      </button>
+
+      {/* Ingressos / camping / VIP avulsos */}
+      {ingressos.length > 0 && (
+        <div className="space-y-2">
+          <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold pt-2">
+            Apenas ingresso / camping
+          </p>
+          {ingressos.slice(0, 4).map((it: any) => {
+            const Icon = TIPO_ICON[it.tipo] ?? Package;
+            const esgotado =
+              it.status === "esgotado" ||
+              (it.quantidade_total != null && it.quantidade_vendida >= it.quantidade_total);
+            return (
+              <button
+                key={it.id}
+                onClick={onItem}
+                disabled={esgotado}
+                className={`w-full text-left rounded-2xl p-3 bg-background/40 border border-border flex items-center gap-3 transition ${
+                  esgotado ? "opacity-50 cursor-not-allowed" : "hover:border-neon-pink/40"
+                }`}
+              >
+                <div className="h-10 w-10 rounded-xl bg-secondary/40 grid place-items-center shrink-0">
+                  <Icon className="size-4" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-bold text-sm truncate">{it.nome}</p>
+                  {it.descricao && (
+                    <p className="text-[11px] text-muted-foreground truncate">{it.descricao}</p>
+                  )}
+                </div>
+                {esgotado ? (
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-500/15 text-red-400">
+                    ESGOTADO
+                  </span>
+                ) : (
+                  <span className="text-sm font-bold text-neon-green">R$ {Number(it.valor).toFixed(0)}</span>
+                )}
+              </button>
+            );
+          })}
+          {ingressos.length > 4 && (
+            <button onClick={onItem} className="w-full text-center text-xs text-neon-pink font-bold py-1">
+              Ver todos os {ingressos.length} itens →
+            </button>
+          )}
+        </div>
       )}
     </div>
   );
