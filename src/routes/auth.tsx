@@ -17,7 +17,10 @@ import {
   ArrowLeft,
 } from "lucide-react";
 
+import { consumePendingExcursionistaInvite, getPendingExcursionistaInvite } from "@/lib/excursionista-link";
+
 export const Route = createFileRoute("/auth")({
+
   head: () => ({
     meta: [{ title: "Entrar — SoltaTrip" }, { name: "robots", content: "noindex" }],
   }),
