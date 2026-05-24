@@ -132,7 +132,11 @@ function AuthPage() {
       typeof window !== "undefined" ? localStorage.getItem("pending_pax_invite") : null;
     if (pendingPax)
       return <Navigate to="/invite/passageiro/$token" params={{ token: pendingPax }} />;
+    const pendingExc = getPendingExcursionistaInvite();
+    if (pendingExc && role === "passageiro")
+      return <Navigate to="/invite/excursionista/$id" params={{ id: pendingExc }} />;
     return <Navigate to={roleHome[role]} />;
+
   }
 
   function pickRole(r: AppRole) {
