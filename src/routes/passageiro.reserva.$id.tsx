@@ -500,7 +500,7 @@ function ReservaDetalhes() {
           const seat = (seats as any[]).find((s) => s.id === p.seat_id);
           const seatLabel = seat?.seat_number ?? p.assento ?? null;
           const ponto = (pontos as any[]).find((pt) => pt.id === p.ponto_embarque_id);
-          const podeEscolher = pago > 0 && status !== "cancelled";
+          const podeEscolher = status !== "cancelled";
           const qrPayload = p.qr_code || p.id;
           const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(qrPayload)}`;
           const isPaid = status === "paid";
@@ -557,9 +557,7 @@ function ReservaDetalhes() {
                       Escolher
                     </button>
                   ) : (
-                    <span className="text-xs text-muted-foreground">
-                      {pago === 0 ? "Pague para liberar" : "—"}
-                    </span>
+                    <span className="text-xs text-muted-foreground">—</span>
                   )}
                 </div>
 
@@ -671,9 +669,7 @@ function EmbarqueSection({
         ) : canEdit ? (
           <span className="text-[11px] text-muted-foreground">Escolha abaixo</span>
         ) : (
-          <span className="text-xs text-muted-foreground">
-            {pago === 0 ? "Pague para liberar" : "—"}
-          </span>
+          <span className="text-xs text-muted-foreground">—</span>
         )}
       </div>
 

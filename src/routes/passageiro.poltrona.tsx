@@ -98,28 +98,9 @@ function Poltrona() {
     );
   }
 
-  if (Number(reserva.amount_paid) <= 0) {
-    return (
-      <Shell title="Escolher poltrona">
-        <div className="glass rounded-3xl p-10 text-center">
-          <p className="text-sm text-muted-foreground">
-            Faça pelo menos um pagamento para liberar a escolha de poltrona.
-          </p>
-          <button
-            onClick={() =>
-              navigate({
-                to: "/passageiro/pagamentos",
-                search: { reserva: (reserva as any).reserva_id ?? reserva.id } as any,
-              })
-            }
-            className="mt-4 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"
-          >
-            Ir para pagamento
-          </button>
-        </div>
-      </Shell>
-    );
-  }
+  // Pré-reserva liberada mesmo com pagamento pendente.
+  // A poltrona fica temporariamente reservada para evitar duplicidade;
+  // QR Code e check-in continuam bloqueados até o organizador confirmar o pagamento.
 
   const selectedSeatId = selectedSeat?.id ?? reserva.seat_id;
   const selectedSeatLabel =
