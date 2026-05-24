@@ -216,22 +216,21 @@ function ItemCard({ item, excursaoId, userId }: { item: any; excursaoId: string;
         pax = paxCriado ?? null;
       }
 
-      const valor_total = Number(item.valor) * qtd;
-      const { error } = await supabase.from("pedidos_itens").insert({
-        excursao_id: excursaoId,
-        item_id: item.id,
-        passageiro_id: pax?.id ?? null,
-        comprador_id: userId,
-        quantidade: qtd,
-        valor_unitario: item.valor,
-        valor_total,
-        status: "pendente",
-      });
-      if (error) throw error;
-      await supabase
-        .from("excursao_itens")
-        .update({ quantidade_vendida: item.quantidade_vendida + qtd })
-        .eq("id", item.id);
+      // RPC atômica: valida quantidade no servidor, evita race condition e oversell.
+      // Também cria o pedido em pedidos_itens (não inserir aqui no cliente).
+      const { error: errCompra } = await supabase.rpc("comprar_item", {
+        p_item_id: item.id,
+        p_qtd: qtd,
+        p_excursao_id: excursaoId,
+      } as any);
+      if (errCompra) {
+        const msg = errCompra.message ?? "";
+        if (msg.includes("sold_out")) throw new Error("Item esgotado.");
+        if (msg.includes("invalid_quantity")) throw new Error("Quantidade inválida (1 a 10).");
+        if (msg.includes("item_unavailable")) throw new Error("Item indisponível.");
+        if (msg.includes("not_authenticated")) throw new Error("Faça login para pedir.");
+        throw errCompra;
+      }
 
       qc.invalidateQueries({ queryKey: ["pax-itens", excursaoId] });
       qc.invalidateQueries({ queryKey: ["pax-pedidos", excursaoId, userId] });
