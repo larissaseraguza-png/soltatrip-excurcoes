@@ -205,6 +205,43 @@ function PassageiroDetalhe() {
               ))
             )}
           </Section>
+
+          <Section title="Ingressos / Combos">
+            {pedidos.length === 0 ? (
+              <div className="p-3 text-xs text-muted-foreground">Nenhum ingresso vinculado.</div>
+            ) : (
+              pedidos.map((p: any) => {
+                const naoRecebido = !!p.nao_recebido_em;
+                const recebido = !!p.recebido_em;
+                const enviado = !!p.enviado_em;
+                const StatusIcon = naoRecebido ? AlertCircle : recebido ? CheckCircle2 : enviado ? Ticket : Clock;
+                const tone = naoRecebido ? "red" : recebido ? "green" : enviado ? "yellow" : "muted";
+                const label = naoRecebido
+                  ? "não recebido"
+                  : recebido
+                    ? "recebido"
+                    : enviado
+                      ? "enviado"
+                      : p.status === "confirmado"
+                        ? "confirmado"
+                        : "pendente";
+                return (
+                  <div key={p.id} className="p-3 flex items-center gap-3">
+                    <StatusIcon className={`size-4 ${naoRecebido ? "text-red-400" : recebido ? "text-neon-green" : "text-neon-purple"}`} />
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-semibold truncate">
+                        {p.item?.nome ?? "Item"}{p.quantidade > 1 ? ` ×${p.quantidade}` : ""}
+                      </div>
+                      <div className="text-[10px] text-muted-foreground">
+                        {(p.item?.tipo ?? "ingresso").toUpperCase()} · {brl(Number(p.valor_total))}
+                      </div>
+                    </div>
+                    <Pill tone={tone as any}>{label}</Pill>
+                  </div>
+                );
+              })
+            )}
+          </Section>
         </>
       )}
     </StaffShell>
