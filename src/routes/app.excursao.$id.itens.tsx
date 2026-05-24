@@ -1,4 +1,5 @@
 import { createFileRoute, Link, useParams } from "@tanstack/react-router";
+import { toast } from "sonner";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -268,11 +269,11 @@ function ItemEditor({
   const [busy, setBusy] = useState(false);
 
   async function save() {
-    if (!nome.trim()) return alert("Informe o nome.");
+    if (!nome.trim()) return toast.error("Informe o nome.");
     const v = Number(valor.replace(",", "."));
-    if (Number.isNaN(v) || v < 0) return alert("Valor inválido.");
+    if (Number.isNaN(v) || v < 0) return toast.error("Valor inválido.");
     const q = qtd.trim() === "" ? null : Number(qtd);
-    if (q != null && (Number.isNaN(q) || q < 0)) return alert("Quantidade inválida.");
+    if (q != null && (Number.isNaN(q) || q < 0)) return toast.error("Quantidade inválida.");
 
     setBusy(true);
     try {
@@ -295,7 +296,7 @@ function ItemEditor({
       }
       onSaved();
     } catch (err: any) {
-      alert(err.message ?? "Erro ao salvar.");
+      toast.error(err.message ?? "Erro ao salvar.");
     } finally {
       setBusy(false);
     }
@@ -310,7 +311,7 @@ function ItemEditor({
       if (error) throw error;
       onSaved();
     } catch (err: any) {
-      alert(err.message ?? "Erro ao remover.");
+      toast.error(err.message ?? "Erro ao remover.");
       setBusy(false);
     }
   }
@@ -472,7 +473,7 @@ function PedidosSection({
       patch.enviado_em = null;
     }
     const { error } = await supabase.from("pedidos_itens").update(patch).eq("id", p.id);
-    if (error) return alert(error.message);
+    if (error) return toast.error(error.message);
     qc.invalidateQueries({ queryKey: ["excursao-pedidos", excursaoId] });
   }
 

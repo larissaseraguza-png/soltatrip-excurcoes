@@ -1,4 +1,5 @@
 import { createFileRoute, Link, useParams } from "@tanstack/react-router";
+import { toast } from "sonner";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -153,9 +154,9 @@ function ItemCard({ item, excursaoId, userId }: { item: any; excursaoId: string;
   const esgotado = item.status === "esgotado" || (restante != null && restante <= 0);
 
   async function pedir() {
-    if (!userId) return alert("Faça login para pedir.");
+    if (!userId) return toast.success("Faça login para pedir.");
     if (qtd < 1) return;
-    if (restante != null && qtd > restante) return alert("Quantidade indisponível.");
+    if (restante != null && qtd > restante) return toast.success("Quantidade indisponível.");
     setBusy(true);
     try {
       // tenta vincular ao passageiro do comprador, se houver
@@ -188,9 +189,9 @@ function ItemCard({ item, excursaoId, userId }: { item: any; excursaoId: string;
       qc.invalidateQueries({ queryKey: ["pax-itens", excursaoId] });
       qc.invalidateQueries({ queryKey: ["pax-pedidos", excursaoId, userId] });
       setQtd(1);
-      alert("Pedido enviado! O organizador irá confirmar o pagamento e emitir.");
+      toast.success("Pedido enviado! O organizador irá confirmar o pagamento e emitir.");
     } catch (err: any) {
-      alert(err.message ?? "Erro ao pedir.");
+      toast.error(err.message ?? "Erro ao pedir.");
     } finally {
       setBusy(false);
     }

@@ -222,10 +222,10 @@ function ReservaDetalhes() {
 
   async function pagar() {
     const v = Number(valor.replace(",", "."));
-    if (!v || v <= 0) return alert("Informe um valor válido");
-    if (v > restante + 0.001) return alert(`Valor máximo: ${brl(restante)}`);
+    if (!v || v <= 0) return toast.error("Informe um valor válido");
+    if (v > restante + 0.001) return toast.error(`Valor máximo: ${brl(restante)}`);
     if (pago > 0 && v >= restante - 0.001 && (faltamPoltronas || faltamEmbarques)) {
-      return alert("Confirme as poltronas e os pontos de embarque antes de finalizar o pagamento.");
+      return toast.error("Confirme as poltronas e os pontos de embarque antes de finalizar o pagamento.");
     }
     setSubmitting(true);
     try {
@@ -244,7 +244,7 @@ function ReservaDetalhes() {
       qc.invalidateQueries({ queryKey: ["reserva-pagamentos", id] });
       qc.invalidateQueries({ queryKey: ["reserva-passageiros", id] });
     } catch (err: any) {
-      alert(err.message ?? "Erro");
+      toast.error(err.message ?? "Erro");
     } finally {
       setSubmitting(false);
     }
@@ -255,14 +255,14 @@ function ReservaDetalhes() {
       .from("passageiros")
       .update({ ponto_embarque_id: pontoId })
       .eq("id", paxId);
-    if (error) return alert(error.message);
+    if (error) return toast.error(error.message);
     refetchPax();
   }
 
   function copyInvite(token: string) {
     const url = `${window.location.origin}/invite/passageiro/${token}`;
     navigator.clipboard.writeText(url);
-    alert("Link de convite copiado!");
+    toast.success("Link de convite copiado!");
   }
 
   return (

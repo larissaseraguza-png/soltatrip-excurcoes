@@ -1,4 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { toast } from "sonner";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { Shell } from "@/components/passageiro/Shell";
@@ -240,7 +241,7 @@ function Poltrona() {
         qc.invalidateQueries({ queryKey: ["reservas-pagto"] }),
       ]);
     } catch (err: any) {
-      alert(err.message ?? "Erro ao escolher poltrona");
+      toast.error(err.message ?? "Erro ao escolher poltrona");
     } finally {
       setSaving(null);
     }
@@ -268,7 +269,7 @@ function Poltrona() {
         params: { id: (reserva as any).reserva_id ?? reserva.id },
       });
     } catch (err: any) {
-      alert(err.message ?? "Erro ao escolher embarque");
+      toast.error(err.message ?? "Erro ao escolher embarque");
     } finally {
       setSavingPonto(null);
     }
