@@ -4,7 +4,7 @@ import { useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useRealtimeSync } from "@/hooks/use-realtime-sync";
-import { ArrowLeft, Calendar, MapPin, Clock, Users, DollarSign, Loader2, Trash2, ChevronRight, Wallet, QrCode, MessageCircle, MapPinned, UserCog, Ban, ImagePlus, Bus } from "lucide-react";
+import { ArrowLeft, Calendar, MapPin, Clock, Users, DollarSign, Loader2, Trash2, ChevronRight, Wallet, QrCode, MapPinned, UserCog, Ban, ImagePlus, Bus, MessageCircle, Save } from "lucide-react";
 
 export const Route = createFileRoute("/app/excursao/$id/")({
   component: ExcursaoDetalhe,
