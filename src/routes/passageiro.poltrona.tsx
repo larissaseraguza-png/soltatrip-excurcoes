@@ -275,15 +275,24 @@ function Poltrona() {
         .eq("id", reserva.id);
       if (error) throw error;
       setSelectedPontoId(pontoId);
-      await qc.invalidateQueries({ queryKey: ["pax-poltrona"] });
-      await qc.invalidateQueries({ queryKey: ["reserva-passageiros"] });
-      await qc.invalidateQueries({ queryKey: ["pagto-passageiros"] });
+      await Promise.all([
+        qc.invalidateQueries({ queryKey: ["pax-poltrona"] }),
+        qc.invalidateQueries({ queryKey: ["reserva-passageiros"] }),
+        qc.invalidateQueries({ queryKey: ["pagto-passageiros"] }),
+        qc.invalidateQueries({ queryKey: ["reserva-grupo"] }),
+      ]);
+      // Fluxo automático: poltrona + embarque concluídos → voltar para a reserva
+      navigate({
+        to: "/passageiro/reserva/$id",
+        params: { id: (reserva as any).reserva_id ?? reserva.id },
+      });
     } catch (err: any) {
       alert(err.message ?? "Erro ao escolher embarque");
     } finally {
       setSavingPonto(null);
     }
   }
+
 
   return (
     <Shell title="Escolher poltrona" subtitle={(reserva as any).excursao?.titulo}>
