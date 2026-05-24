@@ -75,17 +75,10 @@ function DetalhesViagem() {
         >
           <QrCode className="size-5" /> Abrir ticket
         </Link>
-        <div className="grid grid-cols-2 gap-3">
-          <Link
-            to="/passageiro/chat"
-            className="flex items-center justify-center gap-2 h-12 rounded-2xl font-semibold glass"
-          >
-            <MessageCircle className="size-4" /> Falar com staff
-          </Link>
-          <button className="flex items-center justify-center gap-2 h-12 rounded-2xl font-semibold glass">
-            <Share2 className="size-4" /> Compartilhar
-          </button>
-        </div>
+        <button className="w-full flex items-center justify-center gap-2 h-12 rounded-2xl font-semibold glass">
+          <Share2 className="size-4" /> Compartilhar
+        </button>
+
       </div>
     </Shell>
   );

@@ -19,6 +19,7 @@ import {
   MapPinned,
   Users,
   Bus,
+  MessageCircle,
 } from "lucide-react";
 
 
@@ -50,7 +51,7 @@ function ReservaDetalhes() {
       const { data, error } = await supabase
         .from("reservas")
         .select(
-          "id, quantidade, total_price, amount_paid, payment_status, comprador_id, excursao:excursoes!reservas_excursao_id_fkey(id,titulo,destino,data_evento,horario_saida,horario_retorno,cor,banner_url,preco)",
+          "id, quantidade, total_price, amount_paid, payment_status, comprador_id, excursao:excursoes!reservas_excursao_id_fkey(id,titulo,destino,data_evento,horario_saida,horario_retorno,cor,banner_url,preco,whatsapp_group_url)",
         )
         .eq("id", id)
         .maybeSingle();
@@ -68,7 +69,7 @@ function ReservaDetalhes() {
       const { data, error } = await supabase
         .from("passageiros")
         .select(
-          "id, nome, email, status, qr_code, seat_id, assento, ponto_embarque_id, convite_token, user_id, embarcado_em, onibus_id, onibus:onibus(id, nome, horario_saida, horario_retorno, ponto_partida, capacidade)",
+          "id, nome, email, status, qr_code, seat_id, assento, ponto_embarque_id, convite_token, user_id, embarcado_em, onibus_id, onibus:onibus(id, nome, horario_saida, horario_retorno, ponto_partida, capacidade, whatsapp_group_url)",
         )
         .eq("reserva_id", id)
         .order("created_at", { ascending: true });
@@ -296,6 +297,29 @@ function ReservaDetalhes() {
         <Info4 icon={Clock} label="Saída" value={onibusInfo?.horario_saida ?? ex?.horario_saida ?? "—"} />
         <Info4 icon={Users} label="Passageiros" value={String(reserva.quantidade)} />
       </div>
+
+      {/* Grupo WhatsApp — liberado após primeiro pagamento */}
+      {pago > 0 && (() => {
+        const waUrl = onibusInfo?.whatsapp_group_url ?? ex?.whatsapp_group_url ?? null;
+        if (!waUrl) {
+          return (
+            <div className="glass rounded-3xl p-4 mb-5 text-center text-xs text-muted-foreground">
+              O organizador ainda não cadastrou o link do grupo de WhatsApp.
+            </div>
+          );
+        }
+        return (
+          <a
+            href={waUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="mb-5 w-full h-14 rounded-2xl bg-gradient-to-r from-neon-green to-neon-purple text-primary-foreground font-display font-bold flex items-center justify-center gap-2 glow-primary"
+          >
+            <MessageCircle className="size-5" /> Entrar no grupo da excursão
+          </a>
+        );
+      })()}
+
 
       {/* Ônibus do passageiro */}
       {onibusInfo && (

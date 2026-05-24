@@ -4,7 +4,7 @@ import { useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useRealtimeSync } from "@/hooks/use-realtime-sync";
-import { ArrowLeft, Calendar, MapPin, Clock, Users, DollarSign, Loader2, Trash2, ChevronRight, Wallet, QrCode, MessageCircle, MapPinned, UserCog, Ban, ImagePlus, Bus } from "lucide-react";
+import { ArrowLeft, Calendar, MapPin, Clock, Users, DollarSign, Loader2, Trash2, ChevronRight, Wallet, QrCode, MapPinned, UserCog, Ban, ImagePlus, Bus, MessageCircle, Save } from "lucide-react";
 
 export const Route = createFileRoute("/app/excursao/$id/")({
   component: ExcursaoDetalhe,
@@ -64,7 +64,6 @@ function ExcursaoDetalhe() {
       // Apaga dependentes (sem FK cascade)
       await supabase.from("checkins").delete().eq("excursao_id", id);
       await supabase.from("pagamentos").delete().eq("excursao_id", id);
-      await supabase.from("mensagens").delete().eq("excursao_id", id);
       await supabase.from("seats").delete().eq("excursao_id", id);
       await supabase.from("pontos_embarque").delete().eq("excursao_id", id);
       await supabase.from("passageiros").delete().eq("excursao_id", id);
@@ -179,9 +178,11 @@ function ExcursaoDetalhe() {
         <NavCard to="/app/excursao/$id/pontos" id={id} icon={MapPinned} title="Pontos de embarque" desc="Definir locais e horários de embarque" />
         <NavCard to="/app/excursao/$id/financeiro" id={id} icon={Wallet} title="Financeiro" desc="Lançar pagamentos e acompanhar entradas" />
         <NavCard to="/app/excursao/$id/checkin" id={id} icon={QrCode} title="Check-in QR" desc="Embarcar passageiros com leitor de QR" />
-        <NavCard to="/app/excursao/$id/chat" id={id} icon={MessageCircle} title="Chat da viagem" desc="Conversa em tempo real com o grupo" />
         <NavCard to="/app/excursao/$id/equipe" id={id} icon={UserCog} title="Equipe / Staff" desc="Convidar e gerenciar staff desta excursão" />
       </div>
+
+      <WhatsappLinks excursao={data} />
+
 
       <div className="grid grid-cols-2 gap-2">
         {data.status !== "cancelada" && (
@@ -285,6 +286,79 @@ function PontosSummary({ excursaoId }: { excursaoId: string }) {
           </li>
         )}
       </ul>
+    </div>
+  );
+}
+
+function WhatsappLinks({ excursao }: { excursao: any }) {
+  const qc = useQueryClient();
+  const [pax, setPax] = useState(excursao.whatsapp_group_url ?? "");
+  const [staff, setStaff] = useState(excursao.whatsapp_staff_group_url ?? "");
+  const [saving, setSaving] = useState(false);
+  const [ok, setOk] = useState(false);
+
+  async function save() {
+    setSaving(true);
+    setOk(false);
+    try {
+      const norm = (v: string) => {
+        const t = v.trim();
+        if (!t) return null;
+        return /^https?:\/\//i.test(t) ? t : `https://${t}`;
+      };
+      const { error } = await supabase
+        .from("excursoes")
+        .update({ whatsapp_group_url: norm(pax), whatsapp_staff_group_url: norm(staff) })
+        .eq("id", excursao.id);
+      if (error) throw error;
+      qc.invalidateQueries({ queryKey: ["excursao", excursao.id] });
+      setOk(true);
+      setTimeout(() => setOk(false), 2000);
+    } catch (err: any) {
+      alert(err.message ?? "Erro ao salvar.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="glass rounded-2xl p-4 mb-6">
+      <div className="flex items-center gap-2 mb-3">
+        <MessageCircle className="h-4 w-4 text-neon-green" />
+        <p className="text-xs uppercase tracking-wider text-muted-foreground font-bold">Grupos de WhatsApp</p>
+      </div>
+      <p className="text-xs text-muted-foreground mb-3">
+        Toda comunicação acontece no WhatsApp. Cole abaixo o link de convite (chat.whatsapp.com/...).
+      </p>
+      <label className="block mb-3">
+        <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">Grupo dos passageiros</span>
+        <input
+          value={pax}
+          onChange={(e) => setPax(e.target.value)}
+          placeholder="https://chat.whatsapp.com/..."
+          className="mt-1 w-full h-10 px-3 rounded-xl bg-secondary/40 border border-border text-sm focus:border-primary focus:outline-none"
+        />
+      </label>
+      <label className="block mb-3">
+        <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">Grupo da staff</span>
+        <input
+          value={staff}
+          onChange={(e) => setStaff(e.target.value)}
+          placeholder="https://chat.whatsapp.com/..."
+          className="mt-1 w-full h-10 px-3 rounded-xl bg-secondary/40 border border-border text-sm focus:border-primary focus:outline-none"
+        />
+      </label>
+      <button
+        onClick={save}
+        disabled={saving}
+        className="w-full h-10 rounded-xl bg-gradient-to-r from-neon-purple to-neon-pink font-bold text-sm flex items-center justify-center gap-2 disabled:opacity-50"
+      >
+        {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+        {ok ? "Salvo!" : "Salvar links"}
+      </button>
+      <p className="text-[10px] text-muted-foreground mt-2">
+        Para grupos específicos por ônibus, vá em <b>Ônibus</b> e edite cada um.
+      </p>
     </div>
   );
 }

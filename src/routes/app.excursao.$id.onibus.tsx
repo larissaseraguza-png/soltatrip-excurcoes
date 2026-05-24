@@ -18,6 +18,7 @@ type Onibus = {
   ponto_partida: string | null;
   ordem: number;
   ativo: boolean;
+  whatsapp_group_url: string | null;
 };
 
 function OnibusListPage() {
@@ -31,7 +32,7 @@ function OnibusListPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("onibus")
-        .select("id, nome, capacidade, horario_saida, horario_retorno, ponto_partida, ordem, ativo")
+        .select("id, nome, capacidade, horario_saida, horario_retorno, ponto_partida, ordem, ativo, whatsapp_group_url")
         .eq("excursao_id", id)
         .order("ordem", { ascending: true })
         .order("created_at", { ascending: true });
@@ -198,6 +199,7 @@ function OnibusFormModal({
   const [horarioRetorno, setHorarioRetorno] = useState(onibus?.horario_retorno ?? "");
   const [pontoPartida, setPontoPartida] = useState(onibus?.ponto_partida ?? "");
   const [ativo, setAtivo] = useState(onibus?.ativo ?? true);
+  const [whatsapp, setWhatsapp] = useState(onibus?.whatsapp_group_url ?? "");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -211,6 +213,12 @@ function OnibusFormModal({
       const cap = parseInt(capacidade, 10);
       if (!nome.trim()) throw new Error("Informe o nome do ônibus.");
       if (!Number.isFinite(cap) || cap <= 0) throw new Error("Capacidade inválida.");
+
+      const waNorm = (() => {
+        const t = whatsapp.trim();
+        if (!t) return null;
+        return /^https?:\/\//i.test(t) ? t : `https://${t}`;
+      })();
 
       if (isEdit && onibus) {
         if (cap < onibus.capacidade) {
@@ -228,6 +236,7 @@ function OnibusFormModal({
             horario_retorno: horarioRetorno || null,
             ponto_partida: pontoPartida || null,
             ativo,
+            whatsapp_group_url: waNorm,
           })
           .eq("id", onibus.id);
         if (upErr) throw upErr;
@@ -256,6 +265,7 @@ function OnibusFormModal({
             horario_retorno: horarioRetorno || null,
             ponto_partida: pontoPartida || null,
             ativo,
+            whatsapp_group_url: waNorm,
             ordem: nextOrdem,
           })
           .select("id")
@@ -268,6 +278,7 @@ function OnibusFormModal({
         }
         if (novosSeats.length) await supabase.from("seats").insert(novosSeats);
       }
+
 
       qc.invalidateQueries({ queryKey: ["onibus", excursaoId] });
       onClose();
@@ -337,6 +348,17 @@ function OnibusFormModal({
               placeholder="Ex.: Terminal Central"
               className="w-full h-10 px-3 rounded-xl bg-secondary/40 border border-border text-sm focus:border-primary focus:outline-none"
             />
+          </Field>
+          <Field label="Link grupo WhatsApp deste ônibus (opcional)">
+            <input
+              value={whatsapp}
+              onChange={(e) => setWhatsapp(e.target.value)}
+              placeholder="https://chat.whatsapp.com/..."
+              className="w-full h-10 px-3 rounded-xl bg-secondary/40 border border-border text-sm focus:border-primary focus:outline-none"
+            />
+            <p className="text-[10px] text-muted-foreground mt-1">
+              Se vazio, os passageiros deste ônibus verão o grupo geral da excursão.
+            </p>
           </Field>
           <label className="flex items-center gap-2 text-sm">
             <input
