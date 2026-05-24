@@ -1,8 +1,12 @@
-import { createFileRoute, Navigate, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Navigate, useNavigate, redirect } from "@tanstack/react-router";
 import { useAuth } from "@/hooks/use-auth";
+import { isFlowLocked } from "@/config/flow-mode";
 import { Bus, Crown, Shield, Ticket, ArrowRight, Loader2 } from "lucide-react";
 
 export const Route = createFileRoute("/selecionar-perfil")({
+  beforeLoad: () => {
+    if (isFlowLocked()) throw redirect({ to: "/" });
+  },
   head: () => ({
     meta: [{ title: "Selecionar perfil — SoltaTrip" }, { name: "robots", content: "noindex" }],
   }),

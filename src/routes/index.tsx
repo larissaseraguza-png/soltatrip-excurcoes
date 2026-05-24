@@ -1,9 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import heroBus from "@/assets/hero-bus.jpg";
+import { isFlowLocked } from "@/config/flow-mode";
 import {
   Bus, QrCode, Users, Wallet, MessageCircle, MapPin, Sparkles,
   Shield, BarChart3, Ticket, Radio, ArrowRight, Check,
 } from "lucide-react";
+
+const FLOW_LOCKED = isFlowLocked();
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -48,12 +51,14 @@ function Nav() {
             <a href="#features" className="hover:text-foreground transition">Recursos</a>
             <a href="#flow" className="hover:text-foreground transition">Como funciona</a>
           </nav>
-          <Link
-            to="/auth"
-            className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90 transition glow-primary"
-          >
-            Começar <ArrowRight className="h-4 w-4" />
-          </Link>
+          {!FLOW_LOCKED && (
+            <Link
+              to="/auth"
+              className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90 transition glow-primary"
+            >
+              Começar <ArrowRight className="h-4 w-4" />
+            </Link>
+          )}
         </div>
       </div>
     </header>
@@ -79,9 +84,11 @@ function Hero() {
             Passageiros, pagamentos PIX, check-in por QR Code e comunicação — tudo num só app.
           </p>
           <div className="mt-9 flex flex-col sm:flex-row items-center gap-3">
-            <Link to="/auth" className="inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-3.5 font-semibold text-primary-foreground glow-primary hover:opacity-90 transition">
-              Criar minha excursão <ArrowRight className="h-4 w-4" />
-            </Link>
+            {!FLOW_LOCKED && (
+              <Link to="/auth" className="inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-3.5 font-semibold text-primary-foreground glow-primary hover:opacity-90 transition">
+                Criar minha excursão <ArrowRight className="h-4 w-4" />
+              </Link>
+            )}
             <a href="#personas" className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-6 py-3.5 font-semibold hover:bg-secondary transition">
               Ver para quem é
             </a>
@@ -297,16 +304,20 @@ function CTA() {
               Bora <span className="text-gradient glow-text">soltar</span> a próxima?
             </h2>
             <p className="mt-5 max-w-xl mx-auto text-muted-foreground">
-              Crie sua excursão em minutos. Sem instalar nada, sem planilha, sem stress.
+              {FLOW_LOCKED
+                ? "Estamos finalizando os últimos detalhes. Em breve você poderá criar sua conta."
+                : "Crie sua excursão em minutos. Sem instalar nada, sem planilha, sem stress."}
             </p>
-            <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
-              <a href="#" className="inline-flex items-center gap-2 rounded-xl bg-primary px-7 py-4 font-semibold text-primary-foreground glow-primary hover:opacity-90 transition">
-                Criar conta grátis <ArrowRight className="h-4 w-4" />
-              </a>
-              <a href="#" className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-7 py-4 font-semibold hover:bg-secondary transition">
-                Falar com a gente
-              </a>
-            </div>
+            {!FLOW_LOCKED && (
+              <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
+                <Link to="/auth" className="inline-flex items-center gap-2 rounded-xl bg-primary px-7 py-4 font-semibold text-primary-foreground glow-primary hover:opacity-90 transition">
+                  Criar conta grátis <ArrowRight className="h-4 w-4" />
+                </Link>
+                <a href="#" className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-7 py-4 font-semibold hover:bg-secondary transition">
+                  Falar com a gente
+                </a>
+              </div>
+            )}
           </div>
         </div>
       </div>

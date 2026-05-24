@@ -1,8 +1,9 @@
-import { createFileRoute, Link, useNavigate, Navigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate, Navigate, redirect } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useRoleForUser, roleHome, type AppRole } from "@/hooks/use-role";
+import { isFlowLocked } from "@/config/flow-mode";
 import {
   Bus,
   Loader2,
@@ -20,7 +21,11 @@ import {
 import { consumePendingExcursionistaInvite, getPendingExcursionistaInvite } from "@/lib/excursionista-link";
 
 export const Route = createFileRoute("/auth")({
-
+  beforeLoad: () => {
+    if (isFlowLocked()) {
+      throw redirect({ to: "/" });
+    }
+  },
   head: () => ({
     meta: [{ title: "Entrar — SoltaTrip" }, { name: "robots", content: "noindex" }],
   }),
