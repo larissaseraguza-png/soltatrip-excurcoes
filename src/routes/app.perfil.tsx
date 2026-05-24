@@ -240,3 +240,16 @@ function Field({ icon: Icon, label, value, onChange, placeholder }: { icon: type
     </label>
   );
 }
+
+function StatCard({ icon: Icon, label, value, hint }: { icon: typeof UserIcon; label: string; value: string; hint?: string }) {
+  return (
+    <div className="glass rounded-2xl p-4">
+      <div className="flex items-center gap-2 text-muted-foreground">
+        <Icon className="h-4 w-4" />
+        <span className="text-[10px] uppercase tracking-wider font-semibold">{label}</span>
+      </div>
+      <p className="font-display text-2xl font-black mt-1">{value}</p>
+      {hint && <p className="text-[10px] text-muted-foreground mt-0.5">{hint}</p>}
+    </div>
+  );
+}
