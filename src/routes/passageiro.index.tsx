@@ -593,12 +593,14 @@ function ExperienciaStep({
   excursao,
   itens,
   onApenasExcursao,
-  onItem,
+  onCombo,
+  onApenasIngresso,
 }: {
   excursao: Excursao;
   itens: any[];
   onApenasExcursao: () => void;
-  onItem: () => void;
+  onCombo: (item: any) => void;
+  onApenasIngresso: () => void;
 }) {
   // Se o organizador não usa promoter/itens, segue direto para a reserva.
   if (!itens || itens.length === 0) {
@@ -619,18 +621,19 @@ function ExperienciaStep({
 
   const combos = itens.filter((i) => i.tipo === "combo");
   const ingressos = itens.filter((i) => i.tipo !== "combo");
-  const comboDestaque = combos[0];
+  const comboPrincipal = combos[0];
+  const outrosCombos = combos.slice(1);
 
   return (
     <div className="p-5 space-y-4">
       <p className="text-xs text-muted-foreground">
-        Escolha como deseja participar. Você pode comprar a excursão, um ingresso ou aproveitar um combo promocional.
+        Escolha sua experiência. O combo segue o mesmo fluxo da excursão — ônibus, poltrona, embarque e ingresso em um único lugar.
       </p>
 
       {/* COMBO em destaque */}
-      {comboDestaque && (
+      {comboPrincipal && (
         <button
-          onClick={onItem}
+          onClick={() => onCombo(comboPrincipal)}
           className="relative w-full text-left rounded-3xl p-5 overflow-hidden border-2 border-neon-pink/60 bg-gradient-to-br from-neon-purple/30 via-neon-pink/20 to-neon-green/10 glow-primary"
         >
           <div className="absolute -right-8 -top-8 size-32 rounded-full bg-neon-pink/30 blur-3xl" />
@@ -644,24 +647,40 @@ function ExperienciaStep({
               <Package className="size-6" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-[10px] uppercase tracking-widest text-neon-pink font-black">Combo promocional</p>
-              <p className="font-display font-black text-lg leading-tight">{comboDestaque.nome}</p>
-              {comboDestaque.descricao && (
-                <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{comboDestaque.descricao}</p>
+              <p className="text-[10px] uppercase tracking-widest text-neon-pink font-black">Combo · excursão + ingresso</p>
+              <p className="font-display font-black text-lg leading-tight">{comboPrincipal.nome}</p>
+              {comboPrincipal.descricao && (
+                <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{comboPrincipal.descricao}</p>
               )}
               <p className="font-display font-black text-2xl mt-2 bg-gradient-to-r from-neon-pink to-neon-green bg-clip-text text-transparent">
-                R$ {Number(comboDestaque.valor).toFixed(2)}
+                R$ {Number(comboPrincipal.valor).toFixed(2)}
               </p>
+              <p className="text-[11px] text-neon-pink font-bold mt-1">Reserva poltrona + embarque + ingresso em um só fluxo →</p>
             </div>
-            <ChevronRight className="size-5 shrink-0 text-neon-pink mt-1" />
           </div>
-          {combos.length > 1 && (
-            <p className="relative text-[11px] text-neon-pink font-bold mt-3">
-              + {combos.length - 1} outro{combos.length > 2 ? "s" : ""} combo{combos.length > 2 ? "s" : ""} disponível{combos.length > 2 ? "is" : ""}
-            </p>
-          )}
         </button>
       )}
+
+      {/* Outros combos */}
+      {outrosCombos.map((c: any) => (
+        <button
+          key={c.id}
+          onClick={() => onCombo(c)}
+          className="w-full text-left rounded-2xl p-4 bg-gradient-to-br from-neon-purple/20 to-neon-pink/10 border border-neon-pink/40 flex items-center gap-3 hover:border-neon-pink/70 transition"
+        >
+          <div className="h-11 w-11 rounded-xl bg-gradient-to-br from-neon-purple to-neon-pink grid place-items-center shrink-0">
+            <Package className="size-5" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="font-bold truncate">{c.nome}</p>
+            <p className="text-[11px] text-muted-foreground">Combo promocional</p>
+          </div>
+          <div className="text-right">
+            <p className="font-display font-black text-lg text-neon-pink">R$ {Number(c.valor).toFixed(0)}</p>
+            <ChevronRight className="size-4 text-neon-pink ml-auto" />
+          </div>
+        </button>
+      ))}
 
       {/* Apenas excursão */}
       <button
@@ -681,11 +700,11 @@ function ExperienciaStep({
         </div>
       </button>
 
-      {/* Ingressos / camping / VIP avulsos */}
+      {/* Apenas ingresso / camping / VIP (sem excursão) */}
       {ingressos.length > 0 && (
         <div className="space-y-2">
           <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold pt-2">
-            Apenas ingresso / camping
+            Apenas ingresso / camping (sem ônibus)
           </p>
           {ingressos.slice(0, 4).map((it: any) => {
             const Icon = TIPO_ICON[it.tipo] ?? Package;
@@ -695,7 +714,7 @@ function ExperienciaStep({
             return (
               <button
                 key={it.id}
-                onClick={onItem}
+                onClick={onApenasIngresso}
                 disabled={esgotado}
                 className={`w-full text-left rounded-2xl p-3 bg-background/40 border border-border flex items-center gap-3 transition ${
                   esgotado ? "opacity-50 cursor-not-allowed" : "hover:border-neon-pink/40"
@@ -721,7 +740,7 @@ function ExperienciaStep({
             );
           })}
           {ingressos.length > 4 && (
-            <button onClick={onItem} className="w-full text-center text-xs text-neon-pink font-bold py-1">
+            <button onClick={onApenasIngresso} className="w-full text-center text-xs text-neon-pink font-bold py-1">
               Ver todos os {ingressos.length} itens →
             </button>
           )}
