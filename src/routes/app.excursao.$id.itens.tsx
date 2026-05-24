@@ -289,6 +289,7 @@ function ItemEditor({
         quantidade_total: q,
         status,
         ativo,
+        inclui_excursao: incluiExcursao,
       };
       if (item) {
         const { error } = await supabase.from("excursao_itens").update(payload).eq("id", item.id);
