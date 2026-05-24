@@ -40,6 +40,7 @@ import { Route as ExcursionistaInfoRouteImport } from './routes/excursionista.in
 import { Route as ExcursionistaFinanceiroRouteImport } from './routes/excursionista.financeiro'
 import { Route as ExcursionistaEditarRouteImport } from './routes/excursionista.editar'
 import { Route as ExcursionistaCheckinRouteImport } from './routes/excursionista.checkin'
+import { Route as AppHistoricoRouteImport } from './routes/app.historico'
 import { Route as StaffPassageiroIdRouteImport } from './routes/staff.passageiro.$id'
 import { Route as PassageiroViagemIdRouteImport } from './routes/passageiro.viagem.$id'
 import { Route as PassageiroReservaIdRouteImport } from './routes/passageiro.reserva.$id'
@@ -213,6 +214,11 @@ const ExcursionistaCheckinRoute = ExcursionistaCheckinRouteImport.update({
   path: '/checkin',
   getParentRoute: () => ExcursionistaRoute,
 } as any)
+const AppHistoricoRoute = AppHistoricoRouteImport.update({
+  id: '/historico',
+  path: '/historico',
+  getParentRoute: () => AppRoute,
+} as any)
 const StaffPassageiroIdRoute = StaffPassageiroIdRouteImport.update({
   id: '/passageiro/$id',
   path: '/passageiro/$id',
@@ -304,6 +310,7 @@ export interface FileRoutesByFullPath {
   '/passageiro': typeof PassageiroRouteWithChildren
   '/selecionar-perfil': typeof SelecionarPerfilRoute
   '/staff': typeof StaffRouteWithChildren
+  '/app/historico': typeof AppHistoricoRoute
   '/excursionista/checkin': typeof ExcursionistaCheckinRoute
   '/excursionista/editar': typeof ExcursionistaEditarRoute
   '/excursionista/financeiro': typeof ExcursionistaFinanceiroRoute
@@ -349,6 +356,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/selecionar-perfil': typeof SelecionarPerfilRoute
+  '/app/historico': typeof AppHistoricoRoute
   '/excursionista/checkin': typeof ExcursionistaCheckinRoute
   '/excursionista/editar': typeof ExcursionistaEditarRoute
   '/excursionista/financeiro': typeof ExcursionistaFinanceiroRoute
@@ -398,6 +406,7 @@ export interface FileRoutesById {
   '/passageiro': typeof PassageiroRouteWithChildren
   '/selecionar-perfil': typeof SelecionarPerfilRoute
   '/staff': typeof StaffRouteWithChildren
+  '/app/historico': typeof AppHistoricoRoute
   '/excursionista/checkin': typeof ExcursionistaCheckinRoute
   '/excursionista/editar': typeof ExcursionistaEditarRoute
   '/excursionista/financeiro': typeof ExcursionistaFinanceiroRoute
@@ -449,6 +458,7 @@ export interface FileRouteTypes {
     | '/passageiro'
     | '/selecionar-perfil'
     | '/staff'
+    | '/app/historico'
     | '/excursionista/checkin'
     | '/excursionista/editar'
     | '/excursionista/financeiro'
@@ -494,6 +504,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/selecionar-perfil'
+    | '/app/historico'
     | '/excursionista/checkin'
     | '/excursionista/editar'
     | '/excursionista/financeiro'
@@ -542,6 +553,7 @@ export interface FileRouteTypes {
     | '/passageiro'
     | '/selecionar-perfil'
     | '/staff'
+    | '/app/historico'
     | '/excursionista/checkin'
     | '/excursionista/editar'
     | '/excursionista/financeiro'
@@ -815,6 +827,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ExcursionistaCheckinRouteImport
       parentRoute: typeof ExcursionistaRoute
     }
+    '/app/historico': {
+      id: '/app/historico'
+      path: '/historico'
+      fullPath: '/app/historico'
+      preLoaderRoute: typeof AppHistoricoRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/staff/passageiro/$id': {
       id: '/staff/passageiro/$id'
       path: '/passageiro/$id'
@@ -966,12 +985,14 @@ const AppExcursaoIdRouteWithChildren = AppExcursaoIdRoute._addFileChildren(
 )
 
 interface AppRouteChildren {
+  AppHistoricoRoute: typeof AppHistoricoRoute
   AppIndexRoute: typeof AppIndexRoute
   AppExcursaoIdRoute: typeof AppExcursaoIdRouteWithChildren
   AppExcursaoNovaRoute: typeof AppExcursaoNovaRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
+  AppHistoricoRoute: AppHistoricoRoute,
   AppIndexRoute: AppIndexRoute,
   AppExcursaoIdRoute: AppExcursaoIdRouteWithChildren,
   AppExcursaoNovaRoute: AppExcursaoNovaRoute,
