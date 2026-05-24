@@ -188,6 +188,10 @@ function AuthPage() {
 
         const pendingStaff = localStorage.getItem("pending_staff_invite");
         const pendingPax = localStorage.getItem("pending_pax_invite");
+        const pendingExc = getPendingExcursionistaInvite();
+        if (selectedRole === "passageiro" && pendingExc) {
+          await consumePendingExcursionistaInvite();
+        }
         if (pendingStaff) {
           navigate({ to: "/invite/staff/$token", params: { token: pendingStaff }, replace: true });
         } else if (pendingPax) {
@@ -199,6 +203,7 @@ function AuthPage() {
         } else {
           navigate({ to: roleHome[selectedRole], replace: true });
         }
+
       } else {
         // Login
         const { data, error } = await supabase.auth.signInWithPassword({ email, password });
