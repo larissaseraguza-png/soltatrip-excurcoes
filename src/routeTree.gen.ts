@@ -24,7 +24,6 @@ import { Route as StaffSuporteRouteImport } from './routes/staff.suporte'
 import { Route as StaffPerfilRouteImport } from './routes/staff.perfil'
 import { Route as StaffPassageirosRouteImport } from './routes/staff.passageiros'
 import { Route as StaffOnibusRouteImport } from './routes/staff.onibus'
-import { Route as StaffMensagensRouteImport } from './routes/staff.mensagens'
 import { Route as StaffFinanceiroRouteImport } from './routes/staff.financeiro'
 import { Route as StaffEquipeRouteImport } from './routes/staff.equipe'
 import { Route as StaffConfiguracoesRouteImport } from './routes/staff.configuracoes'
@@ -36,13 +35,11 @@ import { Route as PassageiroPoltronaRouteImport } from './routes/passageiro.polt
 import { Route as PassageiroPerfilRouteImport } from './routes/passageiro.perfil'
 import { Route as PassageiroPagamentosRouteImport } from './routes/passageiro.pagamentos'
 import { Route as PassageiroInformacoesRouteImport } from './routes/passageiro.informacoes'
-import { Route as PassageiroChatRouteImport } from './routes/passageiro.chat'
 import { Route as ExcursionistaPassageirosRouteImport } from './routes/excursionista.passageiros'
 import { Route as ExcursionistaInfoRouteImport } from './routes/excursionista.info'
 import { Route as ExcursionistaFinanceiroRouteImport } from './routes/excursionista.financeiro'
 import { Route as ExcursionistaEditarRouteImport } from './routes/excursionista.editar'
 import { Route as ExcursionistaCheckinRouteImport } from './routes/excursionista.checkin'
-import { Route as ExcursionistaChatRouteImport } from './routes/excursionista.chat'
 import { Route as StaffPassageiroIdRouteImport } from './routes/staff.passageiro.$id'
 import { Route as PassageiroViagemIdRouteImport } from './routes/passageiro.viagem.$id'
 import { Route as PassageiroReservaIdRouteImport } from './routes/passageiro.reserva.$id'
@@ -58,7 +55,6 @@ import { Route as AppExcursaoIdOnibusRouteImport } from './routes/app.excursao.$
 import { Route as AppExcursaoIdFinanceiroRouteImport } from './routes/app.excursao.$id.financeiro'
 import { Route as AppExcursaoIdEquipeRouteImport } from './routes/app.excursao.$id.equipe'
 import { Route as AppExcursaoIdCheckinRouteImport } from './routes/app.excursao.$id.checkin'
-import { Route as AppExcursaoIdChatRouteImport } from './routes/app.excursao.$id.chat'
 import { Route as AppExcursaoIdOnibusOnibusIdRouteImport } from './routes/app.excursao.$id.onibus.$onibusId'
 
 const StaffRoute = StaffRouteImport.update({
@@ -136,11 +132,6 @@ const StaffOnibusRoute = StaffOnibusRouteImport.update({
   path: '/onibus',
   getParentRoute: () => StaffRoute,
 } as any)
-const StaffMensagensRoute = StaffMensagensRouteImport.update({
-  id: '/mensagens',
-  path: '/mensagens',
-  getParentRoute: () => StaffRoute,
-} as any)
 const StaffFinanceiroRoute = StaffFinanceiroRouteImport.update({
   id: '/financeiro',
   path: '/financeiro',
@@ -196,11 +187,6 @@ const PassageiroInformacoesRoute = PassageiroInformacoesRouteImport.update({
   path: '/informacoes',
   getParentRoute: () => PassageiroRoute,
 } as any)
-const PassageiroChatRoute = PassageiroChatRouteImport.update({
-  id: '/chat',
-  path: '/chat',
-  getParentRoute: () => PassageiroRoute,
-} as any)
 const ExcursionistaPassageirosRoute =
   ExcursionistaPassageirosRouteImport.update({
     id: '/passageiros',
@@ -225,11 +211,6 @@ const ExcursionistaEditarRoute = ExcursionistaEditarRouteImport.update({
 const ExcursionistaCheckinRoute = ExcursionistaCheckinRouteImport.update({
   id: '/checkin',
   path: '/checkin',
-  getParentRoute: () => ExcursionistaRoute,
-} as any)
-const ExcursionistaChatRoute = ExcursionistaChatRouteImport.update({
-  id: '/chat',
-  path: '/chat',
   getParentRoute: () => ExcursionistaRoute,
 } as any)
 const StaffPassageiroIdRoute = StaffPassageiroIdRouteImport.update({
@@ -308,11 +289,6 @@ const AppExcursaoIdCheckinRoute = AppExcursaoIdCheckinRouteImport.update({
   path: '/checkin',
   getParentRoute: () => AppExcursaoIdRoute,
 } as any)
-const AppExcursaoIdChatRoute = AppExcursaoIdChatRouteImport.update({
-  id: '/chat',
-  path: '/chat',
-  getParentRoute: () => AppExcursaoIdRoute,
-} as any)
 const AppExcursaoIdOnibusOnibusIdRoute =
   AppExcursaoIdOnibusOnibusIdRouteImport.update({
     id: '/$onibusId',
@@ -328,13 +304,11 @@ export interface FileRoutesByFullPath {
   '/passageiro': typeof PassageiroRouteWithChildren
   '/selecionar-perfil': typeof SelecionarPerfilRoute
   '/staff': typeof StaffRouteWithChildren
-  '/excursionista/chat': typeof ExcursionistaChatRoute
   '/excursionista/checkin': typeof ExcursionistaCheckinRoute
   '/excursionista/editar': typeof ExcursionistaEditarRoute
   '/excursionista/financeiro': typeof ExcursionistaFinanceiroRoute
   '/excursionista/info': typeof ExcursionistaInfoRoute
   '/excursionista/passageiros': typeof ExcursionistaPassageirosRoute
-  '/passageiro/chat': typeof PassageiroChatRoute
   '/passageiro/informacoes': typeof PassageiroInformacoesRoute
   '/passageiro/pagamentos': typeof PassageiroPagamentosRoute
   '/passageiro/perfil': typeof PassageiroPerfilRoute
@@ -346,7 +320,6 @@ export interface FileRoutesByFullPath {
   '/staff/configuracoes': typeof StaffConfiguracoesRoute
   '/staff/equipe': typeof StaffEquipeRoute
   '/staff/financeiro': typeof StaffFinanceiroRoute
-  '/staff/mensagens': typeof StaffMensagensRoute
   '/staff/onibus': typeof StaffOnibusRoute
   '/staff/passageiros': typeof StaffPassageirosRoute
   '/staff/perfil': typeof StaffPerfilRoute
@@ -363,7 +336,6 @@ export interface FileRoutesByFullPath {
   '/passageiro/reserva/$id': typeof PassageiroReservaIdRoute
   '/passageiro/viagem/$id': typeof PassageiroViagemIdRoute
   '/staff/passageiro/$id': typeof StaffPassageiroIdRoute
-  '/app/excursao/$id/chat': typeof AppExcursaoIdChatRoute
   '/app/excursao/$id/checkin': typeof AppExcursaoIdCheckinRoute
   '/app/excursao/$id/equipe': typeof AppExcursaoIdEquipeRoute
   '/app/excursao/$id/financeiro': typeof AppExcursaoIdFinanceiroRoute
@@ -377,13 +349,11 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/selecionar-perfil': typeof SelecionarPerfilRoute
-  '/excursionista/chat': typeof ExcursionistaChatRoute
   '/excursionista/checkin': typeof ExcursionistaCheckinRoute
   '/excursionista/editar': typeof ExcursionistaEditarRoute
   '/excursionista/financeiro': typeof ExcursionistaFinanceiroRoute
   '/excursionista/info': typeof ExcursionistaInfoRoute
   '/excursionista/passageiros': typeof ExcursionistaPassageirosRoute
-  '/passageiro/chat': typeof PassageiroChatRoute
   '/passageiro/informacoes': typeof PassageiroInformacoesRoute
   '/passageiro/pagamentos': typeof PassageiroPagamentosRoute
   '/passageiro/perfil': typeof PassageiroPerfilRoute
@@ -395,7 +365,6 @@ export interface FileRoutesByTo {
   '/staff/configuracoes': typeof StaffConfiguracoesRoute
   '/staff/equipe': typeof StaffEquipeRoute
   '/staff/financeiro': typeof StaffFinanceiroRoute
-  '/staff/mensagens': typeof StaffMensagensRoute
   '/staff/onibus': typeof StaffOnibusRoute
   '/staff/passageiros': typeof StaffPassageirosRoute
   '/staff/perfil': typeof StaffPerfilRoute
@@ -411,7 +380,6 @@ export interface FileRoutesByTo {
   '/passageiro/reserva/$id': typeof PassageiroReservaIdRoute
   '/passageiro/viagem/$id': typeof PassageiroViagemIdRoute
   '/staff/passageiro/$id': typeof StaffPassageiroIdRoute
-  '/app/excursao/$id/chat': typeof AppExcursaoIdChatRoute
   '/app/excursao/$id/checkin': typeof AppExcursaoIdCheckinRoute
   '/app/excursao/$id/equipe': typeof AppExcursaoIdEquipeRoute
   '/app/excursao/$id/financeiro': typeof AppExcursaoIdFinanceiroRoute
@@ -430,13 +398,11 @@ export interface FileRoutesById {
   '/passageiro': typeof PassageiroRouteWithChildren
   '/selecionar-perfil': typeof SelecionarPerfilRoute
   '/staff': typeof StaffRouteWithChildren
-  '/excursionista/chat': typeof ExcursionistaChatRoute
   '/excursionista/checkin': typeof ExcursionistaCheckinRoute
   '/excursionista/editar': typeof ExcursionistaEditarRoute
   '/excursionista/financeiro': typeof ExcursionistaFinanceiroRoute
   '/excursionista/info': typeof ExcursionistaInfoRoute
   '/excursionista/passageiros': typeof ExcursionistaPassageirosRoute
-  '/passageiro/chat': typeof PassageiroChatRoute
   '/passageiro/informacoes': typeof PassageiroInformacoesRoute
   '/passageiro/pagamentos': typeof PassageiroPagamentosRoute
   '/passageiro/perfil': typeof PassageiroPerfilRoute
@@ -448,7 +414,6 @@ export interface FileRoutesById {
   '/staff/configuracoes': typeof StaffConfiguracoesRoute
   '/staff/equipe': typeof StaffEquipeRoute
   '/staff/financeiro': typeof StaffFinanceiroRoute
-  '/staff/mensagens': typeof StaffMensagensRoute
   '/staff/onibus': typeof StaffOnibusRoute
   '/staff/passageiros': typeof StaffPassageirosRoute
   '/staff/perfil': typeof StaffPerfilRoute
@@ -465,7 +430,6 @@ export interface FileRoutesById {
   '/passageiro/reserva/$id': typeof PassageiroReservaIdRoute
   '/passageiro/viagem/$id': typeof PassageiroViagemIdRoute
   '/staff/passageiro/$id': typeof StaffPassageiroIdRoute
-  '/app/excursao/$id/chat': typeof AppExcursaoIdChatRoute
   '/app/excursao/$id/checkin': typeof AppExcursaoIdCheckinRoute
   '/app/excursao/$id/equipe': typeof AppExcursaoIdEquipeRoute
   '/app/excursao/$id/financeiro': typeof AppExcursaoIdFinanceiroRoute
@@ -485,13 +449,11 @@ export interface FileRouteTypes {
     | '/passageiro'
     | '/selecionar-perfil'
     | '/staff'
-    | '/excursionista/chat'
     | '/excursionista/checkin'
     | '/excursionista/editar'
     | '/excursionista/financeiro'
     | '/excursionista/info'
     | '/excursionista/passageiros'
-    | '/passageiro/chat'
     | '/passageiro/informacoes'
     | '/passageiro/pagamentos'
     | '/passageiro/perfil'
@@ -503,7 +465,6 @@ export interface FileRouteTypes {
     | '/staff/configuracoes'
     | '/staff/equipe'
     | '/staff/financeiro'
-    | '/staff/mensagens'
     | '/staff/onibus'
     | '/staff/passageiros'
     | '/staff/perfil'
@@ -520,7 +481,6 @@ export interface FileRouteTypes {
     | '/passageiro/reserva/$id'
     | '/passageiro/viagem/$id'
     | '/staff/passageiro/$id'
-    | '/app/excursao/$id/chat'
     | '/app/excursao/$id/checkin'
     | '/app/excursao/$id/equipe'
     | '/app/excursao/$id/financeiro'
@@ -534,13 +494,11 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/selecionar-perfil'
-    | '/excursionista/chat'
     | '/excursionista/checkin'
     | '/excursionista/editar'
     | '/excursionista/financeiro'
     | '/excursionista/info'
     | '/excursionista/passageiros'
-    | '/passageiro/chat'
     | '/passageiro/informacoes'
     | '/passageiro/pagamentos'
     | '/passageiro/perfil'
@@ -552,7 +510,6 @@ export interface FileRouteTypes {
     | '/staff/configuracoes'
     | '/staff/equipe'
     | '/staff/financeiro'
-    | '/staff/mensagens'
     | '/staff/onibus'
     | '/staff/passageiros'
     | '/staff/perfil'
@@ -568,7 +525,6 @@ export interface FileRouteTypes {
     | '/passageiro/reserva/$id'
     | '/passageiro/viagem/$id'
     | '/staff/passageiro/$id'
-    | '/app/excursao/$id/chat'
     | '/app/excursao/$id/checkin'
     | '/app/excursao/$id/equipe'
     | '/app/excursao/$id/financeiro'
@@ -586,13 +542,11 @@ export interface FileRouteTypes {
     | '/passageiro'
     | '/selecionar-perfil'
     | '/staff'
-    | '/excursionista/chat'
     | '/excursionista/checkin'
     | '/excursionista/editar'
     | '/excursionista/financeiro'
     | '/excursionista/info'
     | '/excursionista/passageiros'
-    | '/passageiro/chat'
     | '/passageiro/informacoes'
     | '/passageiro/pagamentos'
     | '/passageiro/perfil'
@@ -604,7 +558,6 @@ export interface FileRouteTypes {
     | '/staff/configuracoes'
     | '/staff/equipe'
     | '/staff/financeiro'
-    | '/staff/mensagens'
     | '/staff/onibus'
     | '/staff/passageiros'
     | '/staff/perfil'
@@ -621,7 +574,6 @@ export interface FileRouteTypes {
     | '/passageiro/reserva/$id'
     | '/passageiro/viagem/$id'
     | '/staff/passageiro/$id'
-    | '/app/excursao/$id/chat'
     | '/app/excursao/$id/checkin'
     | '/app/excursao/$id/equipe'
     | '/app/excursao/$id/financeiro'
@@ -751,13 +703,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StaffOnibusRouteImport
       parentRoute: typeof StaffRoute
     }
-    '/staff/mensagens': {
-      id: '/staff/mensagens'
-      path: '/mensagens'
-      fullPath: '/staff/mensagens'
-      preLoaderRoute: typeof StaffMensagensRouteImport
-      parentRoute: typeof StaffRoute
-    }
     '/staff/financeiro': {
       id: '/staff/financeiro'
       path: '/financeiro'
@@ -835,13 +780,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PassageiroInformacoesRouteImport
       parentRoute: typeof PassageiroRoute
     }
-    '/passageiro/chat': {
-      id: '/passageiro/chat'
-      path: '/chat'
-      fullPath: '/passageiro/chat'
-      preLoaderRoute: typeof PassageiroChatRouteImport
-      parentRoute: typeof PassageiroRoute
-    }
     '/excursionista/passageiros': {
       id: '/excursionista/passageiros'
       path: '/passageiros'
@@ -875,13 +813,6 @@ declare module '@tanstack/react-router' {
       path: '/checkin'
       fullPath: '/excursionista/checkin'
       preLoaderRoute: typeof ExcursionistaCheckinRouteImport
-      parentRoute: typeof ExcursionistaRoute
-    }
-    '/excursionista/chat': {
-      id: '/excursionista/chat'
-      path: '/chat'
-      fullPath: '/excursionista/chat'
-      preLoaderRoute: typeof ExcursionistaChatRouteImport
       parentRoute: typeof ExcursionistaRoute
     }
     '/staff/passageiro/$id': {
@@ -989,13 +920,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppExcursaoIdCheckinRouteImport
       parentRoute: typeof AppExcursaoIdRoute
     }
-    '/app/excursao/$id/chat': {
-      id: '/app/excursao/$id/chat'
-      path: '/chat'
-      fullPath: '/app/excursao/$id/chat'
-      preLoaderRoute: typeof AppExcursaoIdChatRouteImport
-      parentRoute: typeof AppExcursaoIdRoute
-    }
     '/app/excursao/$id/onibus/$onibusId': {
       id: '/app/excursao/$id/onibus/$onibusId'
       path: '/$onibusId'
@@ -1018,7 +942,6 @@ const AppExcursaoIdOnibusRouteWithChildren =
   AppExcursaoIdOnibusRoute._addFileChildren(AppExcursaoIdOnibusRouteChildren)
 
 interface AppExcursaoIdRouteChildren {
-  AppExcursaoIdChatRoute: typeof AppExcursaoIdChatRoute
   AppExcursaoIdCheckinRoute: typeof AppExcursaoIdCheckinRoute
   AppExcursaoIdEquipeRoute: typeof AppExcursaoIdEquipeRoute
   AppExcursaoIdFinanceiroRoute: typeof AppExcursaoIdFinanceiroRoute
@@ -1029,7 +952,6 @@ interface AppExcursaoIdRouteChildren {
 }
 
 const AppExcursaoIdRouteChildren: AppExcursaoIdRouteChildren = {
-  AppExcursaoIdChatRoute: AppExcursaoIdChatRoute,
   AppExcursaoIdCheckinRoute: AppExcursaoIdCheckinRoute,
   AppExcursaoIdEquipeRoute: AppExcursaoIdEquipeRoute,
   AppExcursaoIdFinanceiroRoute: AppExcursaoIdFinanceiroRoute,
@@ -1058,7 +980,6 @@ const AppRouteChildren: AppRouteChildren = {
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
 
 interface ExcursionistaRouteChildren {
-  ExcursionistaChatRoute: typeof ExcursionistaChatRoute
   ExcursionistaCheckinRoute: typeof ExcursionistaCheckinRoute
   ExcursionistaEditarRoute: typeof ExcursionistaEditarRoute
   ExcursionistaFinanceiroRoute: typeof ExcursionistaFinanceiroRoute
@@ -1069,7 +990,6 @@ interface ExcursionistaRouteChildren {
 }
 
 const ExcursionistaRouteChildren: ExcursionistaRouteChildren = {
-  ExcursionistaChatRoute: ExcursionistaChatRoute,
   ExcursionistaCheckinRoute: ExcursionistaCheckinRoute,
   ExcursionistaEditarRoute: ExcursionistaEditarRoute,
   ExcursionistaFinanceiroRoute: ExcursionistaFinanceiroRoute,
@@ -1084,7 +1004,6 @@ const ExcursionistaRouteWithChildren = ExcursionistaRoute._addFileChildren(
 )
 
 interface PassageiroRouteChildren {
-  PassageiroChatRoute: typeof PassageiroChatRoute
   PassageiroInformacoesRoute: typeof PassageiroInformacoesRoute
   PassageiroPagamentosRoute: typeof PassageiroPagamentosRoute
   PassageiroPerfilRoute: typeof PassageiroPerfilRoute
@@ -1098,7 +1017,6 @@ interface PassageiroRouteChildren {
 }
 
 const PassageiroRouteChildren: PassageiroRouteChildren = {
-  PassageiroChatRoute: PassageiroChatRoute,
   PassageiroInformacoesRoute: PassageiroInformacoesRoute,
   PassageiroPagamentosRoute: PassageiroPagamentosRoute,
   PassageiroPerfilRoute: PassageiroPerfilRoute,
@@ -1120,7 +1038,6 @@ interface StaffRouteChildren {
   StaffConfiguracoesRoute: typeof StaffConfiguracoesRoute
   StaffEquipeRoute: typeof StaffEquipeRoute
   StaffFinanceiroRoute: typeof StaffFinanceiroRoute
-  StaffMensagensRoute: typeof StaffMensagensRoute
   StaffOnibusRoute: typeof StaffOnibusRoute
   StaffPassageirosRoute: typeof StaffPassageirosRoute
   StaffPerfilRoute: typeof StaffPerfilRoute
@@ -1134,7 +1051,6 @@ const StaffRouteChildren: StaffRouteChildren = {
   StaffConfiguracoesRoute: StaffConfiguracoesRoute,
   StaffEquipeRoute: StaffEquipeRoute,
   StaffFinanceiroRoute: StaffFinanceiroRoute,
-  StaffMensagensRoute: StaffMensagensRoute,
   StaffOnibusRoute: StaffOnibusRoute,
   StaffPassageirosRoute: StaffPassageirosRoute,
   StaffPerfilRoute: StaffPerfilRoute,
@@ -1159,3 +1075,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
