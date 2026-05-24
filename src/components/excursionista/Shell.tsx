@@ -56,7 +56,6 @@ function BottomNav() {
     { to: "/excursionista/passageiros", icon: Users, label: "Pax" },
     { to: "/excursionista/checkin", icon: QrCode, label: "Check-in" },
     { to: "/excursionista/financeiro", icon: Wallet, label: "Caixa" },
-    { to: "/excursionista/chat", icon: MessageCircle, label: "Chat" },
   ];
   return (
     <nav className="fixed bottom-0 inset-x-0 z-40 px-4 pb-4">
