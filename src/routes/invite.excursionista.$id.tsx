@@ -1,9 +1,10 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate, redirect } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useRoleForUser } from "@/hooks/use-role";
+import { isFlowLocked } from "@/config/flow-mode";
 import {
   rememberExcursionistaInvite,
   linkPassageiroToExcursionista,
@@ -13,6 +14,9 @@ import { Bus, Loader2, MapPin, Calendar, Sparkles, ArrowRight, Crown, AlertCircl
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/invite/excursionista/$id")({
+  beforeLoad: () => {
+    if (isFlowLocked()) throw redirect({ to: "/" });
+  },
   head: () => ({
     meta: [{ title: "Convite do excursionista — SoltaTrip" }, { name: "robots", content: "noindex" }],
   }),
