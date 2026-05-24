@@ -447,6 +447,27 @@ function PedidoCard({
         </div>
       )}
 
+      {naoRecebidos.length > 0 && (
+        <div className="mt-3 rounded-xl bg-red-500/10 border border-red-500/40 px-3 py-2 text-[11px] text-red-300 flex items-start gap-2">
+          <span className="font-bold">⚠️</span>
+          <div className="flex-1">
+            <p className="font-bold uppercase tracking-wider text-[10px]">Passageiro não recebeu</p>
+            <p className="text-red-300/90">
+              {naoRecebidos.map((p) => itemById.get(p.item_id)?.nome ?? "Ingresso").join(", ")} — reenvie e confirme com o passageiro.
+            </p>
+          </div>
+          {naoRecebidos.map((p) => (
+            <button
+              key={p.id}
+              onClick={() => onMarcarEnviado(p)}
+              className="text-[10px] uppercase tracking-wider font-bold px-2.5 py-1 rounded-full bg-neon-pink/20 text-neon-pink border border-neon-pink/40 shrink-0"
+            >
+              Reenviar
+            </button>
+          ))}
+        </div>
+      )}
+
       <button
         onClick={() => setOpen((v) => !v)}
         className="mt-3 text-[11px] text-muted-foreground inline-flex items-center gap-1 hover:text-foreground"
