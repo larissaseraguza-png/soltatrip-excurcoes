@@ -403,6 +403,27 @@ export type Database = {
           },
         ]
       }
+      passageiro_excursionistas: {
+        Row: {
+          created_at: string
+          excursionista_id: string
+          id: string
+          passageiro_user_id: string
+        }
+        Insert: {
+          created_at?: string
+          excursionista_id: string
+          id?: string
+          passageiro_user_id: string
+        }
+        Update: {
+          created_at?: string
+          excursionista_id?: string
+          id?: string
+          passageiro_user_id?: string
+        }
+        Relationships: []
+      }
       passageiros: {
         Row: {
           amount_paid: number
@@ -843,6 +864,31 @@ export type Database = {
           pix_recipient: string
         }[]
       }
+      get_excursionista_excursoes_publicas: {
+        Args: { p_org_id: string }
+        Returns: {
+          banner_url: string
+          cor: string
+          data_evento: string
+          descricao: string
+          destino: string
+          id: string
+          preco: number
+          titulo: string
+        }[]
+      }
+      get_excursionista_vitrine: {
+        Args: { p_org_id: string }
+        Returns: {
+          avatar_url: string
+          bio: string
+          city: string
+          company_name: string
+          full_name: string
+          instagram_url: string
+          organizer_id: string
+        }[]
+      }
       get_my_role: {
         Args: never
         Returns: Database["public"]["Enums"]["app_role"]
@@ -889,6 +935,10 @@ export type Database = {
       }
       is_active_staff_bus: {
         Args: { _onibus_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_linked_to_excursionista: {
+        Args: { _org: string; _pax: string }
         Returns: boolean
       }
       is_reserva_comprador: {

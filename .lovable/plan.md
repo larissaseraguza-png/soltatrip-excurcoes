@@ -1,85 +1,54 @@
-# Múltiplos ônibus por excursão
+# Multi-tenant por link de excursionista
 
-Hoje cada excursão funciona como se fosse 1 ônibus único. Vou introduzir uma entidade **Ônibus** filha da excursão, e fazer com que **poltronas, pontos de embarque, passageiros, staff e check-ins** sejam vinculados a um ônibus específico (não mais à excursão diretamente).
+## Visão geral
 
-## 1. Banco de dados (migração)
+Cada excursionista terá um link único `/invite/excursionista/{organizer_id}`. Ao abrir, o passageiro entra na "vitrine" daquele organizador: cadastro/login vincula a conta e, a partir daí, **todas** as listagens de excursões publicadas no painel do passageiro são filtradas pelos organizadores aos quais ele está vinculado. Sem link, o passageiro só vê excursões que já reservou.
 
-Nova tabela `public.onibus`:
-- `excursao_id` (FK lógica)
-- `nome` (ex.: "Ônibus A — Manhã")
-- `horario_saida`, `horario_retorno`
-- `capacidade` (gera as poltronas automaticamente)
-- `ordem` para ordenar visualmente
-- `ativo`
+## Banco de dados
 
-Adicionar coluna `onibus_id` (nullable) em:
-- `seats`
-- `pontos_embarque`
-- `passageiros`
-- `equipe_excursoes` (staff fica restrito a 1 ônibus, conforme decisão anterior)
-- `checkins`
-- `pagamentos` (herda do passageiro, útil para relatório financeiro por ônibus)
-
-Migração de dados existente (regra escolhida: **1 ônibus padrão por excursão**):
-- Para cada excursão atual: criar um `onibus` "Ônibus 1" usando `total_vagas`, `horario_saida`, `horario_retorno` da excursão.
-- Atualizar todas as linhas filhas (`seats`, `pontos_embarque`, `passageiros`, `equipe_excursoes`, `checkins`, `pagamentos`) com esse `onibus_id`.
-
-Triggers / funções a ajustar:
-- `ensure_seats_for_excursao` → passa a ser disparada **na criação de um ônibus**, gerando `capacidade` poltronas com `onibus_id` setado.
-- `is_active_staff(excursao_id, user_id)` continua existindo; adiciono `is_active_staff_bus(onibus_id, user_id)` para RLS por ônibus.
-- `organizer_create_manual_passageiro` e `organizer_update_passageiro_trip_choices` ganham parâmetro `p_onibus_id` e validam que `seat_id`/`ponto_embarque_id` pertencem àquele ônibus.
-- `criar_reserva_grupo` recebe `p_onibus_id` e grava em cada passageiro.
+Nova tabela `passageiro_excursionistas`:
+- `passageiro_user_id` (uuid → auth.users)
+- `excursionista_id` (uuid → auth.users, o organizer_id)
+- `created_at`
+- UNIQUE(passageiro_user_id, excursionista_id)
 
 RLS:
-- Staff continua vendo a excursão, mas só vê `passageiros`, `seats`, `pontos_embarque`, `checkins`, `pagamentos` do **seu** `onibus_id`.
-- Organizador continua com acesso total à excursão e a todos os ônibus.
+- passageiro vê/insere apenas suas próprias linhas
+- excursionista vê suas próprias linhas (lista de "seus passageiros")
 
-## 2. Painel do excursionista
+Função `is_linked_to_excursionista(_pax uuid, _org uuid)` SECURITY DEFINER.
 
-Dentro da página da excursão (`/app/excursao/$id`), adicionar seção **Ônibus**:
-- Listar ônibus existentes com nome, horário, capacidade, ocupação (poltronas usadas / total), staff vinculado.
-- Criar / editar / desativar ônibus.
-- Tela de detalhe por ônibus reaproveitando as telas atuais (passageiros, poltronas, embarques, financeiro, check-in) — todas filtradas por `onibus_id`.
-- Convite de staff passa a exigir escolha do ônibus.
+Substituir policy `Passengers view published excursoes` em `excursoes`:
+```
+(status='publicada' AND has_role(auth.uid(),'passageiro')
+ AND is_linked_to_excursionista(auth.uid(), organizer_id))
+```
+Mantém policy `Passengers view booked excursoes` para acesso direto sem link.
 
-Rotas novas:
-- `/app/excursao/$id/onibus` (listagem/gestão)
-- `/app/excursao/$id/onibus/$onibusId` (detalhe — abas: passageiros, poltronas, embarques, financeiro)
+## Rotas
 
-## 3. Fluxo de compra do passageiro
+**Nova: `src/routes/invite.excursionista.$id.tsx`**
+- Pega `id` (organizer_id), valida que existe e tem role excursionista
+- Mostra "vitrine" pública: nome do organizador + excursões publicadas dele
+- Botão "Entrar/Cadastrar" → salva `pending_excursionista_link` em localStorage e vai pra `/auth`
+- Se já logado como passageiro: faz upsert em `passageiro_excursionistas` e redireciona pra `/passageiro`
 
-Na página pública da excursão (`/passageiro/excursao/$id` ou equivalente):
-1. Escolhe a excursão (já existente)
-2. **Novo passo**: escolhe o ônibus (cards com nome, horário e vagas restantes)
-3. Escolhe ponto de embarque **daquele ônibus**
-4. Escolhe poltrona **daquele ônibus**
-5. Confirma reserva (grava `onibus_id` no passageiro)
+**`src/routes/auth.tsx`**
+- Após signup/login de passageiro, ler `pending_excursionista_link` e fazer upsert antes do redirect
 
-## 4. Painel do staff
+**`src/routes/passageiro.index.tsx`**
+- Query de excursões já roda com RLS → filtragem automática
+- Adicionar estado "vazio": "Você ainda não tem nenhum organizador vinculado. Peça o link de convite ao seu organizador."
 
-- Tela inicial do staff lista apenas o(s) ônibus em que ele está vinculado.
-- Check-in (`/staff/checkin`) e listas de passageiros filtram por `onibus_id` automaticamente.
-- QR code do passageiro já é único; ao escanear, valida que o passageiro pertence ao ônibus do staff (senão erro "passageiro de outro ônibus").
+## Mudanças mínimas em UI existente
 
-## 5. UI / cuidados visuais
+- `passageiro.tsx` shell: mostrar badge/header do organizador ativo quando há apenas um vinculado
+- Não mexer no fluxo de combo/reserva (já funciona via RLS)
 
-- Em todos os lugares onde aparece "Excursão X", incluir o nome do ônibus quando o contexto for por ônibus (ex.: "Festival XYZ · Ônibus A — Manhã").
-- Manter compatibilidade: dashboards de resumo continuam mostrando totais consolidados da excursão, com breakdown por ônibus.
+## Tarefas
 
-## Ordem de implementação
-
-1. Migração SQL (tabela `onibus`, colunas `onibus_id`, dados existentes, RLS, funções).
-2. Tipos atualizados (auto-gerados após migração).
-3. Painel do excursionista: CRUD de ônibus + filtros nas telas existentes.
-4. Fluxo de compra do passageiro (seleção de ônibus).
-5. Painel do staff (filtro por ônibus + check-in validando ônibus).
-
-Esta primeira mensagem cobre o **passo 1 (migração)**. Depois que você aprovar a migração, sigo direto com os passos 2–5 em código.
-
-## Detalhes técnicos
-
-- `onibus_id` começa **nullable** para permitir a migração de dados; após o backfill, vira `NOT NULL` em `seats`, `passageiros` (apenas onde já há excursão), `pontos_embarque`, `checkins`.
-- `equipe_excursoes.onibus_id` permanece nullable: convites por e-mail entram sem ônibus definido e o organizador escolhe depois.
-- Índices: `(excursao_id, onibus_id)` em `passageiros`, `seats`, `pontos_embarque`, `checkins`, `pagamentos`.
-- `seats` ganha unique `(onibus_id, seat_number)` substituindo `(excursao_id, seat_number)`.
-- Trigger `ensure_seats_for_excursao` é desativado/substituído por um equivalente em `onibus` (gera poltronas no insert do ônibus).
+1. Migration: tabela + função + atualização da policy de `excursoes`
+2. Helper `link-excursionista.ts` (localStorage + upsert)
+3. Rota `/invite/excursionista/$id` (vitrine pública + auto-link)
+4. Integrar auto-link no `auth.tsx`
+5. Estado vazio no `passageiro.index.tsx`
