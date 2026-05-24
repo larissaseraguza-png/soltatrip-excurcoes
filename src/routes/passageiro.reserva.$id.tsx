@@ -301,8 +301,7 @@ function ReservaDetalhes() {
       </div>
 
       <Link
-        to={"/passageiro/itens/$id" as any}
-        params={{ id }}
+        to={`/passageiro/itens/${id}` as any}
         className="glass rounded-2xl p-4 mb-5 flex items-center gap-3 border border-neon-pink/30 hover:border-neon-pink/60 transition"
       >
         <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-neon-purple to-neon-pink grid place-items-center">
