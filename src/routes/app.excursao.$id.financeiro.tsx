@@ -471,20 +471,35 @@ function PedidoCard({
               <p className="text-[10px] uppercase tracking-wider font-bold text-muted-foreground">Itens</p>
               {row.pedidos.map((p) => {
                 const it = itemById.get(p.item_id);
-                const enviado = p.status === "enviado";
+                const recebido = p.status === "recebido";
+                const naoRecebido = p.status === "nao_recebido";
+                const enviado = p.status === "enviado" || recebido || naoRecebido;
+                const badgeClass = naoRecebido
+                  ? "bg-red-500/20 text-red-300 ring-1 ring-red-500/40"
+                  : recebido
+                  ? "bg-neon-green/25 text-neon-green"
+                  : enviado
+                  ? "bg-neon-green/15 text-neon-green"
+                  : "bg-yellow-400/15 text-yellow-300";
+                const badgeText = naoRecebido
+                  ? "Não recebido"
+                  : recebido
+                  ? "Recebido"
+                  : enviado
+                  ? "Enviado"
+                  : "Pendente";
                 return (
-                  <div key={p.id} className="flex items-center gap-2 rounded-lg bg-secondary/40 px-2.5 py-2">
+                  <div key={p.id} className={`flex items-center gap-2 rounded-lg px-2.5 py-2 ${naoRecebido ? "bg-red-500/10 ring-1 ring-red-500/30" : "bg-secondary/40"}`}>
                     {it?.inclui_excursao ? <Package className="size-3.5 text-neon-pink" /> : <Ticket className="size-3.5 text-neon-purple" />}
                     <div className="flex-1 min-w-0">
                       <p className="text-xs font-semibold truncate">{it?.nome ?? "Item"} · x{p.quantidade}</p>
                       <p className="text-[10px] text-muted-foreground">
                         {it?.tipo ?? "ingresso"}{it?.inclui_excursao ? " · combo" : ""} · {brl(Number(p.valor_total))}
+                        {naoRecebido && " · passageiro não recebeu"}
                       </p>
                     </div>
-                    <span className={`text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-full ${
-                      enviado ? "bg-neon-green/15 text-neon-green" : "bg-yellow-400/15 text-yellow-300"
-                    }`}>
-                      {enviado ? "Enviado" : "Pendente"}
+                    <span className={`text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-full ${badgeClass}`}>
+                      {badgeText}
                     </span>
                   </div>
                 );
