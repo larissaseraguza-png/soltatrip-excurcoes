@@ -841,6 +841,10 @@ export type Database = {
         }
         Returns: Database["public"]["Enums"]["app_role"]
       }
+      comprar_item: {
+        Args: { p_excursao_id: string; p_item_id: string; p_qtd: number }
+        Returns: string
+      }
       criar_reserva_grupo:
         | {
             Args: { p_excursao_id: string; p_passageiros: Json }
