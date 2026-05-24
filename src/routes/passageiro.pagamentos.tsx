@@ -96,6 +96,7 @@ function Pagamentos() {
         payment_links: { label: string; url: string; provider?: string }[] | null;
         organizer_name: string | null;
       };
+    },
   });
 
   useRealtimeSync(
