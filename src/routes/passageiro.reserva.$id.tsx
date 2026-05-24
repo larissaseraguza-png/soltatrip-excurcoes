@@ -68,7 +68,7 @@ function ReservaDetalhes() {
       const { data, error } = await supabase
         .from("passageiros")
         .select(
-          "id, nome, email, status, qr_code, seat_id, assento, ponto_embarque_id, convite_token, user_id, embarcado_em, onibus_id, onibus:onibus(id, nome, horario_saida, horario_retorno, ponto_partida, capacidade)",
+          "id, nome, email, status, qr_code, seat_id, assento, ponto_embarque_id, convite_token, user_id, embarcado_em, onibus_id, onibus:onibus(id, nome, horario_saida, horario_retorno, ponto_partida, capacidade, whatsapp_group_url)",
         )
         .eq("reserva_id", id)
         .order("created_at", { ascending: true });
