@@ -254,6 +254,11 @@ function ItemCard({ item, excursaoId, userId }: { item: any; excursaoId: string;
           <div className="flex items-center gap-2 flex-wrap">
             <span className="font-semibold">{item.nome}</span>
             <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">{meta.label}</span>
+            {ehCombo && (
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-gradient-to-r from-neon-purple to-neon-pink text-primary-foreground font-bold">
+                COMBO • INCLUI EXCURSÃO
+              </span>
+            )}
             {esgotado && (
               <span className="text-[10px] px-2 py-0.5 rounded-full bg-red-500/15 text-red-400 font-bold">
                 ESGOTADO
