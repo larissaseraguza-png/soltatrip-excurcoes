@@ -72,15 +72,32 @@ function PassageiroDetalhe() {
     },
   });
 
+  const { data: pedidos = [] } = useQuery({
+    queryKey: ["staff-pax-pedidos", id, pax?.excursao_id],
+    enabled: !!pax?.excursao_id,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("pedidos_itens")
+        .select("id,quantidade,valor_total,status,enviado_em,recebido_em,nao_recebido_em,item:excursao_itens(nome,tipo)")
+        .eq("excursao_id", pax!.excursao_id)
+        .eq("passageiro_id", id)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
   useRealtimeSync(
     `staff-pax-${id}`,
     [
       { table: "passageiros", filter: `id=eq.${id}` },
       { table: "pagamentos", filter: `passageiro_id=eq.${id}` },
+      { table: "pedidos_itens", filter: `passageiro_id=eq.${id}` },
     ],
     [
       ["staff-pax-detalhe", id],
       ["staff-pax-pgto", id],
+      ["staff-pax-pedidos", id],
     ],
   );
 
