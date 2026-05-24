@@ -297,6 +297,29 @@ function ReservaDetalhes() {
         <Info4 icon={Users} label="Passageiros" value={String(reserva.quantidade)} />
       </div>
 
+      {/* Grupo WhatsApp — liberado após primeiro pagamento */}
+      {pago > 0 && (() => {
+        const waUrl = onibusInfo?.whatsapp_group_url ?? ex?.whatsapp_group_url ?? null;
+        if (!waUrl) {
+          return (
+            <div className="glass rounded-3xl p-4 mb-5 text-center text-xs text-muted-foreground">
+              O organizador ainda não cadastrou o link do grupo de WhatsApp.
+            </div>
+          );
+        }
+        return (
+          <a
+            href={waUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="mb-5 w-full h-14 rounded-2xl bg-gradient-to-r from-neon-green to-neon-purple text-primary-foreground font-display font-bold flex items-center justify-center gap-2 glow-primary"
+          >
+            <MessageCircle className="size-5" /> Entrar no grupo da excursão
+          </a>
+        );
+      })()}
+
+
       {/* Ônibus do passageiro */}
       {onibusInfo && (
         <div className="glass rounded-3xl p-5 mb-5 border border-neon-purple/30">
