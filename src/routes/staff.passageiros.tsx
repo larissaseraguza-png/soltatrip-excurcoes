@@ -150,6 +150,7 @@ function PassageirosStaff() {
           {filtered.map((p) => {
             const ponto = p.ponto_embarque_id ? pontoById.get(p.ponto_embarque_id) : null;
             const seat = p.assento ?? (p.seat_id ? seatById.get(p.seat_id) : null) ?? "—";
+            const ped = pedidosByPax.get(p.id);
             return (
               <Link key={p.id} to="/staff/passageiro/$id" params={{ id: p.id }} className="glass rounded-2xl p-4 block hover:border-neon-green/50 border border-transparent transition">
                 <div className="flex items-center gap-3">
@@ -157,9 +158,17 @@ function PassageirosStaff() {
                     {p.nome.split(" ").map((n) => n[0]).slice(0, 2).join("")}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
+                    <div className="flex items-center gap-2 mb-1 flex-wrap">
                       <p className="font-semibold truncate">{p.nome}</p>
                       <Pill tone={p.status === "confirmado" ? "green" : "yellow"}>{p.status}</Pill>
+                      {ped && ped.naoRecebidos > 0 && (
+                        <Pill tone="red"><AlertCircle className="size-3 inline mr-0.5" />{ped.naoRecebidos} não recebido</Pill>
+                      )}
+                      {ped && ped.total > 0 && ped.naoRecebidos === 0 && (
+                        <Pill tone={ped.pendentes > 0 ? "yellow" : "green"}>
+                          <Ticket className="size-3 inline mr-0.5" />{ped.total}
+                        </Pill>
+                      )}
                     </div>
                     <div className="grid gap-1 text-xs text-muted-foreground">
                       <span className="flex items-center gap-1"><Phone className="size-3" /> {p.telefone ?? "sem telefone"}</span>
