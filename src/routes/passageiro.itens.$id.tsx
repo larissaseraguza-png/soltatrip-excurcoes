@@ -298,7 +298,7 @@ function ItemCard({ item, excursaoId, userId }: { item: any; excursaoId: string;
             className="flex-1 h-9 rounded-xl bg-gradient-to-r from-neon-purple to-neon-pink text-primary-foreground font-bold text-sm flex items-center justify-center gap-2 disabled:opacity-50"
           >
             {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShoppingBag className="h-4 w-4" />}
-            Pedir {brl(Number(item.valor) * qtd)}
+            {ehCombo ? "Reservar combo" : "Pedir"} {brl(Number(item.valor) * qtd)}
           </button>
         </div>
       )}
