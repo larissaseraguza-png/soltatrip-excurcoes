@@ -338,8 +338,11 @@ function FinanceiroPage() {
 
 function needsAction(r: { passageiro: { payment_status: string } | null; pedidos: { status: string }[] }) {
   const payPending = r.passageiro && r.passageiro.payment_status !== "paid";
-  const ticketPending = r.pedidos.some((p) => p.status !== "enviado" && p.status !== "cancelado");
-  return Boolean(payPending || ticketPending);
+  const ticketPending = r.pedidos.some(
+    (p) => p.status !== "enviado" && p.status !== "recebido" && p.status !== "cancelado",
+  );
+  const naoRecebido = r.pedidos.some((p) => p.status === "nao_recebido");
+  return Boolean(payPending || ticketPending || naoRecebido);
 }
 
 function PedidoCard({
