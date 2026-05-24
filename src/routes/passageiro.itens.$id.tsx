@@ -8,7 +8,7 @@ import { useRealtimeSync } from "@/hooks/use-realtime-sync";
 import {
   ArrowLeft, Loader2, Plus, Minus, ShoppingBag, Ticket, Tent, HeartHandshake,
   Crown, KeyRound, Package, Clock, CheckCircle2, Mail, Copy, QrCode,
-  CreditCard, ExternalLink,
+  CreditCard, ExternalLink, ThumbsUp, AlertTriangle, CircleDot,
 } from "lucide-react";
 import { Shell } from "@/components/passageiro/Shell";
 
@@ -139,25 +139,10 @@ function ItensPassageiro() {
           <h2 className="font-display font-bold text-sm uppercase tracking-wider text-muted-foreground mb-2">
             Meus pedidos
           </h2>
-          <ul className="space-y-2">
+          <ul className="space-y-3">
             {meusPedidos.map((p: any) => {
               const it: any = itemMap.get(p.item_id);
-              return (
-                <li key={p.id} className="glass rounded-2xl p-3 flex items-center gap-3">
-                  <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-sm truncate">
-                      {it?.nome ?? "Item"} <span className="text-muted-foreground">× {p.quantidade}</span>
-                    </p>
-                    <p className="text-xs text-neon-green font-bold">{brl(p.valor_total)}</p>
-                    {p.emitido_em && (
-                      <p className="text-[10px] text-muted-foreground">
-                        Emitido em {new Date(p.emitido_em).toLocaleDateString("pt-BR")}
-                      </p>
-                    )}
-                  </div>
-                  <Status status={p.status} />
-                </li>
-              );
+              return <PedidoCard key={p.id} pedido={p} item={it} excursaoId={id} userId={user?.id} />;
             })}
           </ul>
         </>
@@ -334,11 +319,126 @@ function ItemCard({ item, excursaoId, userId }: { item: any; excursaoId: string;
 }
 
 function Status({ status }: { status: string }) {
+  if (status === "recebido")
+    return <span className="text-[10px] px-2 py-0.5 rounded-full bg-neon-green/20 text-neon-green font-bold inline-flex items-center gap-1"><ThumbsUp className="h-3 w-3" />Recebido</span>;
+  if (status === "nao_recebido")
+    return <span className="text-[10px] px-2 py-0.5 rounded-full bg-red-500/15 text-red-400 font-bold inline-flex items-center gap-1"><AlertTriangle className="h-3 w-3" />Não recebido</span>;
   if (status === "enviado")
     return <span className="text-[10px] px-2 py-0.5 rounded-full bg-neon-green/15 text-neon-green font-bold inline-flex items-center gap-1"><Mail className="h-3 w-3" />Enviado por e-mail</span>;
   if (status === "emitido")
     return <span className="text-[10px] px-2 py-0.5 rounded-full bg-neon-purple/15 text-neon-purple font-bold inline-flex items-center gap-1"><CheckCircle2 className="h-3 w-3" />Emitido</span>;
-  return <span className="text-[10px] px-2 py-0.5 rounded-full bg-yellow-500/15 text-yellow-400 font-bold inline-flex items-center gap-1"><Clock className="h-3 w-3" />Pendente</span>;
+  return <span className="text-[10px] px-2 py-0.5 rounded-full bg-yellow-500/15 text-yellow-400 font-bold inline-flex items-center gap-1"><Clock className="h-3 w-3" />Aguardando</span>;
+}
+
+function PedidoCard({ pedido, item, excursaoId, userId }: { pedido: any; item: any; excursaoId: string; userId?: string }) {
+  const qc = useQueryClient();
+  const [busy, setBusy] = useState(false);
+
+  const jaEnviado = pedido.status === "enviado" || pedido.status === "emitido" || pedido.status === "recebido" || pedido.status === "nao_recebido";
+  const finalizado = pedido.status === "recebido";
+  const naoRecebido = pedido.status === "nao_recebido";
+  const podeConfirmar = pedido.status === "enviado" || pedido.status === "emitido";
+
+  async function marcar(novoStatus: "recebido" | "nao_recebido") {
+    setBusy(true);
+    try {
+      const patch: any = { status: novoStatus };
+      if (novoStatus === "recebido") patch.recebido_em = new Date().toISOString();
+      else patch.nao_recebido_em = new Date().toISOString();
+      const { error } = await supabase.from("pedidos_itens").update(patch).eq("id", pedido.id);
+      if (error) throw error;
+      toast.success(novoStatus === "recebido" ? "Recebimento confirmado." : "Aviso enviado ao organizador.");
+      qc.invalidateQueries({ queryKey: ["pax-pedidos", excursaoId, userId] });
+    } catch (e: any) {
+      toast.error(e.message ?? "Erro ao atualizar.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const steps = [
+    { key: "pedido", label: "Pedido feito", done: true },
+    { key: "pago", label: "Pagamento confirmado", done: jaEnviado },
+    { key: "enviado", label: "Ingresso enviado", done: jaEnviado },
+    { key: "recebido", label: "Recebido", done: finalizado, alert: naoRecebido },
+  ];
+
+  return (
+    <li className="glass rounded-2xl p-4">
+      <div className="flex items-start gap-3 mb-3">
+        <div className="flex-1 min-w-0">
+          <p className="font-semibold text-sm truncate">
+            {item?.nome ?? "Item"} <span className="text-muted-foreground">× {pedido.quantidade}</span>
+          </p>
+          <p className="text-xs text-neon-green font-bold">{brl(pedido.valor_total)}</p>
+        </div>
+        <Status status={pedido.status} />
+      </div>
+
+      <ol className="space-y-1.5 mb-3">
+        {steps.map((s, i) => (
+          <li key={s.key} className="flex items-center gap-2 text-xs">
+            {s.alert ? (
+              <AlertTriangle className="h-3.5 w-3.5 text-red-400 shrink-0" />
+            ) : s.done ? (
+              <CheckCircle2 className="h-3.5 w-3.5 text-neon-green shrink-0" />
+            ) : (
+              <CircleDot className="h-3.5 w-3.5 text-muted-foreground/50 shrink-0" />
+            )}
+            <span className={s.done ? "text-foreground" : "text-muted-foreground"}>{s.label}</span>
+            {s.key === "enviado" && pedido.enviado_em && (
+              <span className="text-[10px] text-muted-foreground ml-auto">
+                {new Date(pedido.enviado_em).toLocaleDateString("pt-BR")}
+              </span>
+            )}
+            {s.key === "recebido" && pedido.recebido_em && (
+              <span className="text-[10px] text-muted-foreground ml-auto">
+                {new Date(pedido.recebido_em).toLocaleDateString("pt-BR")}
+              </span>
+            )}
+          </li>
+        ))}
+      </ol>
+
+      {podeConfirmar && (
+        <div className="grid grid-cols-2 gap-2">
+          <button
+            onClick={() => marcar("recebido")}
+            disabled={busy}
+            className="h-9 rounded-xl bg-gradient-to-r from-neon-green/80 to-neon-green text-background font-bold text-xs flex items-center justify-center gap-1 disabled:opacity-50"
+          >
+            <ThumbsUp className="h-3.5 w-3.5" /> Recebi ingresso
+          </button>
+          <button
+            onClick={() => marcar("nao_recebido")}
+            disabled={busy}
+            className="h-9 rounded-xl bg-red-500/15 text-red-400 border border-red-500/30 font-bold text-xs flex items-center justify-center gap-1 disabled:opacity-50"
+          >
+            <AlertTriangle className="h-3.5 w-3.5" /> Não recebi
+          </button>
+        </div>
+      )}
+
+      {naoRecebido && (
+        <div className="rounded-xl bg-red-500/10 border border-red-500/30 px-3 py-2 text-[11px] text-red-300">
+          O organizador foi avisado. Em breve entrarão em contato.
+          <button
+            onClick={() => marcar("recebido")}
+            disabled={busy}
+            className="ml-2 underline font-bold"
+          >
+            Recebi agora
+          </button>
+        </div>
+      )}
+
+      {finalizado && (
+        <p className="text-[11px] text-neon-green flex items-center gap-1">
+          <CheckCircle2 className="h-3 w-3" /> Recebimento confirmado por você.
+        </p>
+      )}
+    </li>
+  );
 }
 
 function PaymentPanel({ payInfo }: { payInfo: any }) {

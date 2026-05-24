@@ -38,6 +38,7 @@ type PedidoItem = {
   id: string; passageiro_id: string | null; comprador_id: string;
   item_id: string; quantidade: number; valor_unitario: number; valor_total: number;
   status: string; emitido_em: string | null; enviado_em: string | null;
+  recebido_em: string | null; nao_recebido_em: string | null;
   observacao: string | null; created_at: string;
 };
 
@@ -104,7 +105,7 @@ function FinanceiroPage() {
       const { data } = await supabase
         .from("pedidos_itens")
         .select(
-          "id,passageiro_id,comprador_id,item_id,quantidade,valor_unitario,valor_total,status,emitido_em,enviado_em,observacao,created_at",
+          "id,passageiro_id,comprador_id,item_id,quantidade,valor_unitario,valor_total,status,emitido_em,enviado_em,recebido_em,nao_recebido_em,observacao,created_at",
         )
         .eq("excursao_id", id)
         .order("created_at", { ascending: false });
@@ -337,8 +338,11 @@ function FinanceiroPage() {
 
 function needsAction(r: { passageiro: { payment_status: string } | null; pedidos: { status: string }[] }) {
   const payPending = r.passageiro && r.passageiro.payment_status !== "paid";
-  const ticketPending = r.pedidos.some((p) => p.status !== "enviado" && p.status !== "cancelado");
-  return Boolean(payPending || ticketPending);
+  const ticketPending = r.pedidos.some(
+    (p) => p.status !== "enviado" && p.status !== "recebido" && p.status !== "cancelado",
+  );
+  const naoRecebido = r.pedidos.some((p) => p.status === "nao_recebido");
+  return Boolean(payPending || ticketPending || naoRecebido);
 }
 
 function PedidoCard({
@@ -382,7 +386,10 @@ function PedidoCard({
   const onibus = pax?.onibus_id ? onibusById.get(pax.onibus_id) : null;
   const ponto = pax?.ponto_embarque_id ? pontoById.get(pax.ponto_embarque_id) : null;
 
-  const ingressosPendentes = row.pedidos.filter((p) => p.status !== "enviado" && p.status !== "cancelado");
+  const ingressosPendentes = row.pedidos.filter(
+    (p) => p.status !== "enviado" && p.status !== "recebido" && p.status !== "nao_recebido" && p.status !== "cancelado",
+  );
+  const naoRecebidos = row.pedidos.filter((p) => p.status === "nao_recebido");
   const precisaPag = pax && payStatus !== "paid" && totalGeral > 0;
 
   return (
@@ -440,6 +447,27 @@ function PedidoCard({
         </div>
       )}
 
+      {naoRecebidos.length > 0 && (
+        <div className="mt-3 rounded-xl bg-red-500/10 border border-red-500/40 px-3 py-2 text-[11px] text-red-300 flex items-start gap-2">
+          <span className="font-bold">⚠️</span>
+          <div className="flex-1">
+            <p className="font-bold uppercase tracking-wider text-[10px]">Passageiro não recebeu</p>
+            <p className="text-red-300/90">
+              {naoRecebidos.map((p) => itemById.get(p.item_id)?.nome ?? "Ingresso").join(", ")} — reenvie e confirme com o passageiro.
+            </p>
+          </div>
+          {naoRecebidos.map((p) => (
+            <button
+              key={p.id}
+              onClick={() => onMarcarEnviado(p)}
+              className="text-[10px] uppercase tracking-wider font-bold px-2.5 py-1 rounded-full bg-neon-pink/20 text-neon-pink border border-neon-pink/40 shrink-0"
+            >
+              Reenviar
+            </button>
+          ))}
+        </div>
+      )}
+
       <button
         onClick={() => setOpen((v) => !v)}
         className="mt-3 text-[11px] text-muted-foreground inline-flex items-center gap-1 hover:text-foreground"
@@ -470,20 +498,35 @@ function PedidoCard({
               <p className="text-[10px] uppercase tracking-wider font-bold text-muted-foreground">Itens</p>
               {row.pedidos.map((p) => {
                 const it = itemById.get(p.item_id);
-                const enviado = p.status === "enviado";
+                const recebido = p.status === "recebido";
+                const naoRecebido = p.status === "nao_recebido";
+                const enviado = p.status === "enviado" || recebido || naoRecebido;
+                const badgeClass = naoRecebido
+                  ? "bg-red-500/20 text-red-300 ring-1 ring-red-500/40"
+                  : recebido
+                  ? "bg-neon-green/25 text-neon-green"
+                  : enviado
+                  ? "bg-neon-green/15 text-neon-green"
+                  : "bg-yellow-400/15 text-yellow-300";
+                const badgeText = naoRecebido
+                  ? "Não recebido"
+                  : recebido
+                  ? "Recebido"
+                  : enviado
+                  ? "Enviado"
+                  : "Pendente";
                 return (
-                  <div key={p.id} className="flex items-center gap-2 rounded-lg bg-secondary/40 px-2.5 py-2">
+                  <div key={p.id} className={`flex items-center gap-2 rounded-lg px-2.5 py-2 ${naoRecebido ? "bg-red-500/10 ring-1 ring-red-500/30" : "bg-secondary/40"}`}>
                     {it?.inclui_excursao ? <Package className="size-3.5 text-neon-pink" /> : <Ticket className="size-3.5 text-neon-purple" />}
                     <div className="flex-1 min-w-0">
                       <p className="text-xs font-semibold truncate">{it?.nome ?? "Item"} · x{p.quantidade}</p>
                       <p className="text-[10px] text-muted-foreground">
                         {it?.tipo ?? "ingresso"}{it?.inclui_excursao ? " · combo" : ""} · {brl(Number(p.valor_total))}
+                        {naoRecebido && " · passageiro não recebeu"}
                       </p>
                     </div>
-                    <span className={`text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-full ${
-                      enviado ? "bg-neon-green/15 text-neon-green" : "bg-yellow-400/15 text-yellow-300"
-                    }`}>
-                      {enviado ? "Enviado" : "Pendente"}
+                    <span className={`text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-full ${badgeClass}`}>
+                      {badgeText}
                     </span>
                   </div>
                 );
