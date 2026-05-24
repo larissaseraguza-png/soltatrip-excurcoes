@@ -54,7 +54,6 @@ function BottomNav() {
   const items = [
     { to: "/passageiro", icon: Ticket, label: "Viagens" },
     { to: "/passageiro/pagamentos", icon: Wallet, label: "Pagar" },
-    { to: "/passageiro/chat", icon: MessageCircle, label: "Avisos" },
     { to: "/passageiro/suporte", icon: LifeBuoy, label: "Suporte" },
     { to: "/passageiro/perfil", icon: User, label: "Perfil" },
   ];
