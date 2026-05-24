@@ -107,6 +107,18 @@ function PassageirosStaff() {
 
   const seatById = useMemo(() => new Map((seats as any[]).map((s) => [s.id, s.seat_number])), [seats]);
   const pontoById = useMemo(() => new Map(pontos.map((p) => [p.id, p])), [pontos]);
+  const pedidosByPax = useMemo(() => {
+    const m = new Map<string, { total: number; pendentes: number; naoRecebidos: number }>();
+    (pedidos as any[]).forEach((p) => {
+      if (!p.passageiro_id) return;
+      const cur = m.get(p.passageiro_id) ?? { total: 0, pendentes: 0, naoRecebidos: 0 };
+      cur.total += 1;
+      if (p.nao_recebido_em) cur.naoRecebidos += 1;
+      else if (!p.recebido_em && !p.enviado_em) cur.pendentes += 1;
+      m.set(p.passageiro_id, cur);
+    });
+    return m;
+  }, [pedidos]);
   const filtered = passageiros.filter((p) =>
     p.nome.toLowerCase().includes(search.toLowerCase()) || (p.telefone ?? "").includes(search),
   );
