@@ -105,6 +105,21 @@ function MinhasViagens() {
     },
   });
 
+  const { data: itensEx = [] } = useQuery({
+    queryKey: ["itens-publicos", modalEx?.id],
+    enabled: !!modalEx,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("excursao_itens")
+        .select("*")
+        .eq("excursao_id", modalEx!.id)
+        .eq("ativo", true)
+        .neq("status", "oculto")
+        .order("ordem", { ascending: true });
+      return data ?? [];
+    },
+  });
+
   useRealtimeSync(
     `minhas-reservas-${user?.id ?? "anon"}`,
     user
