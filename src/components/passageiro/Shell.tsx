@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Ticket, Wallet, MessageCircle, User, LifeBuoy, ArrowLeft, Bell } from "lucide-react";
+import { Ticket, Wallet, MessageCircle, User, LifeBuoy, ArrowLeft, Bell, Sparkles } from "lucide-react";
 import type { ReactNode } from "react";
 
 type ShellProps = {
@@ -53,6 +53,7 @@ function BottomNav() {
   const path = useRouterState({ select: (s) => s.location.pathname });
   const items = [
     { to: "/passageiro", icon: Ticket, label: "Viagens" },
+    { to: "/passageiro/evento", icon: Sparkles, label: "Evento" },
     { to: "/passageiro/pagamentos", icon: Wallet, label: "Pagar" },
     { to: "/passageiro/suporte", icon: LifeBuoy, label: "Suporte" },
     { to: "/passageiro/perfil", icon: User, label: "Perfil" },

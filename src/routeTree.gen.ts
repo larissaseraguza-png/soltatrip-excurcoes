@@ -35,6 +35,7 @@ import { Route as PassageiroPoltronaRouteImport } from './routes/passageiro.polt
 import { Route as PassageiroPerfilRouteImport } from './routes/passageiro.perfil'
 import { Route as PassageiroPagamentosRouteImport } from './routes/passageiro.pagamentos'
 import { Route as PassageiroInformacoesRouteImport } from './routes/passageiro.informacoes'
+import { Route as PassageiroEventoRouteImport } from './routes/passageiro.evento'
 import { Route as ExcursionistaPassageirosRouteImport } from './routes/excursionista.passageiros'
 import { Route as ExcursionistaInfoRouteImport } from './routes/excursionista.info'
 import { Route as ExcursionistaFinanceiroRouteImport } from './routes/excursionista.financeiro'
@@ -194,6 +195,11 @@ const PassageiroPagamentosRoute = PassageiroPagamentosRouteImport.update({
 const PassageiroInformacoesRoute = PassageiroInformacoesRouteImport.update({
   id: '/informacoes',
   path: '/informacoes',
+  getParentRoute: () => PassageiroRoute,
+} as any)
+const PassageiroEventoRoute = PassageiroEventoRouteImport.update({
+  id: '/evento',
+  path: '/evento',
   getParentRoute: () => PassageiroRoute,
 } as any)
 const ExcursionistaPassageirosRoute =
@@ -370,6 +376,7 @@ export interface FileRoutesByFullPath {
   '/excursionista/financeiro': typeof ExcursionistaFinanceiroRoute
   '/excursionista/info': typeof ExcursionistaInfoRoute
   '/excursionista/passageiros': typeof ExcursionistaPassageirosRoute
+  '/passageiro/evento': typeof PassageiroEventoRoute
   '/passageiro/informacoes': typeof PassageiroInformacoesRoute
   '/passageiro/pagamentos': typeof PassageiroPagamentosRoute
   '/passageiro/perfil': typeof PassageiroPerfilRoute
@@ -424,6 +431,7 @@ export interface FileRoutesByTo {
   '/excursionista/financeiro': typeof ExcursionistaFinanceiroRoute
   '/excursionista/info': typeof ExcursionistaInfoRoute
   '/excursionista/passageiros': typeof ExcursionistaPassageirosRoute
+  '/passageiro/evento': typeof PassageiroEventoRoute
   '/passageiro/informacoes': typeof PassageiroInformacoesRoute
   '/passageiro/pagamentos': typeof PassageiroPagamentosRoute
   '/passageiro/perfil': typeof PassageiroPerfilRoute
@@ -482,6 +490,7 @@ export interface FileRoutesById {
   '/excursionista/financeiro': typeof ExcursionistaFinanceiroRoute
   '/excursionista/info': typeof ExcursionistaInfoRoute
   '/excursionista/passageiros': typeof ExcursionistaPassageirosRoute
+  '/passageiro/evento': typeof PassageiroEventoRoute
   '/passageiro/informacoes': typeof PassageiroInformacoesRoute
   '/passageiro/pagamentos': typeof PassageiroPagamentosRoute
   '/passageiro/perfil': typeof PassageiroPerfilRoute
@@ -542,6 +551,7 @@ export interface FileRouteTypes {
     | '/excursionista/financeiro'
     | '/excursionista/info'
     | '/excursionista/passageiros'
+    | '/passageiro/evento'
     | '/passageiro/informacoes'
     | '/passageiro/pagamentos'
     | '/passageiro/perfil'
@@ -596,6 +606,7 @@ export interface FileRouteTypes {
     | '/excursionista/financeiro'
     | '/excursionista/info'
     | '/excursionista/passageiros'
+    | '/passageiro/evento'
     | '/passageiro/informacoes'
     | '/passageiro/pagamentos'
     | '/passageiro/perfil'
@@ -653,6 +664,7 @@ export interface FileRouteTypes {
     | '/excursionista/financeiro'
     | '/excursionista/info'
     | '/excursionista/passageiros'
+    | '/passageiro/evento'
     | '/passageiro/informacoes'
     | '/passageiro/pagamentos'
     | '/passageiro/perfil'
@@ -886,6 +898,13 @@ declare module '@tanstack/react-router' {
       path: '/informacoes'
       fullPath: '/passageiro/informacoes'
       preLoaderRoute: typeof PassageiroInformacoesRouteImport
+      parentRoute: typeof PassageiroRoute
+    }
+    '/passageiro/evento': {
+      id: '/passageiro/evento'
+      path: '/evento'
+      fullPath: '/passageiro/evento'
+      preLoaderRoute: typeof PassageiroEventoRouteImport
       parentRoute: typeof PassageiroRoute
     }
     '/excursionista/passageiros': {
@@ -1191,6 +1210,7 @@ const ExcursionistaRouteWithChildren = ExcursionistaRoute._addFileChildren(
 )
 
 interface PassageiroRouteChildren {
+  PassageiroEventoRoute: typeof PassageiroEventoRoute
   PassageiroInformacoesRoute: typeof PassageiroInformacoesRoute
   PassageiroPagamentosRoute: typeof PassageiroPagamentosRoute
   PassageiroPerfilRoute: typeof PassageiroPerfilRoute
@@ -1205,6 +1225,7 @@ interface PassageiroRouteChildren {
 }
 
 const PassageiroRouteChildren: PassageiroRouteChildren = {
+  PassageiroEventoRoute: PassageiroEventoRoute,
   PassageiroInformacoesRoute: PassageiroInformacoesRoute,
   PassageiroPagamentosRoute: PassageiroPagamentosRoute,
   PassageiroPerfilRoute: PassageiroPerfilRoute,
