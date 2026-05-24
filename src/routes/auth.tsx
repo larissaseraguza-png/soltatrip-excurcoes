@@ -8,6 +8,8 @@ import {
   Loader2,
   Mail,
   Lock,
+  Eye,
+  EyeOff,
   AlertCircle,
   Crown,
   Shield,
