@@ -213,7 +213,12 @@ function AuthPage() {
       } else {
         // Login
         const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) throw error;
+        if (error) {
+          if (/email.*not.*confirmed/i.test(error.message)) {
+            throw new Error("Seu e-mail ainda não foi confirmado. Verifique sua caixa de entrada.");
+          }
+          throw error;
+        }
         if (!data.user) throw new Error("Falha ao entrar.");
 
         // Valida função
