@@ -80,6 +80,24 @@ function Pagamentos() {
     },
   });
 
+  const { data: payInfo } = useQuery({
+    queryKey: ["organizer-payment-info", reservaAtiva?.excursao?.id],
+    enabled: !!reservaAtiva?.excursao?.id,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("get_excursao_payment_info", {
+        p_excursao_id: reservaAtiva.excursao.id,
+      });
+      if (error) throw error;
+      const row = Array.isArray(data) ? data[0] : data;
+      return (row ?? null) as null | {
+        pix_key: string | null;
+        pix_recipient: string | null;
+        pix_qr_url: string | null;
+        payment_links: { label: string; url: string; provider?: string }[] | null;
+        organizer_name: string | null;
+      };
+  });
+
   useRealtimeSync(
     `pagto-${user?.id ?? "anon"}-${reservaAtiva?.id ?? "none"}`,
     reservaAtiva?.id
