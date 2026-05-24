@@ -50,6 +50,7 @@ import { Route as AppCustosRouteImport } from './routes/app.custos'
 import { Route as StaffPassageiroIdRouteImport } from './routes/staff.passageiro.$id'
 import { Route as PassageiroViagemIdRouteImport } from './routes/passageiro.viagem.$id'
 import { Route as PassageiroReservaIdRouteImport } from './routes/passageiro.reserva.$id'
+import { Route as PassageiroItensIdRouteImport } from './routes/passageiro.itens.$id'
 import { Route as InviteStaffTokenRouteImport } from './routes/invite.staff.$token'
 import { Route as InvitePassageiroTokenRouteImport } from './routes/invite.passageiro.$token'
 import { Route as ExcursionistaExcursaoIdRouteImport } from './routes/excursionista.excursao.$id'
@@ -59,6 +60,7 @@ import { Route as AppExcursaoIdIndexRouteImport } from './routes/app.excursao.$i
 import { Route as AppExcursaoIdPontosRouteImport } from './routes/app.excursao.$id.pontos'
 import { Route as AppExcursaoIdPassageirosRouteImport } from './routes/app.excursao.$id.passageiros'
 import { Route as AppExcursaoIdOnibusRouteImport } from './routes/app.excursao.$id.onibus'
+import { Route as AppExcursaoIdItensRouteImport } from './routes/app.excursao.$id.itens'
 import { Route as AppExcursaoIdFinanceiroRouteImport } from './routes/app.excursao.$id.financeiro'
 import { Route as AppExcursaoIdEquipeRouteImport } from './routes/app.excursao.$id.equipe'
 import { Route as AppExcursaoIdCheckinRouteImport } from './routes/app.excursao.$id.checkin'
@@ -270,6 +272,11 @@ const PassageiroReservaIdRoute = PassageiroReservaIdRouteImport.update({
   path: '/reserva/$id',
   getParentRoute: () => PassageiroRoute,
 } as any)
+const PassageiroItensIdRoute = PassageiroItensIdRouteImport.update({
+  id: '/itens/$id',
+  path: '/itens/$id',
+  getParentRoute: () => PassageiroRoute,
+} as any)
 const InviteStaffTokenRoute = InviteStaffTokenRouteImport.update({
   id: '/invite/staff/$token',
   path: '/invite/staff/$token',
@@ -314,6 +321,11 @@ const AppExcursaoIdPassageirosRoute =
 const AppExcursaoIdOnibusRoute = AppExcursaoIdOnibusRouteImport.update({
   id: '/onibus',
   path: '/onibus',
+  getParentRoute: () => AppExcursaoIdRoute,
+} as any)
+const AppExcursaoIdItensRoute = AppExcursaoIdItensRouteImport.update({
+  id: '/itens',
+  path: '/itens',
   getParentRoute: () => AppExcursaoIdRoute,
 } as any)
 const AppExcursaoIdFinanceiroRoute = AppExcursaoIdFinanceiroRouteImport.update({
@@ -382,12 +394,14 @@ export interface FileRoutesByFullPath {
   '/excursionista/excursao/$id': typeof ExcursionistaExcursaoIdRoute
   '/invite/passageiro/$token': typeof InvitePassageiroTokenRoute
   '/invite/staff/$token': typeof InviteStaffTokenRoute
+  '/passageiro/itens/$id': typeof PassageiroItensIdRoute
   '/passageiro/reserva/$id': typeof PassageiroReservaIdRoute
   '/passageiro/viagem/$id': typeof PassageiroViagemIdRoute
   '/staff/passageiro/$id': typeof StaffPassageiroIdRoute
   '/app/excursao/$id/checkin': typeof AppExcursaoIdCheckinRoute
   '/app/excursao/$id/equipe': typeof AppExcursaoIdEquipeRoute
   '/app/excursao/$id/financeiro': typeof AppExcursaoIdFinanceiroRoute
+  '/app/excursao/$id/itens': typeof AppExcursaoIdItensRoute
   '/app/excursao/$id/onibus': typeof AppExcursaoIdOnibusRouteWithChildren
   '/app/excursao/$id/passageiros': typeof AppExcursaoIdPassageirosRoute
   '/app/excursao/$id/pontos': typeof AppExcursaoIdPontosRoute
@@ -433,12 +447,14 @@ export interface FileRoutesByTo {
   '/excursionista/excursao/$id': typeof ExcursionistaExcursaoIdRoute
   '/invite/passageiro/$token': typeof InvitePassageiroTokenRoute
   '/invite/staff/$token': typeof InviteStaffTokenRoute
+  '/passageiro/itens/$id': typeof PassageiroItensIdRoute
   '/passageiro/reserva/$id': typeof PassageiroReservaIdRoute
   '/passageiro/viagem/$id': typeof PassageiroViagemIdRoute
   '/staff/passageiro/$id': typeof StaffPassageiroIdRoute
   '/app/excursao/$id/checkin': typeof AppExcursaoIdCheckinRoute
   '/app/excursao/$id/equipe': typeof AppExcursaoIdEquipeRoute
   '/app/excursao/$id/financeiro': typeof AppExcursaoIdFinanceiroRoute
+  '/app/excursao/$id/itens': typeof AppExcursaoIdItensRoute
   '/app/excursao/$id/onibus': typeof AppExcursaoIdOnibusRouteWithChildren
   '/app/excursao/$id/passageiros': typeof AppExcursaoIdPassageirosRoute
   '/app/excursao/$id/pontos': typeof AppExcursaoIdPontosRoute
@@ -490,12 +506,14 @@ export interface FileRoutesById {
   '/excursionista/excursao/$id': typeof ExcursionistaExcursaoIdRoute
   '/invite/passageiro/$token': typeof InvitePassageiroTokenRoute
   '/invite/staff/$token': typeof InviteStaffTokenRoute
+  '/passageiro/itens/$id': typeof PassageiroItensIdRoute
   '/passageiro/reserva/$id': typeof PassageiroReservaIdRoute
   '/passageiro/viagem/$id': typeof PassageiroViagemIdRoute
   '/staff/passageiro/$id': typeof StaffPassageiroIdRoute
   '/app/excursao/$id/checkin': typeof AppExcursaoIdCheckinRoute
   '/app/excursao/$id/equipe': typeof AppExcursaoIdEquipeRoute
   '/app/excursao/$id/financeiro': typeof AppExcursaoIdFinanceiroRoute
+  '/app/excursao/$id/itens': typeof AppExcursaoIdItensRoute
   '/app/excursao/$id/onibus': typeof AppExcursaoIdOnibusRouteWithChildren
   '/app/excursao/$id/passageiros': typeof AppExcursaoIdPassageirosRoute
   '/app/excursao/$id/pontos': typeof AppExcursaoIdPontosRoute
@@ -548,12 +566,14 @@ export interface FileRouteTypes {
     | '/excursionista/excursao/$id'
     | '/invite/passageiro/$token'
     | '/invite/staff/$token'
+    | '/passageiro/itens/$id'
     | '/passageiro/reserva/$id'
     | '/passageiro/viagem/$id'
     | '/staff/passageiro/$id'
     | '/app/excursao/$id/checkin'
     | '/app/excursao/$id/equipe'
     | '/app/excursao/$id/financeiro'
+    | '/app/excursao/$id/itens'
     | '/app/excursao/$id/onibus'
     | '/app/excursao/$id/passageiros'
     | '/app/excursao/$id/pontos'
@@ -599,12 +619,14 @@ export interface FileRouteTypes {
     | '/excursionista/excursao/$id'
     | '/invite/passageiro/$token'
     | '/invite/staff/$token'
+    | '/passageiro/itens/$id'
     | '/passageiro/reserva/$id'
     | '/passageiro/viagem/$id'
     | '/staff/passageiro/$id'
     | '/app/excursao/$id/checkin'
     | '/app/excursao/$id/equipe'
     | '/app/excursao/$id/financeiro'
+    | '/app/excursao/$id/itens'
     | '/app/excursao/$id/onibus'
     | '/app/excursao/$id/passageiros'
     | '/app/excursao/$id/pontos'
@@ -655,12 +677,14 @@ export interface FileRouteTypes {
     | '/excursionista/excursao/$id'
     | '/invite/passageiro/$token'
     | '/invite/staff/$token'
+    | '/passageiro/itens/$id'
     | '/passageiro/reserva/$id'
     | '/passageiro/viagem/$id'
     | '/staff/passageiro/$id'
     | '/app/excursao/$id/checkin'
     | '/app/excursao/$id/equipe'
     | '/app/excursao/$id/financeiro'
+    | '/app/excursao/$id/itens'
     | '/app/excursao/$id/onibus'
     | '/app/excursao/$id/passageiros'
     | '/app/excursao/$id/pontos'
@@ -969,6 +993,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PassageiroReservaIdRouteImport
       parentRoute: typeof PassageiroRoute
     }
+    '/passageiro/itens/$id': {
+      id: '/passageiro/itens/$id'
+      path: '/itens/$id'
+      fullPath: '/passageiro/itens/$id'
+      preLoaderRoute: typeof PassageiroItensIdRouteImport
+      parentRoute: typeof PassageiroRoute
+    }
     '/invite/staff/$token': {
       id: '/invite/staff/$token'
       path: '/invite/staff/$token'
@@ -1032,6 +1063,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppExcursaoIdOnibusRouteImport
       parentRoute: typeof AppExcursaoIdRoute
     }
+    '/app/excursao/$id/itens': {
+      id: '/app/excursao/$id/itens'
+      path: '/itens'
+      fullPath: '/app/excursao/$id/itens'
+      preLoaderRoute: typeof AppExcursaoIdItensRouteImport
+      parentRoute: typeof AppExcursaoIdRoute
+    }
     '/app/excursao/$id/financeiro': {
       id: '/app/excursao/$id/financeiro'
       path: '/financeiro'
@@ -1078,6 +1116,7 @@ interface AppExcursaoIdRouteChildren {
   AppExcursaoIdCheckinRoute: typeof AppExcursaoIdCheckinRoute
   AppExcursaoIdEquipeRoute: typeof AppExcursaoIdEquipeRoute
   AppExcursaoIdFinanceiroRoute: typeof AppExcursaoIdFinanceiroRoute
+  AppExcursaoIdItensRoute: typeof AppExcursaoIdItensRoute
   AppExcursaoIdOnibusRoute: typeof AppExcursaoIdOnibusRouteWithChildren
   AppExcursaoIdPassageirosRoute: typeof AppExcursaoIdPassageirosRoute
   AppExcursaoIdPontosRoute: typeof AppExcursaoIdPontosRoute
@@ -1088,6 +1127,7 @@ const AppExcursaoIdRouteChildren: AppExcursaoIdRouteChildren = {
   AppExcursaoIdCheckinRoute: AppExcursaoIdCheckinRoute,
   AppExcursaoIdEquipeRoute: AppExcursaoIdEquipeRoute,
   AppExcursaoIdFinanceiroRoute: AppExcursaoIdFinanceiroRoute,
+  AppExcursaoIdItensRoute: AppExcursaoIdItensRoute,
   AppExcursaoIdOnibusRoute: AppExcursaoIdOnibusRouteWithChildren,
   AppExcursaoIdPassageirosRoute: AppExcursaoIdPassageirosRoute,
   AppExcursaoIdPontosRoute: AppExcursaoIdPontosRoute,
@@ -1159,6 +1199,7 @@ interface PassageiroRouteChildren {
   PassageiroSuporteRoute: typeof PassageiroSuporteRoute
   PassageiroTicketRoute: typeof PassageiroTicketRoute
   PassageiroIndexRoute: typeof PassageiroIndexRoute
+  PassageiroItensIdRoute: typeof PassageiroItensIdRoute
   PassageiroReservaIdRoute: typeof PassageiroReservaIdRoute
   PassageiroViagemIdRoute: typeof PassageiroViagemIdRoute
 }
@@ -1172,6 +1213,7 @@ const PassageiroRouteChildren: PassageiroRouteChildren = {
   PassageiroSuporteRoute: PassageiroSuporteRoute,
   PassageiroTicketRoute: PassageiroTicketRoute,
   PassageiroIndexRoute: PassageiroIndexRoute,
+  PassageiroItensIdRoute: PassageiroItensIdRoute,
   PassageiroReservaIdRoute: PassageiroReservaIdRoute,
   PassageiroViagemIdRoute: PassageiroViagemIdRoute,
 }

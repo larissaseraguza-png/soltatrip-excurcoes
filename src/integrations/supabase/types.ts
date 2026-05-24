@@ -114,6 +114,54 @@ export type Database = {
           },
         ]
       }
+      excursao_itens: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          descricao: string | null
+          excursao_id: string
+          id: string
+          nome: string
+          ordem: number
+          quantidade_total: number | null
+          quantidade_vendida: number
+          status: string
+          tipo: string
+          updated_at: string
+          valor: number
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          descricao?: string | null
+          excursao_id: string
+          id?: string
+          nome: string
+          ordem?: number
+          quantidade_total?: number | null
+          quantidade_vendida?: number
+          status?: string
+          tipo?: string
+          updated_at?: string
+          valor?: number
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          descricao?: string | null
+          excursao_id?: string
+          id?: string
+          nome?: string
+          ordem?: number
+          quantidade_total?: number | null
+          quantidade_vendida?: number
+          status?: string
+          tipo?: string
+          updated_at?: string
+          valor?: number
+        }
+        Relationships: []
+      }
       excursoes: {
         Row: {
           banner_url: string | null
@@ -455,6 +503,65 @@ export type Database = {
             columns: ["reserva_id"]
             isOneToOne: false
             referencedRelation: "reservas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pedidos_itens: {
+        Row: {
+          comprador_id: string
+          created_at: string
+          emitido_em: string | null
+          enviado_em: string | null
+          excursao_id: string
+          id: string
+          item_id: string
+          observacao: string | null
+          passageiro_id: string | null
+          quantidade: number
+          status: string
+          updated_at: string
+          valor_total: number
+          valor_unitario: number
+        }
+        Insert: {
+          comprador_id: string
+          created_at?: string
+          emitido_em?: string | null
+          enviado_em?: string | null
+          excursao_id: string
+          id?: string
+          item_id: string
+          observacao?: string | null
+          passageiro_id?: string | null
+          quantidade?: number
+          status?: string
+          updated_at?: string
+          valor_total?: number
+          valor_unitario?: number
+        }
+        Update: {
+          comprador_id?: string
+          created_at?: string
+          emitido_em?: string | null
+          enviado_em?: string | null
+          excursao_id?: string
+          id?: string
+          item_id?: string
+          observacao?: string | null
+          passageiro_id?: string | null
+          quantidade?: number
+          status?: string
+          updated_at?: string
+          valor_total?: number
+          valor_unitario?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pedidos_itens_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "excursao_itens"
             referencedColumns: ["id"]
           },
         ]
