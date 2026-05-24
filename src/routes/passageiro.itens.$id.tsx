@@ -139,25 +139,10 @@ function ItensPassageiro() {
           <h2 className="font-display font-bold text-sm uppercase tracking-wider text-muted-foreground mb-2">
             Meus pedidos
           </h2>
-          <ul className="space-y-2">
+          <ul className="space-y-3">
             {meusPedidos.map((p: any) => {
               const it: any = itemMap.get(p.item_id);
-              return (
-                <li key={p.id} className="glass rounded-2xl p-3 flex items-center gap-3">
-                  <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-sm truncate">
-                      {it?.nome ?? "Item"} <span className="text-muted-foreground">× {p.quantidade}</span>
-                    </p>
-                    <p className="text-xs text-neon-green font-bold">{brl(p.valor_total)}</p>
-                    {p.emitido_em && (
-                      <p className="text-[10px] text-muted-foreground">
-                        Emitido em {new Date(p.emitido_em).toLocaleDateString("pt-BR")}
-                      </p>
-                    )}
-                  </div>
-                  <Status status={p.status} />
-                </li>
-              );
+              return <PedidoCard key={p.id} pedido={p} item={it} excursaoId={id} userId={user?.id} />;
             })}
           </ul>
         </>
