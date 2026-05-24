@@ -214,6 +214,12 @@ function OnibusFormModal({
       if (!nome.trim()) throw new Error("Informe o nome do ônibus.");
       if (!Number.isFinite(cap) || cap <= 0) throw new Error("Capacidade inválida.");
 
+      const waNorm = (() => {
+        const t = whatsapp.trim();
+        if (!t) return null;
+        return /^https?:\/\//i.test(t) ? t : `https://${t}`;
+      })();
+
       if (isEdit && onibus) {
         if (cap < onibus.capacidade) {
           if (!confirm("Reduzir a capacidade pode afetar poltronas já criadas. Continuar?")) {
@@ -230,6 +236,7 @@ function OnibusFormModal({
             horario_retorno: horarioRetorno || null,
             ponto_partida: pontoPartida || null,
             ativo,
+            whatsapp_group_url: waNorm,
           })
           .eq("id", onibus.id);
         if (upErr) throw upErr;
@@ -258,6 +265,7 @@ function OnibusFormModal({
             horario_retorno: horarioRetorno || null,
             ponto_partida: pontoPartida || null,
             ativo,
+            whatsapp_group_url: waNorm,
             ordem: nextOrdem,
           })
           .select("id")
@@ -270,6 +278,7 @@ function OnibusFormModal({
         }
         if (novosSeats.length) await supabase.from("seats").insert(novosSeats);
       }
+
 
       qc.invalidateQueries({ queryKey: ["onibus", excursaoId] });
       onClose();
