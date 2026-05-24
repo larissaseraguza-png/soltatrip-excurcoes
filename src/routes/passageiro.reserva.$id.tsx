@@ -300,20 +300,6 @@ function ReservaDetalhes() {
         <Info4 icon={Users} label="Passageiros" value={String(reserva.quantidade)} />
       </div>
 
-      <Link
-        to="/passageiro/itens/$id"
-        params={{ id }}
-        className="glass rounded-2xl p-4 mb-5 flex items-center gap-3 border border-neon-pink/30 hover:border-neon-pink/60 transition"
-      >
-        <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-neon-purple to-neon-pink grid place-items-center">
-          <Ticket className="h-5 w-5" />
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="font-semibold text-sm">Itens da festa</p>
-          <p className="text-xs text-muted-foreground">Ingresso, camping, VIP, combos…</p>
-        </div>
-        <ChevronRight className="h-4 w-4 text-muted-foreground" />
-      </Link>
 
       {/* Grupo WhatsApp — liberado após primeiro pagamento */}
       {pago > 0 && (() => {
