@@ -41,6 +41,39 @@ function Perfil() {
     },
   });
 
+  const { data: stats } = useQuery({
+    queryKey: ["profile-stats", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const today = new Date().toISOString().slice(0, 10);
+      const { data: exs } = await supabase
+        .from("excursoes")
+        .select("id,data_evento,status")
+        .eq("organizer_id", user!.id);
+      const ids = (exs ?? []).map((e) => e.id);
+      const total = exs?.length ?? 0;
+      const futuras = (exs ?? []).filter((e) => e.data_evento >= today && e.status !== "encerrada").length;
+      const realizadas = total - futuras;
+
+      let pax = 0;
+      let receita = 0;
+      if (ids.length) {
+        const { count } = await supabase
+          .from("passageiros")
+          .select("id", { count: "exact", head: true })
+          .in("excursao_id", ids);
+        pax = count ?? 0;
+        const { data: pays } = await supabase
+          .from("pagamentos")
+          .select("valor,status")
+          .in("excursao_id", ids)
+          .eq("status", "confirmado");
+        receita = (pays ?? []).reduce((s, p) => s + Number(p.valor || 0), 0);
+      }
+      return { total, futuras, realizadas, pax, receita };
+    },
+  });
+
   const [form, setForm] = useState<Profile | null>(null);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
