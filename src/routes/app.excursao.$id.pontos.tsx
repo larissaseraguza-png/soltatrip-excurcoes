@@ -1,4 +1,5 @@
 import { createFileRoute, Link, useParams, useSearch } from "@tanstack/react-router";
+import { toast } from "sonner";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft, Plus, Loader2, Trash2, MapPin, Clock, Users } from "lucide-react";
@@ -88,7 +89,7 @@ function PontosPage() {
       ordem: pontos.length,
     });
     setSaving(false);
-    if (error) { alert(error.message); return; }
+    if (error) { toast.error(error.message); return; }
     setForm({ nome: "", endereco: "", referencia: "", horario: "" });
     qc.invalidateQueries({ queryKey: ["pontos", id, onibusId ?? "all"] });
   }

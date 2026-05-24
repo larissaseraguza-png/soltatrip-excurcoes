@@ -1,4 +1,5 @@
 import { createFileRoute, Link, useParams, useNavigate } from "@tanstack/react-router";
+import { toast } from "sonner";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -49,9 +50,9 @@ function ExcursaoDetalhe() {
       // Atualiza passageiros para 'cancelado'
       await supabase.from("passageiros").update({ status: "cancelado" }).eq("excursao_id", id);
       qc.invalidateQueries();
-      alert("Excursão cancelada.");
+      toast.success("Excursão cancelada.");
     } catch (err: any) {
-      alert(err.message ?? "Erro ao cancelar.");
+      toast.error(err.message ?? "Erro ao cancelar.");
     } finally {
       setBusy(null);
     }
@@ -74,7 +75,7 @@ function ExcursaoDetalhe() {
       qc.invalidateQueries();
       navigate({ to: "/app" });
     } catch (err: any) {
-      alert(err.message ?? "Erro ao excluir.");
+      toast.error(err.message ?? "Erro ao excluir.");
       setBusy(null);
     }
   }
@@ -97,7 +98,7 @@ function ExcursaoDetalhe() {
       if (updErr) throw updErr;
       qc.invalidateQueries({ queryKey: ["excursao", id] });
     } catch (err: any) {
-      alert(err.message ?? "Erro ao enviar imagem.");
+      toast.error(err.message ?? "Erro ao enviar imagem.");
     } finally {
       setBusy(null);
     }
@@ -316,7 +317,7 @@ function WhatsappLinks({ excursao }: { excursao: any }) {
       setOk(true);
       setTimeout(() => setOk(false), 2000);
     } catch (err: any) {
-      alert(err.message ?? "Erro ao salvar.");
+      toast.error(err.message ?? "Erro ao salvar.");
     } finally {
       setSaving(false);
     }

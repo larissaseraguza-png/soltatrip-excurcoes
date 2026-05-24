@@ -1,4 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { toast } from "sonner";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { Shell, Pill } from "@/components/passageiro/Shell";
@@ -147,14 +148,14 @@ function MinhasViagens() {
   async function confirmar() {
     if (!user || !modalEx) return;
     if (onibusDaExcursao.length > 0 && !onibusId) {
-      alert("Escolha um ônibus para a reserva.");
+      toast.error("Escolha um ônibus para a reserva.");
       setStep("onibus");
       return;
     }
     for (let i = 0; i < paxs.length; i++) {
       const p = paxs[i];
       if (!p.nome.trim() || !p.email.trim()) {
-        alert(`Preencha nome e email do passageiro ${i + 1}.`);
+        toast.error(`Preencha nome e email do passageiro ${i + 1}.`);
         return;
       }
     }
@@ -175,7 +176,7 @@ function MinhasViagens() {
       const reservaId = data as unknown as string;
       navigate({ to: "/passageiro/pagamentos", search: { reserva: reservaId } as any });
     } catch (err: any) {
-      alert(err.message ?? "Erro ao reservar");
+      toast.error(err.message ?? "Erro ao reservar");
     } finally {
       setReservando(false);
     }

@@ -174,7 +174,7 @@ function PassageirosPage() {
           .join(" · "),
       );
     },
-    onError: (err: any) => alert(err.message ?? "Erro ao salvar alterações"),
+    onError: (err: any) => toast.error(err.message ?? "Erro ao salvar alterações"),
   });
 
   const pontoNome = (pid: string | null) => pontos.find((p) => p.id === pid)?.nome ?? null;
@@ -342,7 +342,7 @@ function PassageirosPage() {
                   title="QR"
                   onClick={() => {
                     navigator.clipboard.writeText(p.qr_code);
-                    alert(`Código QR copiado: ${p.qr_code}`);
+                    toast.success(`Código QR copiado: ${p.qr_code}`);
                   }}
                   className="h-8 w-8 rounded-lg bg-secondary text-foreground hover:bg-secondary/80 flex items-center justify-center"
                 >

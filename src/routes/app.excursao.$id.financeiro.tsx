@@ -1,4 +1,5 @@
 import { createFileRoute, Link, useParams, useSearch } from "@tanstack/react-router";
+import { toast } from "sonner";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft, Plus, Loader2, CheckCircle2, Clock, TrendingUp, Bus, Save } from "lucide-react";
@@ -221,7 +222,7 @@ function NewPagamentoModal({
 
   async function save(e: React.FormEvent) {
     e.preventDefault();
-    if (!form.passageiro_id) { alert("Cadastre um passageiro primeiro."); return; }
+    if (!form.passageiro_id) { toast.error("Cadastre um passageiro primeiro."); return; }
     setSaving(true);
     // Resolve onibus_id from the selected passenger if not enforced by URL filter
     const selected = passageiros.find((p) => p.id === form.passageiro_id);
@@ -237,7 +238,7 @@ function NewPagamentoModal({
       pago_em: form.status === "pago" ? new Date().toISOString() : null,
     });
     setSaving(false);
-    if (error) { alert(error.message); return; }
+    if (error) { toast.error(error.message); return; }
     qc.invalidateQueries({ queryKey: ["pagamentos", excursaoId, onibusId ?? "all"] });
     onClose();
   }
@@ -334,7 +335,7 @@ function CustoOnibusEditor({ excursaoId, valorAtual }: { excursaoId: string; val
     setSaving(true);
     const { error } = await supabase.from("excursoes").update({ custo_onibus: Number(valor || 0) }).eq("id", excursaoId);
     setSaving(false);
-    if (error) { alert(error.message); return; }
+    if (error) { toast.error(error.message); return; }
     setSaved(true);
     setTimeout(() => setSaved(false), 1500);
     qc.invalidateQueries({ queryKey: ["excursao", excursaoId] });

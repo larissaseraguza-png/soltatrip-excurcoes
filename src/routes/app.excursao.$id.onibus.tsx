@@ -1,4 +1,5 @@
 import { createFileRoute, Link, useParams } from "@tanstack/react-router";
+import { toast } from "sonner";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -70,7 +71,7 @@ function OnibusListPage() {
   async function handleDelete(o: Onibus) {
     const count = ocupacao[o.id] ?? 0;
     if (count > 0) {
-      alert(`Não é possível excluir: existem ${count} passageiros neste ônibus. Mova-os ou cancele antes.`);
+      toast.error(`Não é possível excluir: existem ${count} passageiros neste ônibus. Mova-os ou cancele antes.`);
       return;
     }
     if (!confirm(`Excluir o ônibus "${o.nome}"? Poltronas e pontos vinculados serão removidos.`)) return;
@@ -81,7 +82,7 @@ function OnibusListPage() {
       if (error) throw error;
       qc.invalidateQueries({ queryKey: ["onibus", id] });
     } catch (err: any) {
-      alert(err.message ?? "Erro ao excluir.");
+      toast.error(err.message ?? "Erro ao excluir.");
     }
   }
 

@@ -1,4 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { toast } from "sonner";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { Shell, Pill } from "@/components/passageiro/Shell";
@@ -154,11 +155,11 @@ function Pagamentos() {
     if (!reservaAtiva) return;
     const v = Number(valor.replace(",", "."));
     if (!v || v <= 0) {
-      alert("Informe um valor válido");
+      toast.error("Informe um valor válido");
       return;
     }
     if (v > restante + 0.001) {
-      alert(`Valor máximo: ${brl(restante)}`);
+      toast.error(`Valor máximo: ${brl(restante)}`);
       return;
     }
     setSubmitting(true);
@@ -178,7 +179,7 @@ function Pagamentos() {
         qc.invalidateQueries({ queryKey: ["reservas-pagto"] }),
         qc.invalidateQueries({ queryKey: ["pagto-passageiros"] }),
       ]);
-      alert("Pagamento enviado! Aguardando confirmação manual do organizador.");
+      toast.success("Pagamento enviado! Aguardando confirmação manual do organizador.");
       // Fluxo automático: avançar para poltrona/embarque mesmo aguardando confirmação
       if (faltamPoltronas || faltamEmbarques) {
         navigate({
@@ -187,7 +188,7 @@ function Pagamentos() {
         });
       }
     } catch (err: any) {
-      alert(err.message ?? "Erro ao registrar pagamento");
+      toast.error(err.message ?? "Erro ao registrar pagamento");
     } finally {
       setSubmitting(false);
     }
