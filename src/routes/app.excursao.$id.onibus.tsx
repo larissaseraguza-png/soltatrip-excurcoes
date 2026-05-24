@@ -18,6 +18,7 @@ type Onibus = {
   ponto_partida: string | null;
   ordem: number;
   ativo: boolean;
+  whatsapp_group_url: string | null;
 };
 
 function OnibusListPage() {
