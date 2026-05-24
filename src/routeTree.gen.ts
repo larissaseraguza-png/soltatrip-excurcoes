@@ -50,6 +50,7 @@ import { Route as AppCustosRouteImport } from './routes/app.custos'
 import { Route as StaffPassageiroIdRouteImport } from './routes/staff.passageiro.$id'
 import { Route as PassageiroViagemIdRouteImport } from './routes/passageiro.viagem.$id'
 import { Route as PassageiroReservaIdRouteImport } from './routes/passageiro.reserva.$id'
+import { Route as PassageiroItensIdRouteImport } from './routes/passageiro.itens.$id'
 import { Route as InviteStaffTokenRouteImport } from './routes/invite.staff.$token'
 import { Route as InvitePassageiroTokenRouteImport } from './routes/invite.passageiro.$token'
 import { Route as ExcursionistaExcursaoIdRouteImport } from './routes/excursionista.excursao.$id'
@@ -271,6 +272,11 @@ const PassageiroReservaIdRoute = PassageiroReservaIdRouteImport.update({
   path: '/reserva/$id',
   getParentRoute: () => PassageiroRoute,
 } as any)
+const PassageiroItensIdRoute = PassageiroItensIdRouteImport.update({
+  id: '/itens/$id',
+  path: '/itens/$id',
+  getParentRoute: () => PassageiroRoute,
+} as any)
 const InviteStaffTokenRoute = InviteStaffTokenRouteImport.update({
   id: '/invite/staff/$token',
   path: '/invite/staff/$token',
@@ -388,6 +394,7 @@ export interface FileRoutesByFullPath {
   '/excursionista/excursao/$id': typeof ExcursionistaExcursaoIdRoute
   '/invite/passageiro/$token': typeof InvitePassageiroTokenRoute
   '/invite/staff/$token': typeof InviteStaffTokenRoute
+  '/passageiro/itens/$id': typeof PassageiroItensIdRoute
   '/passageiro/reserva/$id': typeof PassageiroReservaIdRoute
   '/passageiro/viagem/$id': typeof PassageiroViagemIdRoute
   '/staff/passageiro/$id': typeof StaffPassageiroIdRoute
@@ -440,6 +447,7 @@ export interface FileRoutesByTo {
   '/excursionista/excursao/$id': typeof ExcursionistaExcursaoIdRoute
   '/invite/passageiro/$token': typeof InvitePassageiroTokenRoute
   '/invite/staff/$token': typeof InviteStaffTokenRoute
+  '/passageiro/itens/$id': typeof PassageiroItensIdRoute
   '/passageiro/reserva/$id': typeof PassageiroReservaIdRoute
   '/passageiro/viagem/$id': typeof PassageiroViagemIdRoute
   '/staff/passageiro/$id': typeof StaffPassageiroIdRoute
@@ -498,6 +506,7 @@ export interface FileRoutesById {
   '/excursionista/excursao/$id': typeof ExcursionistaExcursaoIdRoute
   '/invite/passageiro/$token': typeof InvitePassageiroTokenRoute
   '/invite/staff/$token': typeof InviteStaffTokenRoute
+  '/passageiro/itens/$id': typeof PassageiroItensIdRoute
   '/passageiro/reserva/$id': typeof PassageiroReservaIdRoute
   '/passageiro/viagem/$id': typeof PassageiroViagemIdRoute
   '/staff/passageiro/$id': typeof StaffPassageiroIdRoute
@@ -557,6 +566,7 @@ export interface FileRouteTypes {
     | '/excursionista/excursao/$id'
     | '/invite/passageiro/$token'
     | '/invite/staff/$token'
+    | '/passageiro/itens/$id'
     | '/passageiro/reserva/$id'
     | '/passageiro/viagem/$id'
     | '/staff/passageiro/$id'
@@ -609,6 +619,7 @@ export interface FileRouteTypes {
     | '/excursionista/excursao/$id'
     | '/invite/passageiro/$token'
     | '/invite/staff/$token'
+    | '/passageiro/itens/$id'
     | '/passageiro/reserva/$id'
     | '/passageiro/viagem/$id'
     | '/staff/passageiro/$id'
@@ -666,6 +677,7 @@ export interface FileRouteTypes {
     | '/excursionista/excursao/$id'
     | '/invite/passageiro/$token'
     | '/invite/staff/$token'
+    | '/passageiro/itens/$id'
     | '/passageiro/reserva/$id'
     | '/passageiro/viagem/$id'
     | '/staff/passageiro/$id'
@@ -981,6 +993,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PassageiroReservaIdRouteImport
       parentRoute: typeof PassageiroRoute
     }
+    '/passageiro/itens/$id': {
+      id: '/passageiro/itens/$id'
+      path: '/itens/$id'
+      fullPath: '/passageiro/itens/$id'
+      preLoaderRoute: typeof PassageiroItensIdRouteImport
+      parentRoute: typeof PassageiroRoute
+    }
     '/invite/staff/$token': {
       id: '/invite/staff/$token'
       path: '/invite/staff/$token'
@@ -1180,6 +1199,7 @@ interface PassageiroRouteChildren {
   PassageiroSuporteRoute: typeof PassageiroSuporteRoute
   PassageiroTicketRoute: typeof PassageiroTicketRoute
   PassageiroIndexRoute: typeof PassageiroIndexRoute
+  PassageiroItensIdRoute: typeof PassageiroItensIdRoute
   PassageiroReservaIdRoute: typeof PassageiroReservaIdRoute
   PassageiroViagemIdRoute: typeof PassageiroViagemIdRoute
 }
@@ -1193,6 +1213,7 @@ const PassageiroRouteChildren: PassageiroRouteChildren = {
   PassageiroSuporteRoute: PassageiroSuporteRoute,
   PassageiroTicketRoute: PassageiroTicketRoute,
   PassageiroIndexRoute: PassageiroIndexRoute,
+  PassageiroItensIdRoute: PassageiroItensIdRoute,
   PassageiroReservaIdRoute: PassageiroReservaIdRoute,
   PassageiroViagemIdRoute: PassageiroViagemIdRoute,
 }
