@@ -38,6 +38,7 @@ type PedidoItem = {
   id: string; passageiro_id: string | null; comprador_id: string;
   item_id: string; quantidade: number; valor_unitario: number; valor_total: number;
   status: string; emitido_em: string | null; enviado_em: string | null;
+  recebido_em: string | null; nao_recebido_em: string | null;
   observacao: string | null; created_at: string;
 };
 
