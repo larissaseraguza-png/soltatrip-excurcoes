@@ -519,9 +519,11 @@ export type Database = {
           excursao_id: string
           id: string
           item_id: string
+          nao_recebido_em: string | null
           observacao: string | null
           passageiro_id: string | null
           quantidade: number
+          recebido_em: string | null
           status: string
           updated_at: string
           valor_total: number
@@ -535,9 +537,11 @@ export type Database = {
           excursao_id: string
           id?: string
           item_id: string
+          nao_recebido_em?: string | null
           observacao?: string | null
           passageiro_id?: string | null
           quantidade?: number
+          recebido_em?: string | null
           status?: string
           updated_at?: string
           valor_total?: number
@@ -551,9 +555,11 @@ export type Database = {
           excursao_id?: string
           id?: string
           item_id?: string
+          nao_recebido_em?: string | null
           observacao?: string | null
           passageiro_id?: string | null
           quantidade?: number
+          recebido_em?: string | null
           status?: string
           updated_at?: string
           valor_total?: number
