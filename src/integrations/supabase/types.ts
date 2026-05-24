@@ -133,6 +133,8 @@ export type Database = {
           titulo: string
           total_vagas: number
           updated_at: string
+          whatsapp_group_url: string | null
+          whatsapp_staff_group_url: string | null
         }
         Insert: {
           banner_url?: string | null
@@ -152,6 +154,8 @@ export type Database = {
           titulo: string
           total_vagas?: number
           updated_at?: string
+          whatsapp_group_url?: string | null
+          whatsapp_staff_group_url?: string | null
         }
         Update: {
           banner_url?: string | null
@@ -171,6 +175,8 @@ export type Database = {
           titulo?: string
           total_vagas?: number
           updated_at?: string
+          whatsapp_group_url?: string | null
+          whatsapp_staff_group_url?: string | null
         }
         Relationships: []
       }
@@ -221,41 +227,6 @@ export type Database = {
           },
         ]
       }
-      mensagens: {
-        Row: {
-          autor_id: string
-          autor_nome: string | null
-          conteudo: string
-          created_at: string
-          excursao_id: string
-          id: string
-        }
-        Insert: {
-          autor_id: string
-          autor_nome?: string | null
-          conteudo: string
-          created_at?: string
-          excursao_id: string
-          id?: string
-        }
-        Update: {
-          autor_id?: string
-          autor_nome?: string | null
-          conteudo?: string
-          created_at?: string
-          excursao_id?: string
-          id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "mensagens_excursao_id_fkey"
-            columns: ["excursao_id"]
-            isOneToOne: false
-            referencedRelation: "excursoes"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       onibus: {
         Row: {
           ativo: boolean
@@ -269,6 +240,7 @@ export type Database = {
           ordem: number
           ponto_partida: string | null
           updated_at: string
+          whatsapp_group_url: string | null
         }
         Insert: {
           ativo?: boolean
@@ -282,6 +254,7 @@ export type Database = {
           ordem?: number
           ponto_partida?: string | null
           updated_at?: string
+          whatsapp_group_url?: string | null
         }
         Update: {
           ativo?: boolean
@@ -295,6 +268,7 @@ export type Database = {
           ordem?: number
           ponto_partida?: string | null
           updated_at?: string
+          whatsapp_group_url?: string | null
         }
         Relationships: []
       }
