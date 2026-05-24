@@ -191,7 +191,8 @@ function ItemCard({ item, excursaoId, userId }: { item: any; excursaoId: string;
         const { data: novaId, error: errRpc } = await supabase.rpc("criar_reserva_grupo", {
           p_excursao_id: excursaoId,
           p_passageiros: passageiros,
-        });
+          p_onibus_id: null,
+        } as any);
         if (errRpc) throw errRpc;
         novaReservaId = novaId as string;
 
