@@ -669,9 +669,7 @@ function EmbarqueSection({
         ) : canEdit ? (
           <span className="text-[11px] text-muted-foreground">Escolha abaixo</span>
         ) : (
-          <span className="text-xs text-muted-foreground">
-            {pago === 0 ? "Pague para liberar" : "—"}
-          </span>
+          <span className="text-xs text-muted-foreground">—</span>
         )}
       </div>
 
