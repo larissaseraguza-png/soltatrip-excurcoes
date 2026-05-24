@@ -1,9 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import heroBus from "@/assets/hero-bus.jpg";
+import { isFlowLocked } from "@/config/flow-mode";
 import {
   Bus, QrCode, Users, Wallet, MessageCircle, MapPin, Sparkles,
   Shield, BarChart3, Ticket, Radio, ArrowRight, Check,
 } from "lucide-react";
+
+const FLOW_LOCKED = isFlowLocked();
 
 export const Route = createFileRoute("/")({
   head: () => ({
