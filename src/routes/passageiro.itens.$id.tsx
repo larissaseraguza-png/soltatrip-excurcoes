@@ -72,6 +72,22 @@ function ItensPassageiro() {
     },
   });
 
+  const { data: payInfo } = useQuery({
+    queryKey: ["pax-itens-payinfo", id],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data } = await supabase.rpc("get_excursao_payment_info", { p_excursao_id: id });
+      const row = Array.isArray(data) ? data[0] : data;
+      return (row ?? null) as null | {
+        pix_key: string | null;
+        pix_recipient: string | null;
+        pix_qr_url: string | null;
+        payment_links: { label: string; url: string; provider?: string }[] | null;
+        organizer_name: string | null;
+      };
+    },
+  });
+
   useRealtimeSync(
     `pax-itens-${id}`,
     [
@@ -82,6 +98,7 @@ function ItensPassageiro() {
   );
 
   const itemMap = new Map(itens.map((i: any) => [i.id, i]));
+  const temPedidoPendente = (meusPedidos as any[]).some((p) => p.status === "pendente");
 
   return (
     <Shell back={`/passageiro/reserva/${id}` as any} title="Itens da festa" subtitle={ex?.titulo}>
