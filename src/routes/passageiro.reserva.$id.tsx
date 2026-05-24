@@ -311,6 +311,7 @@ function ReservaDetalhes() {
           <p className="text-xs text-muted-foreground">Ingresso, camping, VIP, combos…</p>
         </div>
         <ChevronRight className="h-4 w-4 text-muted-foreground" />
+      </Link>
 
       {/* Grupo WhatsApp — liberado após primeiro pagamento */}
       {pago > 0 && (() => {
