@@ -128,6 +128,12 @@ function ItensPassageiro() {
         </ul>
       )}
 
+      {(temPedidoPendente || (meusPedidos as any[]).length > 0) && (
+        <PaymentPanel payInfo={payInfo} />
+      )}
+
+
+
       {meusPedidos.length > 0 && (
         <>
           <h2 className="font-display font-bold text-sm uppercase tracking-wider text-muted-foreground mb-2">
