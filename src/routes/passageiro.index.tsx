@@ -46,6 +46,7 @@ function MinhasViagens() {
   const [qtd, setQtd] = useState(1);
   const [paxs, setPaxs] = useState<Pax[]>([]);
   const [onibusId, setOnibusId] = useState<string | null>(null);
+  const [selectedItem, setSelectedItem] = useState<any | null>(null);
 
   const { data: reservas = [], isLoading: loadingMinhas } = useQuery({
     queryKey: ["minhas-reservas", user?.id],
