@@ -231,9 +231,11 @@ function ItemCard({ item, excursaoId, userId }: { item: any; excursaoId: string;
 
       if (ehCombo) {
         const reservaId = novaReservaId ?? pax?.reserva_id;
-        toast.success("Combo reservado! Agora escolha ônibus, poltrona e embarque.");
+        toast.success("Combo reservado! Escolha ônibus, poltrona e embarque.");
         if (reservaId) {
           navigate({ to: "/passageiro/reserva/$id", params: { id: reservaId } });
+        } else if (pax?.id) {
+          navigate({ to: "/passageiro/poltrona", search: { pax: pax.id } as any });
         }
       } else {
         toast.success("Pedido enviado! O organizador irá confirmar o pagamento e emitir.");
