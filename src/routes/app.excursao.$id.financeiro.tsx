@@ -105,7 +105,7 @@ function FinanceiroPage() {
       const { data } = await supabase
         .from("pedidos_itens")
         .select(
-          "id,passageiro_id,comprador_id,item_id,quantidade,valor_unitario,valor_total,status,emitido_em,enviado_em,observacao,created_at",
+          "id,passageiro_id,comprador_id,item_id,quantidade,valor_unitario,valor_total,status,emitido_em,enviado_em,recebido_em,nao_recebido_em,observacao,created_at",
         )
         .eq("excursao_id", id)
         .order("created_at", { ascending: false });
