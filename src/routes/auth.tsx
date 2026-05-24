@@ -173,16 +173,18 @@ function AuthPage() {
         if (error) throw error;
         if (!data.user) throw new Error("Falha ao criar conta.");
 
+        // Verificação de e-mail obrigatória: sem sessão, pedir confirmação e sair.
         if (!data.session) {
-          const { data: loginData, error: loginError } = await supabase.auth.signInWithPassword({
-            email,
-            password,
-          });
-          if (loginError) throw loginError;
-          if (!loginData.user)
-            throw new Error("Conta criada, mas não foi possível entrar automaticamente.");
+          setInfo(
+            `Enviamos um link de confirmação para ${email}. Abra seu e-mail e clique para ativar sua conta antes de entrar.`,
+          );
+          setMode("signin");
+          setStep("role");
+          setBusy(false);
+          return;
         }
 
+        // Sessão imediata só ocorre se auto-confirm estiver ativo (não em produção).
         const { error: profileError } = await completeSignupProfile({
           p_full_name: fullName,
           p_phone: cleanPhone,
