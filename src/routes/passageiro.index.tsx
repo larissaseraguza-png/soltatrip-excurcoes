@@ -327,8 +327,15 @@ function MinhasViagens() {
               <ExperienciaStep
                 excursao={modalEx}
                 itens={itensEx as any[]}
-                onApenasExcursao={() => setStep("onibus")}
-                onItem={() => {
+                onApenasExcursao={() => {
+                  setSelectedItem(null);
+                  setStep("onibus");
+                }}
+                onCombo={(item) => {
+                  setSelectedItem(item);
+                  setStep("onibus");
+                }}
+                onApenasIngresso={() => {
                   setModalEx(null);
                   navigate({ to: "/passageiro/itens/$id", params: { id: modalEx.id } });
                 }}
