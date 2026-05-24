@@ -175,10 +175,10 @@ function ItemCard({ item, excursaoId, userId }: { item: any; excursaoId: string;
       // COMBO: se inclui excursão e ainda não há reserva, cria uma automática
       if (ehCombo && !pax) {
         const { data: u } = await supabase.auth.getUser();
-        const meta = u?.user?.user_metadata ?? {};
+        const userMeta = u?.user?.user_metadata ?? {};
         const nome =
-          (meta.full_name as string) ||
-          (meta.name as string) ||
+          (userMeta.full_name as string) ||
+          (userMeta.name as string) ||
           (u?.user?.email?.split("@")[0] ?? "Passageiro");
         const email = u?.user?.email ?? null;
 
