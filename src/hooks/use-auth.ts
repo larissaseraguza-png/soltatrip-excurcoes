@@ -56,6 +56,5 @@ export function useAuth() {
   useEffect(() => {
     init();
   }, []);
-  if (typeof window !== "undefined" && !initialized) init();
   return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 }
