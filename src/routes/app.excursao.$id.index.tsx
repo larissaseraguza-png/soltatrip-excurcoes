@@ -83,15 +83,14 @@ function ExcursaoDetalhe() {
     }
   }
 
-  async function handleBannerUpload(file: File) {
+  async function handleBannerUpload(file: File | Blob) {
     if (!user) return;
     setBusy("upload");
     try {
-      const ext = file.name.split(".").pop() || "jpg";
-      const path = `${user.id}/${id}-${Date.now()}.${ext}`;
+      const path = `${user.id}/${id}-${Date.now()}.jpg`;
       const { error: upErr } = await supabase.storage
         .from("excursao-banners")
-        .upload(path, file, { upsert: true, cacheControl: "3600" });
+        .upload(path, file, { upsert: true, cacheControl: "3600", contentType: "image/jpeg" });
       if (upErr) throw upErr;
       const { data: pub } = supabase.storage.from("excursao-banners").getPublicUrl(path);
       const { error: updErr } = await supabase
@@ -106,6 +105,7 @@ function ExcursaoDetalhe() {
       setBusy(null);
     }
   }
+
 
   if (isLoading) {
     return <div className="flex justify-center py-20"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>;
