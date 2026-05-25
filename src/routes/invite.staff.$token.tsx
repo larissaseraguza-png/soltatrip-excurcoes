@@ -129,9 +129,28 @@ function InviteStaffPage() {
           </p>
 
           {invite.used ? (
-            <Msg tone="error" icon={AlertCircle}>Este convite já foi utilizado.</Msg>
+            user && invite.used_by === user.id ? (
+              <Msg tone="success" icon={CheckCircle2}>Convite já vinculado. Abrindo área de staff…</Msg>
+            ) : !user ? (
+              <>
+                <p className="text-xs text-muted-foreground mb-3">
+                  Este convite já foi aceito. Entre com a sua conta para acessar a área de staff.
+                </p>
+                <Link
+                  to="/auth"
+                  className="w-full h-11 rounded-xl bg-primary text-primary-foreground font-semibold glow-primary hover:opacity-90 flex items-center justify-center"
+                >
+                  Fazer login
+                </Link>
+              </>
+            ) : (
+              <Msg tone="error" icon={AlertCircle}>
+                Este convite foi aceito por outra conta. Saia e entre com a conta correta.
+              </Msg>
+            )
           ) : expirado ? (
-            <Msg tone="error" icon={AlertCircle}>Este convite expirou.</Msg>
+            <Msg tone="error" icon={AlertCircle}>Este convite expirou. Peça um novo ao organizador.</Msg>
+          ) : (() => null)() /* placeholder */ as any
           ) : done ? (
             <Msg tone="success" icon={CheckCircle2}>Vínculo criado! Redirecionando…</Msg>
           ) : !user ? (
