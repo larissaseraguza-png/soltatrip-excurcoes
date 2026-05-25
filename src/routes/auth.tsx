@@ -1,5 +1,5 @@
-import { createFileRoute, Link, useNavigate, Navigate, redirect } from "@tanstack/react-router";
-import { useState, type FormEvent } from "react";
+import { createFileRoute, Link, useNavigate, redirect } from "@tanstack/react-router";
+import { useState, useEffect, type FormEvent } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useRoleForUser, roleHome, type AppRole } from "@/hooks/use-role";
@@ -136,21 +136,54 @@ function AuthPage() {
   const [step, setStep] = useState<"role" | "credentials">("role");
   const [selectedRole, setSelectedRole] = useState<AppRole | null>(null);
 
-  const [email, setEmail] = useState(() => {
-    if (typeof window === "undefined") return "";
-    return localStorage.getItem("st_last_email") ?? "";
-  });
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [remember, setRemember] = useState(() => {
-    if (typeof window === "undefined") return true;
-    return localStorage.getItem("st_remember") !== "0";
-  });
+  const [remember, setRemember] = useState(true);
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+
+  // Carregar preferências do localStorage apenas no cliente (após montagem)
+  // evita hydration mismatch entre SSR e cliente.
+  useEffect(() => {
+    try {
+      const savedEmail = localStorage.getItem("st_last_email");
+      if (savedEmail) setEmail(savedEmail);
+      const savedRemember = localStorage.getItem("st_remember");
+      if (savedRemember !== null) setRemember(savedRemember !== "0");
+    } catch {
+      /* ignora */
+    }
+  }, []);
+
+  // Navegação pós-auth: useEffect ao invés de <Navigate> condicional evita
+  // hydration mismatch (SSR sempre renderiza o formulário; cliente navega após hidratação).
+  useEffect(() => {
+    if (busy || !user || !role) return;
+    try {
+      const pendingStaff = localStorage.getItem("pending_staff_invite");
+      if (pendingStaff) {
+        navigate({ to: "/invite/staff/$token", params: { token: pendingStaff }, replace: true });
+        return;
+      }
+      const pendingPax = localStorage.getItem("pending_pax_invite");
+      if (pendingPax) {
+        navigate({ to: "/invite/passageiro/$token", params: { token: pendingPax }, replace: true });
+        return;
+      }
+      const pendingExc = getPendingExcursionistaInvite();
+      if (pendingExc && role === "passageiro") {
+        navigate({ to: "/invite/excursionista/$id", params: { id: pendingExc }, replace: true });
+        return;
+      }
+      navigate({ to: roleHome[role], replace: true });
+    } catch {
+      navigate({ to: roleHome[role], replace: true });
+    }
+  }, [busy, user, role, navigate]);
 
   if (loading || (!busy && user && roleLoading)) {
     return (
@@ -158,22 +191,6 @@ function AuthPage() {
         <Loader2 className="h-6 w-6 animate-spin text-primary" />
       </div>
     );
-  }
-
-  // Já autenticado: retoma convite pendente ou vai para a área do papel.
-  if (!busy && user && role) {
-    const pendingStaff =
-      typeof window !== "undefined" ? localStorage.getItem("pending_staff_invite") : null;
-    if (pendingStaff)
-      return <Navigate to="/invite/staff/$token" params={{ token: pendingStaff }} />;
-    const pendingPax =
-      typeof window !== "undefined" ? localStorage.getItem("pending_pax_invite") : null;
-    if (pendingPax)
-      return <Navigate to="/invite/passageiro/$token" params={{ token: pendingPax }} />;
-    const pendingExc = getPendingExcursionistaInvite();
-    if (pendingExc && role === "passageiro")
-      return <Navigate to="/invite/excursionista/$id" params={{ id: pendingExc }} />;
-    return <Navigate to={roleHome[role]} />;
   }
 
   function pickRole(r: AppRole) {

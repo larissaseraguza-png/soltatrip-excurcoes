@@ -45,6 +45,11 @@ type ExPub = {
   cor: string | null;
 };
 
+function fmtDateBR(iso: string) {
+  const [y, m, d] = iso.split("-");
+  return `${d}/${m}/${y}`;
+}
+
 function SlugPage() {
   const { slug } = Route.useParams();
   const { user, loading: authLoading } = useAuth();
@@ -221,7 +226,7 @@ function SlugPage() {
                     <MapPin className="h-3 w-3" /> {e.destino}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    {new Date(e.data_evento + "T00:00:00").toLocaleDateString("pt-BR")}
+                    {fmtDateBR(e.data_evento)}
                   </p>
                 </div>
                 <div className="text-right">

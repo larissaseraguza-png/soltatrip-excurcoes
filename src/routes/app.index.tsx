@@ -30,6 +30,12 @@ type PaxRow = { excursao_id: string; total_price: number; amount_paid: number; s
 const brl = (n: number) =>
   n.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
 
+// Formato SSR-safe: evita hydration mismatch de toLocaleDateString entre server/client
+function fmtDateBR(iso: string) {
+  const [y, m, d] = iso.split("-");
+  return `${d}/${m}/${y}`;
+}
+
 function Dashboard() {
   const { user } = useAuth();
 
@@ -99,20 +105,29 @@ function Dashboard() {
       </div>
 
       {/* Hero financeiro */}
-
-      <Link to="/app/relatorios" className="block glass rounded-3xl p-5 mb-4 relative overflow-hidden hover:border-primary/50 transition">
+      <div className="glass rounded-3xl p-5 mb-4 relative overflow-hidden hover:border-primary/50 transition">
         <div className="absolute -top-10 -right-10 size-40 rounded-full bg-neon-pink/30 blur-3xl pointer-events-none" />
-        <p className="text-xs text-muted-foreground uppercase tracking-wider">Receita total</p>
-        <p className="font-display text-4xl font-black text-gradient mt-1">{brl(receita)}</p>
-        <div className="flex items-center gap-1 mt-2 text-neon-green text-xs font-medium">
-          <TrendingUp className="size-3.5" /> {passageiros} passageiros confirmados
+        <div className="flex items-start justify-between">
+          <div>
+            <p className="text-xs text-muted-foreground uppercase tracking-wider">Receita total</p>
+            <p className="font-display text-4xl font-black text-gradient mt-1">{brl(receita)}</p>
+            <div className="flex items-center gap-1 mt-2 text-neon-green text-xs font-medium">
+              <TrendingUp className="size-3.5" /> {passageiros} passageiros confirmados
+            </div>
+          </div>
+          <Link
+            to="/app/relatorios"
+            className="inline-flex items-center gap-1 text-xs font-semibold text-muted-foreground hover:text-foreground transition"
+          >
+            Relatórios <ArrowRight className="h-3 w-3" />
+          </Link>
         </div>
         <div className="grid grid-cols-3 gap-3 mt-5">
           <MiniLink to="/app/pendentes" label="Pendente" value={brl(pendente)} tone="text-yellow-300" icon={AlertCircle} />
           <MiniLink to="/app/custos" label="Custos" value={brl(custos)} tone="text-neon-pink" icon={Wallet} />
           <MiniLink to="/app/relatorios" label="Lucro" value={brl(lucro)} tone={lucro >= 0 ? "text-neon-green" : "text-red-400"} icon={TrendingUp} />
         </div>
-      </Link>
+      </div>
 
       {/* Cards operacionais */}
       <div className="grid grid-cols-3 gap-3 mb-6">
@@ -215,7 +230,7 @@ function ExcursaoCard({ ex }: { ex: Excursao }) {
         </div>
         <div className="space-y-1 text-xs text-muted-foreground">
           <div className="flex items-center gap-1.5"><MapPin className="h-3.5 w-3.5" /> {ex.destino}</div>
-          <div className="flex items-center gap-1.5"><Calendar className="h-3.5 w-3.5" /> {new Date(ex.data_evento + "T00:00:00").toLocaleDateString("pt-BR")}</div>
+          <div className="flex items-center gap-1.5"><Calendar className="h-3.5 w-3.5" /> {fmtDateBR(ex.data_evento)}</div>
           <div className="flex items-center gap-1.5"><Users className="h-3.5 w-3.5" /> {ex.total_vagas} vagas · R$ {Number(ex.preco).toFixed(2)}</div>
         </div>
       </div>

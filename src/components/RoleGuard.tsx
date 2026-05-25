@@ -6,9 +6,8 @@ export function RoleGuard({ allow, children }: { allow: AppRole; children: React
   const { user, loading: aLoading } = useAuth();
   const { role, loading: rLoading } = useRoleForUser(user, aLoading);
 
-  // Enquanto resolve auth/role, renderiza o shell silenciosamente para evitar
-  // flash de loader de tela inteira em cada navegação.
-  if (aLoading || rLoading) return <>{children}</>;
+  // Durante loading: skeleton silencioso (nunca children — evita vazar conteúdo protegido e hydration mismatch).
+  if (aLoading || rLoading) return <div className="min-h-[50vh]" aria-hidden />;
   if (!user) return <Navigate to="/auth" />;
   if (!role) return <Navigate to="/auth" />;
   if (role !== allow) return <Navigate to={roleHome[role]} />;
