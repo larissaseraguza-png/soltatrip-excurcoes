@@ -195,6 +195,13 @@ function NovaExcursao() {
 
   return (
     <div>
+      {pendingFile && (
+        <BannerCropper
+          file={pendingFile}
+          onCancel={() => setPendingFile(null)}
+          onConfirm={(blob) => { setCroppedBanner(blob); setPendingFile(null); }}
+        />
+      )}
       <Link to="/app" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4">
         <ArrowLeft className="h-4 w-4" /> Voltar
       </Link>
