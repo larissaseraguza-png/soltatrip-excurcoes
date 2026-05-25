@@ -136,9 +136,16 @@ function AuthPage() {
   const [step, setStep] = useState<"role" | "credentials">("role");
   const [selectedRole, setSelectedRole] = useState<AppRole | null>(null);
 
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(() => {
+    if (typeof window === "undefined") return "";
+    return localStorage.getItem("st_last_email") ?? "";
+  });
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [remember, setRemember] = useState(() => {
+    if (typeof window === "undefined") return true;
+    return localStorage.getItem("st_remember") !== "0";
+  });
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
   const [error, setError] = useState<string | null>(null);
