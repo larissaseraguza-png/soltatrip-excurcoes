@@ -65,6 +65,18 @@ function CheckinPage() {
     setTimeout(() => setFeedback(null), 2500);
   }
 
+  async function desembarcar(pid: string, nome: string) {
+    if (!confirm(`Remover embarque de ${nome}?`)) return;
+    const { error } = await supabase
+      .from("passageiros")
+      .update({ status: "confirmado", embarcado_em: null })
+      .eq("id", pid);
+    if (error) { setFeedback({ ok: false, msg: error.message }); return; }
+    setFeedback({ ok: true, msg: `Embarque de ${nome} removido.` });
+    qc.invalidateQueries({ queryKey: ["passageiros-checkin", id, onibusId ?? "all"] });
+    setTimeout(() => setFeedback(null), 2500);
+  }
+
   const embarcados = passageiros.filter((p) => p.status === "embarcado").length;
   const filtered = passageiros.filter((p) => p.nome.toLowerCase().includes(search.toLowerCase()));
 
@@ -126,7 +138,12 @@ function CheckinPage() {
                 <p className="text-xs text-muted-foreground">{p.assento ? `Assento ${p.assento}` : "sem assento"}</p>
               </div>
               {p.status === "embarcado" ? (
-                <span className="text-[10px] uppercase tracking-wider font-bold text-neon-green">ok</span>
+                <button
+                  onClick={() => desembarcar(p.id, p.nome)}
+                  className="h-9 px-3 rounded-lg border border-yellow-500/30 text-yellow-400 text-[11px] font-bold hover:bg-yellow-500/10"
+                >
+                  Desembarcar
+                </button>
               ) : (
                 <button
                   onClick={() => embarcar(p.id, p.nome, p.onibus_id ?? null)}
