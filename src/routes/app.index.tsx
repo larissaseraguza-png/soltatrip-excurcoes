@@ -30,6 +30,12 @@ type PaxRow = { excursao_id: string; total_price: number; amount_paid: number; s
 const brl = (n: number) =>
   n.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
 
+// Formato SSR-safe: evita hydration mismatch de toLocaleDateString entre server/client
+function fmtDateBR(iso: string) {
+  const [y, m, d] = iso.split("-");
+  return `${d}/${m}/${y}`;
+}
+
 function Dashboard() {
   const { user } = useAuth();
 
