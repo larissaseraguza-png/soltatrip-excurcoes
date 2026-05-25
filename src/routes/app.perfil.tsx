@@ -138,8 +138,15 @@ function Perfil() {
     }
   }
 
-  const publicUrl = form?.slug
-    ? `${typeof window !== "undefined" ? window.location.origin : ""}/e/${form.slug}`
+  const savedSlug = data?.slug ?? null;
+  const slugValid =
+    !!form?.slug &&
+    form.slug.length >= 3 &&
+    form.slug.length <= 40 &&
+    /^[a-z0-9][a-z0-9_-]*[a-z0-9]$/.test(form.slug);
+  const slugDirty = (form?.slug ?? "") !== (savedSlug ?? "");
+  const publicUrl = savedSlug
+    ? `${typeof window !== "undefined" ? window.location.origin : "https://soltatrip.app"}/e/${savedSlug}`
     : null;
   const [copied, setCopied] = useState(false);
   async function copyLink() {
@@ -164,6 +171,7 @@ function Perfil() {
       copyLink();
     }
   }
+
 
   if (isLoading || !form) {
     return <div className="flex justify-center py-20"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>;
