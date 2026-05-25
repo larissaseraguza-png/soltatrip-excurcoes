@@ -232,17 +232,28 @@ function AuthPage() {
             emailRedirectTo: `${window.location.origin}/auth`,
           },
         });
+        // Log completo para diagnóstico (não expõe senha).
+        console.log("[signup response]", { data, error });
         if (error) throw new Error(getAuthErrorMessage(error, "Não foi possível criar a conta."));
-        if (!data.user) {
-          throw new Error(
-            "O serviço de autenticação não retornou o usuário criado. Aguarde alguns segundos e tente novamente.",
+
+        // E-mail já cadastrado: Supabase devolve user com identities=[] (anti-enumeração)
+        // ou user=null quando confirmação por e-mail está ativa.
+        const identities = (data.user?.identities ?? []) as unknown[];
+        const isDuplicate = !data.user || identities.length === 0;
+        if (isDuplicate) {
+          setInfo(
+            `Este e-mail já está cadastrado. Use "Entrar" para acessar sua conta — se esqueceu a senha, peça a recuperação.`,
           );
+          setMode("signin");
+          setStep("role");
+          setBusy(false);
+          return;
         }
 
         // Verificação de e-mail obrigatória: sem sessão, pedir confirmação e sair.
         if (!data.session) {
           setInfo(
-            `Enviamos um link de confirmação para ${email}. Abra seu e-mail e clique para ativar sua conta antes de entrar.`,
+            `Enviamos um link de confirmação para ${email}. Abra seu e-mail (verifique também o spam) e clique para ativar sua conta antes de entrar.`,
           );
           setMode("signin");
           setStep("role");
