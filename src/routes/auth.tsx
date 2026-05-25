@@ -159,28 +159,38 @@ function AuthPage() {
     }
   }, []);
 
+  // Navegação pós-auth: useEffect ao invés de <Navigate> condicional evita
+  // hydration mismatch (SSR sempre renderiza o formulário; cliente navega após hidratação).
+  useEffect(() => {
+    if (busy || !user || !role) return;
+    try {
+      const pendingStaff = localStorage.getItem("pending_staff_invite");
+      if (pendingStaff) {
+        navigate({ to: "/invite/staff/$token", params: { token: pendingStaff }, replace: true });
+        return;
+      }
+      const pendingPax = localStorage.getItem("pending_pax_invite");
+      if (pendingPax) {
+        navigate({ to: "/invite/passageiro/$token", params: { token: pendingPax }, replace: true });
+        return;
+      }
+      const pendingExc = getPendingExcursionistaInvite();
+      if (pendingExc && role === "passageiro") {
+        navigate({ to: "/invite/excursionista/$id", params: { id: pendingExc }, replace: true });
+        return;
+      }
+      navigate({ to: roleHome[role], replace: true });
+    } catch {
+      navigate({ to: roleHome[role], replace: true });
+    }
+  }, [busy, user, role, navigate]);
+
   if (loading || (!busy && user && roleLoading)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="h-6 w-6 animate-spin text-primary" />
       </div>
     );
-  }
-
-  // Já autenticado: retoma convite pendente ou vai para a área do papel.
-  if (!busy && user && role) {
-    const pendingStaff =
-      typeof window !== "undefined" ? localStorage.getItem("pending_staff_invite") : null;
-    if (pendingStaff)
-      return <Navigate to="/invite/staff/$token" params={{ token: pendingStaff }} />;
-    const pendingPax =
-      typeof window !== "undefined" ? localStorage.getItem("pending_pax_invite") : null;
-    if (pendingPax)
-      return <Navigate to="/invite/passageiro/$token" params={{ token: pendingPax }} />;
-    const pendingExc = getPendingExcursionistaInvite();
-    if (pendingExc && role === "passageiro")
-      return <Navigate to="/invite/excursionista/$id" params={{ id: pendingExc }} />;
-    return <Navigate to={roleHome[role]} />;
   }
 
   function pickRole(r: AppRole) {
