@@ -18,7 +18,10 @@ import {
   ArrowLeft,
 } from "lucide-react";
 
-import { consumePendingExcursionistaInvite, getPendingExcursionistaInvite } from "@/lib/excursionista-link";
+import {
+  consumePendingExcursionistaInvite,
+  getPendingExcursionistaInvite,
+} from "@/lib/excursionista-link";
 
 export const Route = createFileRoute("/auth")({
   beforeLoad: () => {
@@ -164,7 +167,6 @@ function AuthPage() {
     if (pendingExc && role === "passageiro")
       return <Navigate to="/invite/excursionista/$id" params={{ id: pendingExc }} />;
     return <Navigate to={roleHome[role]} />;
-
   }
 
   function pickRole(r: AppRole) {
@@ -241,7 +243,6 @@ function AuthPage() {
         } else {
           navigate({ to: roleHome[selectedRole], replace: true });
         }
-
       } else {
         // Login
         const { data, error } = await supabase.auth.signInWithPassword({ email, password });
@@ -288,7 +289,6 @@ function AuthPage() {
         } else {
           navigate({ to: roleHome[userRole], replace: true });
         }
-
       }
     } catch (err: unknown) {
       setError(getAuthErrorMessage(err));
@@ -532,9 +532,7 @@ function Field({
           className={`w-full h-11 rounded-xl bg-secondary/40 border border-border focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 transition text-sm ${icon ? "pl-10" : "pl-3"} ${actionIcon ? "pr-10" : "pr-3"}`}
         />
         {actionIcon && (
-          <span className="absolute right-2 top-1/2 -translate-y-1/2">
-            {actionIcon}
-          </span>
+          <span className="absolute right-2 top-1/2 -translate-y-1/2">{actionIcon}</span>
         )}
       </div>
     </label>
