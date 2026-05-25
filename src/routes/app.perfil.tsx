@@ -21,6 +21,7 @@ type Profile = {
   bio: string | null;
   instagram_url: string | null;
   website_url: string | null;
+  slug: string | null;
 };
 
 function Perfil() {
