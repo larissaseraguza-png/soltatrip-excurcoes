@@ -150,7 +150,6 @@ function InviteStaffPage() {
             )
           ) : expirado ? (
             <Msg tone="error" icon={AlertCircle}>Este convite expirou. Peça um novo ao organizador.</Msg>
-          ) : (() => null)() /* placeholder */ as any
           ) : done ? (
             <Msg tone="success" icon={CheckCircle2}>Vínculo criado! Redirecionando…</Msg>
           ) : !user ? (
