@@ -113,7 +113,6 @@ function RootShell({ children }: { children: React.ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
-  const router = useRouter();
   const lastUserId = useRef<string | null | undefined>(undefined);
 
   useEffect(() => {
@@ -121,7 +120,6 @@ function RootComponent() {
       const nextUserId = session?.user?.id ?? null;
       if (lastUserId.current !== undefined && lastUserId.current !== nextUserId) {
         queryClient.clear();
-        router.invalidate();
       }
       lastUserId.current = nextUserId;
     });
@@ -131,7 +129,7 @@ function RootComponent() {
     });
 
     return () => subscription.unsubscribe();
-  }, [queryClient, router]);
+  }, [queryClient]);
 
   return (
     <QueryClientProvider client={queryClient}>
