@@ -105,20 +105,29 @@ function Dashboard() {
       </div>
 
       {/* Hero financeiro */}
-
-      <Link to="/app/relatorios" className="block glass rounded-3xl p-5 mb-4 relative overflow-hidden hover:border-primary/50 transition">
+      <div className="glass rounded-3xl p-5 mb-4 relative overflow-hidden hover:border-primary/50 transition">
         <div className="absolute -top-10 -right-10 size-40 rounded-full bg-neon-pink/30 blur-3xl pointer-events-none" />
-        <p className="text-xs text-muted-foreground uppercase tracking-wider">Receita total</p>
-        <p className="font-display text-4xl font-black text-gradient mt-1">{brl(receita)}</p>
-        <div className="flex items-center gap-1 mt-2 text-neon-green text-xs font-medium">
-          <TrendingUp className="size-3.5" /> {passageiros} passageiros confirmados
+        <div className="flex items-start justify-between">
+          <div>
+            <p className="text-xs text-muted-foreground uppercase tracking-wider">Receita total</p>
+            <p className="font-display text-4xl font-black text-gradient mt-1">{brl(receita)}</p>
+            <div className="flex items-center gap-1 mt-2 text-neon-green text-xs font-medium">
+              <TrendingUp className="size-3.5" /> {passageiros} passageiros confirmados
+            </div>
+          </div>
+          <Link
+            to="/app/relatorios"
+            className="inline-flex items-center gap-1 text-xs font-semibold text-muted-foreground hover:text-foreground transition"
+          >
+            Relatórios <ArrowRight className="h-3 w-3" />
+          </Link>
         </div>
         <div className="grid grid-cols-3 gap-3 mt-5">
           <MiniLink to="/app/pendentes" label="Pendente" value={brl(pendente)} tone="text-yellow-300" icon={AlertCircle} />
           <MiniLink to="/app/custos" label="Custos" value={brl(custos)} tone="text-neon-pink" icon={Wallet} />
           <MiniLink to="/app/relatorios" label="Lucro" value={brl(lucro)} tone={lucro >= 0 ? "text-neon-green" : "text-red-400"} icon={TrendingUp} />
         </div>
-      </Link>
+      </div>
 
       {/* Cards operacionais */}
       <div className="grid grid-cols-3 gap-3 mb-6">
