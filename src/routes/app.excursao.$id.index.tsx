@@ -151,7 +151,7 @@ function ExcursaoDetalhe() {
           className="hidden"
           onChange={(e) => {
             const f = e.target.files?.[0];
-            if (f) handleBannerUpload(f);
+            if (f) setPendingFile(f);
             e.target.value = "";
           }}
         />
