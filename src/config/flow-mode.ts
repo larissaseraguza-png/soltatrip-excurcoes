@@ -3,4 +3,4 @@
 // "active"  → fluxo normal de login/cadastro habilitado.
 export const FLOW_MODE: "locked" | "active" = "active";
 
-export const isFlowLocked = () => FLOW_MODE === "locked";
+export const isFlowLocked = () => (FLOW_MODE as string) === "locked";
