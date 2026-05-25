@@ -287,7 +287,7 @@ function NovaExcursao() {
                       </button>
                     )}
                   </div>
-                  <div className="grid grid-cols-[1fr_110px] gap-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-[1fr_140px] gap-2">
                     <div>
                       <input
                         placeholder="Nome do local *"
