@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useRealtimeSync } from "@/hooks/use-realtime-sync";
 import { ArrowLeft, Calendar, MapPin, Clock, Users, DollarSign, Loader2, Trash2, ChevronRight, Wallet, QrCode, MapPinned, UserCog, Ban, ImagePlus, Bus, MessageCircle, Save, Ticket } from "lucide-react";
+import { SafeBoundary } from "@/components/SafeBoundary";
 
 export const Route = createFileRoute("/app/excursao/$id/")({
   component: ExcursaoDetalhe,
@@ -171,7 +172,9 @@ function ExcursaoDetalhe() {
         </div>
       )}
 
-      <PontosSummary excursaoId={id} />
+      <SafeBoundary label="Resumo de pontos">
+        <PontosSummary excursaoId={id} />
+      </SafeBoundary>
 
       <div className="space-y-2 mb-6">
         <NavCard to="/app/excursao/$id/onibus" id={id} icon={Bus} title="Ônibus" desc="Gerenciar múltiplos ônibus desta excursão" />
@@ -183,7 +186,9 @@ function ExcursaoDetalhe() {
         <NavCard to="/app/excursao/$id/equipe" id={id} icon={UserCog} title="Equipe / Staff" desc="Convidar e gerenciar staff desta excursão" />
       </div>
 
-      <WhatsappLinks excursao={data} />
+      <SafeBoundary label="Grupos de WhatsApp">
+        <WhatsappLinks excursao={data} />
+      </SafeBoundary>
 
 
       <div className="grid grid-cols-2 gap-2">

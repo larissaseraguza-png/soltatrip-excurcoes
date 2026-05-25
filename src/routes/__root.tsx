@@ -12,6 +12,7 @@ import {
 import appCss from "../styles.css?url";
 import { supabase } from "@/integrations/supabase/client";
 import { Toaster } from "@/components/ui/sonner";
+import { SafeBoundary } from "@/components/SafeBoundary";
 
 function NotFoundComponent() {
   return (
@@ -141,7 +142,9 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <Outlet />
+      <SafeBoundary label="App root">
+        <Outlet />
+      </SafeBoundary>
       <Toaster position="top-center" richColors />
     </QueryClientProvider>
   );
