@@ -221,7 +221,7 @@ function ExcursaoCard({ ex }: { ex: Excursao }) {
         </div>
         <div className="space-y-1 text-xs text-muted-foreground">
           <div className="flex items-center gap-1.5"><MapPin className="h-3.5 w-3.5" /> {ex.destino}</div>
-          <div className="flex items-center gap-1.5"><Calendar className="h-3.5 w-3.5" /> {new Date(ex.data_evento + "T00:00:00").toLocaleDateString("pt-BR")}</div>
+          <div className="flex items-center gap-1.5"><Calendar className="h-3.5 w-3.5" /> {fmtDateBR(ex.data_evento)}</div>
           <div className="flex items-center gap-1.5"><Users className="h-3.5 w-3.5" /> {ex.total_vagas} vagas · R$ {Number(ex.preco).toFixed(2)}</div>
         </div>
       </div>
