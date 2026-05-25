@@ -232,7 +232,7 @@ function NovaExcursao() {
                 </span>
                 <button
                   type="button"
-                  onClick={(e) => { e.stopPropagation(); handleBannerChange(null); }}
+                  onClick={(e) => { e.stopPropagation(); setCroppedBanner(null); }}
                   className="absolute top-2 right-2 h-9 w-9 rounded-full bg-background/80 backdrop-blur flex items-center justify-center"
                   aria-label="Remover imagem"
                 >
