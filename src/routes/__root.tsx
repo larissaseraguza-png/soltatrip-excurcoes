@@ -76,7 +76,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "SoltaTrip — Gestão de excursões para festivais" },
-      { name: "description", content: "Plataforma SaaS para excursões de eventos, festivais e raves." },
+      {
+        name: "description",
+        content: "Plataforma SaaS para excursões de eventos, festivais e raves.",
+      },
       { name: "theme-color", content: "#1a0a2e" },
       { property: "og:title", content: "SoltaTrip" },
       { property: "og:description", content: "Excursões de festival, sem planilha." },
@@ -87,7 +90,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "stylesheet", href: appCss },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
-      { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" },
+      {
+        rel: "stylesheet",
+        href: "https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&display=swap",
+      },
     ],
   }),
 
@@ -113,15 +119,15 @@ function RootShell({ children }: { children: React.ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
-  const router = useRouter();
   const lastUserId = useRef<string | null | undefined>(undefined);
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
       const nextUserId = session?.user?.id ?? null;
       if (lastUserId.current !== undefined && lastUserId.current !== nextUserId) {
         queryClient.clear();
-        router.invalidate();
       }
       lastUserId.current = nextUserId;
     });
@@ -131,7 +137,7 @@ function RootComponent() {
     });
 
     return () => subscription.unsubscribe();
-  }, [queryClient, router]);
+  }, [queryClient]);
 
   return (
     <QueryClientProvider client={queryClient}>

@@ -18,7 +18,10 @@ import {
   ArrowLeft,
 } from "lucide-react";
 
-import { consumePendingExcursionistaInvite, getPendingExcursionistaInvite } from "@/lib/excursionista-link";
+import {
+  consumePendingExcursionistaInvite,
+  getPendingExcursionistaInvite,
+} from "@/lib/excursionista-link";
 
 export const Route = createFileRoute("/auth")({
   beforeLoad: () => {
@@ -92,6 +95,29 @@ type CompleteSignupProfileArgs = {
   p_role: AppRole;
 };
 
+function getAuthErrorMessage(err: unknown, fallback = "Erro inesperado") {
+  const message =
+    err instanceof Error
+      ? err.message
+      : typeof err === "object" && err !== null && "message" in err
+        ? String((err as { message?: unknown }).message ?? "")
+        : typeof err === "string"
+          ? err
+          : "";
+
+  if (!message) return fallback;
+  if (/email.*not.*confirmed/i.test(message)) {
+    return "Seu e-mail ainda não foi confirmado. Verifique sua caixa de entrada e o spam.";
+  }
+  if (/for security purposes.*only request this after/i.test(message)) {
+    return `O provedor de autenticação limitou novas tentativas: ${message}`;
+  }
+  if (/failed to fetch/i.test(message)) {
+    return "Falha de conexão com o serviço de autenticação. Tente novamente ou use o link publicado.";
+  }
+  return message;
+}
+
 function completeSignupProfile(args: CompleteSignupProfileArgs) {
   const rpc = supabase.rpc as unknown as (
     fn: "complete_signup_profile",
@@ -141,7 +167,6 @@ function AuthPage() {
     if (pendingExc && role === "passageiro")
       return <Navigate to="/invite/excursionista/$id" params={{ id: pendingExc }} />;
     return <Navigate to={roleHome[role]} />;
-
   }
 
   function pickRole(r: AppRole) {
@@ -175,8 +200,12 @@ function AuthPage() {
             emailRedirectTo: `${window.location.origin}/auth`,
           },
         });
-        if (error) throw error;
-        if (!data.user) throw new Error("Falha ao criar conta.");
+        if (error) throw new Error(getAuthErrorMessage(error, "Não foi possível criar a conta."));
+        if (!data.user) {
+          throw new Error(
+            "O serviço de autenticação não retornou o usuário criado. Aguarde alguns segundos e tente novamente.",
+          );
+        }
 
         // Verificação de e-mail obrigatória: sem sessão, pedir confirmação e sair.
         if (!data.session) {
@@ -214,16 +243,10 @@ function AuthPage() {
         } else {
           navigate({ to: roleHome[selectedRole], replace: true });
         }
-
       } else {
         // Login
         const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) {
-          if (/email.*not.*confirmed/i.test(error.message)) {
-            throw new Error("Seu e-mail ainda não foi confirmado. Verifique sua caixa de entrada.");
-          }
-          throw error;
-        }
+        if (error) throw new Error(getAuthErrorMessage(error, "Não foi possível entrar."));
         if (!data.user) throw new Error("Falha ao entrar.");
 
         // Valida função
@@ -266,10 +289,9 @@ function AuthPage() {
         } else {
           navigate({ to: roleHome[userRole], replace: true });
         }
-
       }
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Erro inesperado");
+      setError(getAuthErrorMessage(err));
     } finally {
       setBusy(false);
     }
@@ -510,9 +532,7 @@ function Field({
           className={`w-full h-11 rounded-xl bg-secondary/40 border border-border focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 transition text-sm ${icon ? "pl-10" : "pl-3"} ${actionIcon ? "pr-10" : "pr-3"}`}
         />
         {actionIcon && (
-          <span className="absolute right-2 top-1/2 -translate-y-1/2">
-            {actionIcon}
-          </span>
+          <span className="absolute right-2 top-1/2 -translate-y-1/2">{actionIcon}</span>
         )}
       </div>
     </label>
