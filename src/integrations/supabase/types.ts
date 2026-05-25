@@ -935,7 +935,9 @@ export type Database = {
           excursao_titulo: string
           ja_usado: boolean
           nome: string
+          passageiro_id: string
           reserva_id: string
+          user_id: string
         }[]
       }
       get_staff_invitation: {
@@ -949,6 +951,7 @@ export type Database = {
           id: string
           papel: string
           used: boolean
+          used_by: string
         }[]
       }
       has_booking_for_excursao: {
