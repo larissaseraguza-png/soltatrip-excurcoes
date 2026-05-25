@@ -19,6 +19,20 @@ function init() {
   if (initialized) return;
   if (typeof window === "undefined") return; // nunca inicializa no servidor
   initialized = true;
+
+  // "Lembrar de mim" — se desativado, encerra sessão ao reabrir o navegador.
+  // st_remember="0" + ausência de sentinel de sessionStorage => nova aba após fechamento.
+  try {
+    const remember = localStorage.getItem("st_remember");
+    const alive = sessionStorage.getItem("st_session_alive");
+    if (remember === "0" && !alive) {
+      supabase.auth.signOut().catch(() => {});
+    }
+    sessionStorage.setItem("st_session_alive", "1");
+  } catch {
+    /* storage indisponível: ignora */
+  }
+
   supabase.auth.getSession().then(({ data }) => {
     setState({ session: data.session, user: data.session?.user ?? null, loading: false });
   });

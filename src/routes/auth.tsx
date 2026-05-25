@@ -136,9 +136,16 @@ function AuthPage() {
   const [step, setStep] = useState<"role" | "credentials">("role");
   const [selectedRole, setSelectedRole] = useState<AppRole | null>(null);
 
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(() => {
+    if (typeof window === "undefined") return "";
+    return localStorage.getItem("st_last_email") ?? "";
+  });
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [remember, setRemember] = useState(() => {
+    if (typeof window === "undefined") return true;
+    return localStorage.getItem("st_remember") !== "0";
+  });
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -189,6 +196,14 @@ function AuthPage() {
     setInfo(null);
     setBusy(true);
     try {
+      // Persistir preferências de login antes da chamada de auth.
+      try {
+        localStorage.setItem("st_remember", remember ? "1" : "0");
+        if (email) localStorage.setItem("st_last_email", email);
+        sessionStorage.setItem("st_session_alive", "1");
+      } catch {
+        /* ignora */
+      }
       if (mode === "signup") {
         const cleanPhone = phone.replace(/\D/g, "");
         if (cleanPhone.length < 10) throw new Error("Telefone inválido. Inclua DDD.");
@@ -465,6 +480,20 @@ function AuthPage() {
                   minLength={6}
                   placeholder="••••••••"
                 />
+
+                <label className="flex items-center gap-2 select-none cursor-pointer pt-1">
+                  <input
+                    type="checkbox"
+                    checked={remember}
+                    onChange={(e) => setRemember(e.target.checked)}
+                    className="h-4 w-4 rounded border-border bg-secondary/40 text-primary focus:ring-2 focus:ring-primary/30"
+                  />
+                  <span className="text-xs text-muted-foreground">
+                    Lembrar de mim neste dispositivo
+                  </span>
+                </label>
+
+
 
                 {error && (
                   <div className="flex items-start gap-2 text-sm text-red-400 bg-red-500/10 border border-red-500/30 rounded-lg px-3 py-2">
