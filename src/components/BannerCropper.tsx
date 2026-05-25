@@ -170,9 +170,11 @@ async function renderCroppedImage(url: string, area: Area): Promise<Blob> {
 function loadImage(src: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const img = new Image();
-    img.crossOrigin = "anonymous";
+    // Só define crossOrigin para URLs http(s). Para blob:/data: alguns
+    // Androids rejeitam o onload silenciosamente quando crossOrigin está setado.
+    if (/^https?:/i.test(src)) img.crossOrigin = "anonymous";
     img.onload = () => resolve(img);
-    img.onerror = reject;
+    img.onerror = () => reject(new Error("Falha ao carregar imagem"));
     img.src = src;
   });
 }
