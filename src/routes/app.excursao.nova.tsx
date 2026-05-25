@@ -230,13 +230,14 @@ function NovaExcursao() {
               </div>
             ) : (
               <>
-                {/* Área segura: o que ficar dentro do retângulo central aparece em todos os aparelhos */}
-                <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-                  <div className="w-[88%] h-[78%] border border-white/60 border-dashed rounded-xl" />
-                </div>
-                <span className="pointer-events-none absolute bottom-2 left-2 text-[10px] font-semibold text-white bg-black/60 px-2 py-0.5 rounded-full backdrop-blur">
-                  Área segura
-                </span>
+                <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent pointer-events-none" />
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); if (bannerFile) setPendingFile(bannerFile); }}
+                  className="absolute bottom-2 left-2 inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-full bg-background/80 backdrop-blur hover:bg-background"
+                >
+                  <ImagePlus className="h-3 w-3" /> Ajustar
+                </button>
                 <button
                   type="button"
                   onClick={(e) => { e.stopPropagation(); setCroppedBanner(null); }}
@@ -249,7 +250,7 @@ function NovaExcursao() {
             )}
           </div>
           <p className="mt-1.5 text-[11px] text-muted-foreground leading-tight">
-            Use imagem horizontal 16:9 (ex: 1600×900). Mantenha o conteúdo principal centralizado para não ser cortado em Android e iPhone.
+            Use imagem horizontal 16:9 (ex: 1600×900). Após selecionar, você pode mover, dar zoom e enquadrar a foto.
           </p>
           {show && errors.banner && <p className="mt-1 text-xs text-red-400">{errors.banner}</p>}
           <input
