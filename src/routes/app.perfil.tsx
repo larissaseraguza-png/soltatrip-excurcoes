@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Loader2, Save, Upload, User as UserIcon, Phone, Mail, MapPin, Instagram, Globe, Building2, FileText, Bus, Users as UsersIcon, CalendarClock, DollarSign } from "lucide-react";
+import { Loader2, Save, Upload, User as UserIcon, Phone, Mail, MapPin, Instagram, Globe, Building2, FileText, Bus, Users as UsersIcon, CalendarClock, DollarSign, Link2, Copy, Share2, ExternalLink, Check } from "lucide-react";
 
 export const Route = createFileRoute("/app/perfil")({
   head: () => ({ meta: [{ title: "Meu perfil — SoltaTrip" }, { name: "robots", content: "noindex" }] }),
@@ -21,6 +21,7 @@ type Profile = {
   bio: string | null;
   instagram_url: string | null;
   website_url: string | null;
+  slug: string | null;
 };
 
 function Perfil() {
@@ -33,7 +34,7 @@ function Perfil() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("profiles")
-        .select("id,full_name,phone,avatar_url,company_name,city,bio,instagram_url,website_url")
+        .select("id,full_name,phone,avatar_url,company_name,city,bio,instagram_url,website_url,slug")
         .eq("id", user!.id)
         .maybeSingle();
       if (error) throw error;
@@ -82,7 +83,7 @@ function Perfil() {
     if (data) setForm(data);
     else if (user) setForm({
       id: user.id, full_name: "", phone: "", avatar_url: null,
-      company_name: "", city: "", bio: "", instagram_url: "", website_url: "",
+      company_name: "", city: "", bio: "", instagram_url: "", website_url: "", slug: null,
     });
   }, [data, user]);
 
@@ -108,6 +109,7 @@ function Perfil() {
     if (!user || !form) return;
     setSaving(true);
     try {
+      const cleanSlug = form.slug?.trim().toLowerCase() || null;
       const { error } = await supabase.from("profiles").upsert({
         id: user.id,
         full_name: form.full_name,
@@ -118,14 +120,47 @@ function Perfil() {
         bio: form.bio,
         instagram_url: form.instagram_url,
         website_url: form.website_url,
+        slug: cleanSlug,
       });
       if (error) throw error;
       toast.success("Perfil salvo");
       qc.invalidateQueries({ queryKey: ["profile", user.id] });
     } catch (e: any) {
-      toast.error(e.message ?? "Erro ao salvar");
+      const msg = e?.message ?? "";
+      if (msg.includes("slug_invalid_length")) toast.error("Slug precisa ter entre 3 e 40 caracteres");
+      else if (msg.includes("slug_invalid_format")) toast.error("Slug aceita apenas letras minúsculas, números, '-' e '_'");
+      else if (msg.includes("slug_reserved")) toast.error("Esse slug é reservado, escolha outro");
+      else if (msg.includes("duplicate") || msg.includes("unique")) toast.error("Esse link já está em uso");
+      else toast.error(msg || "Erro ao salvar");
     } finally {
       setSaving(false);
+    }
+  }
+
+  const publicUrl = form?.slug
+    ? `${typeof window !== "undefined" ? window.location.origin : ""}/e/${form.slug}`
+    : null;
+  const [copied, setCopied] = useState(false);
+  async function copyLink() {
+    if (!publicUrl) return;
+    try {
+      await navigator.clipboard.writeText(publicUrl);
+      setCopied(true);
+      toast.success("Link copiado");
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      toast.error("Não foi possível copiar");
+    }
+  }
+  async function shareLink() {
+    if (!publicUrl) return;
+    const name = form?.company_name || form?.full_name || "Excursionista";
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: `${name} no SoltaTrip`, url: publicUrl });
+      } catch {}
+    } else {
+      copyLink();
     }
   }
 
@@ -177,8 +212,79 @@ function Perfil() {
         <StatCard icon={DollarSign} label="Receita total" value={`R$ ${Number(stats?.receita ?? 0).toLocaleString("pt-BR", { maximumFractionDigits: 0 })}`} hint="pagamentos confirmados" />
       </div>
 
+      <div className="glass rounded-3xl p-5 mb-4 relative overflow-hidden">
+        <div className="absolute -top-16 -right-16 size-40 rounded-full bg-neon-purple/20 blur-3xl pointer-events-none" />
+        <div className="relative">
+          <div className="flex items-center gap-2 mb-1">
+            <Link2 className="h-4 w-4 text-neon-pink" />
+            <h3 className="font-display font-bold text-sm uppercase tracking-wider">Meu link de divulgação</h3>
+          </div>
+          <p className="text-xs text-muted-foreground mb-4">
+            Compartilhe sua página pública. Apenas suas excursões aparecem para quem entrar pelo seu link.
+          </p>
+
+          <label className="block">
+            <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Seu slug</span>
+            <div className="mt-1 flex items-stretch rounded-xl bg-input border border-border focus-within:border-neon-pink overflow-hidden">
+              <span className="px-3 grid place-items-center text-xs text-muted-foreground bg-background/40 border-r border-border">
+                soltatrip.app/e/
+              </span>
+              <input
+                value={form.slug ?? ""}
+                onChange={(e) => setForm({ ...form, slug: e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, "") })}
+                placeholder="seu-nome"
+                maxLength={40}
+                className="flex-1 px-3 h-11 text-sm outline-none bg-transparent"
+              />
+            </div>
+            <span className="text-[10px] text-muted-foreground">
+              3-40 caracteres. Letras minúsculas, números, "-" e "_".
+            </span>
+          </label>
+
+          {publicUrl && (
+            <>
+              <div className="mt-3 rounded-xl border border-border bg-background/40 px-3 py-2.5 text-xs font-mono break-all">
+                {publicUrl}
+              </div>
+              <div className="mt-3 grid grid-cols-3 gap-2">
+                <button
+                  onClick={copyLink}
+                  className="h-10 rounded-xl border border-border bg-card text-xs font-semibold inline-flex items-center justify-center gap-1.5 hover:bg-secondary transition"
+                >
+                  {copied ? <Check className="h-3.5 w-3.5 text-neon-green" /> : <Copy className="h-3.5 w-3.5" />}
+                  {copied ? "Copiado" : "Copiar"}
+                </button>
+                <button
+                  onClick={shareLink}
+                  className="h-10 rounded-xl border border-border bg-card text-xs font-semibold inline-flex items-center justify-center gap-1.5 hover:bg-secondary transition"
+                >
+                  <Share2 className="h-3.5 w-3.5" /> Compartilhar
+                </button>
+                <a
+                  href={publicUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="h-10 rounded-xl bg-primary text-primary-foreground text-xs font-semibold inline-flex items-center justify-center gap-1.5 glow-primary hover:opacity-90 transition"
+                >
+                  <ExternalLink className="h-3.5 w-3.5" /> Abrir
+                </a>
+              </div>
+              <p className="mt-3 text-[10px] text-muted-foreground">
+                QR Code em breve.
+              </p>
+            </>
+          )}
+          {!publicUrl && (
+            <p className="mt-3 text-xs text-muted-foreground">
+              Defina um slug e clique em <strong>Salvar perfil</strong> para gerar seu link.
+            </p>
+          )}
+        </div>
+      </div>
 
       <Section title="Dados pessoais">
+
         <Field icon={UserIcon} label="Nome completo" value={form.full_name ?? ""} onChange={(v) => setForm({ ...form, full_name: v })} />
         <Field icon={Phone} label="Telefone" value={form.phone ?? ""} onChange={(v) => setForm({ ...form, phone: v })} placeholder="(11) 99999-9999" />
         <Field icon={MapPin} label="Cidade/Região" value={form.city ?? ""} onChange={(v) => setForm({ ...form, city: v })} placeholder="São Paulo, SP" />

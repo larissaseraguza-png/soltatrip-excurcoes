@@ -665,6 +665,7 @@ export type Database = {
           pix_key: string | null
           pix_qr_url: string | null
           pix_recipient: string | null
+          slug: string | null
           updated_at: string
           website_url: string | null
         }
@@ -685,6 +686,7 @@ export type Database = {
           pix_key?: string | null
           pix_qr_url?: string | null
           pix_recipient?: string | null
+          slug?: string | null
           updated_at?: string
           website_url?: string | null
         }
@@ -705,6 +707,7 @@ export type Database = {
           pix_key?: string | null
           pix_qr_url?: string | null
           pix_recipient?: string | null
+          slug?: string | null
           updated_at?: string
           website_url?: string | null
         }
@@ -881,6 +884,19 @@ export type Database = {
           titulo: string
         }[]
       }
+      get_excursionista_excursoes_publicas_by_slug: {
+        Args: { p_slug: string }
+        Returns: {
+          banner_url: string
+          cor: string
+          data_evento: string
+          descricao: string
+          destino: string
+          id: string
+          preco: number
+          titulo: string
+        }[]
+      }
       get_excursionista_vitrine: {
         Args: { p_org_id: string }
         Returns: {
@@ -891,6 +907,19 @@ export type Database = {
           full_name: string
           instagram_url: string
           organizer_id: string
+        }[]
+      }
+      get_excursionista_vitrine_by_slug: {
+        Args: { p_slug: string }
+        Returns: {
+          avatar_url: string
+          bio: string
+          city: string
+          company_name: string
+          full_name: string
+          instagram_url: string
+          organizer_id: string
+          slug: string
         }[]
       }
       get_my_role: {

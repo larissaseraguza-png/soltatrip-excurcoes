@@ -41,6 +41,7 @@ import { Route as ExcursionistaInfoRouteImport } from './routes/excursionista.in
 import { Route as ExcursionistaFinanceiroRouteImport } from './routes/excursionista.financeiro'
 import { Route as ExcursionistaEditarRouteImport } from './routes/excursionista.editar'
 import { Route as ExcursionistaCheckinRouteImport } from './routes/excursionista.checkin'
+import { Route as ESlugRouteImport } from './routes/e.$slug'
 import { Route as AppRelatoriosRouteImport } from './routes/app.relatorios'
 import { Route as AppPerfilRouteImport } from './routes/app.perfil'
 import { Route as AppPendentesRouteImport } from './routes/app.pendentes'
@@ -229,6 +230,11 @@ const ExcursionistaCheckinRoute = ExcursionistaCheckinRouteImport.update({
   path: '/checkin',
   getParentRoute: () => ExcursionistaRoute,
 } as any)
+const ESlugRoute = ESlugRouteImport.update({
+  id: '/e/$slug',
+  path: '/e/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AppRelatoriosRoute = AppRelatoriosRouteImport.update({
   id: '/relatorios',
   path: '/relatorios',
@@ -377,6 +383,7 @@ export interface FileRoutesByFullPath {
   '/app/pendentes': typeof AppPendentesRoute
   '/app/perfil': typeof AppPerfilRoute
   '/app/relatorios': typeof AppRelatoriosRoute
+  '/e/$slug': typeof ESlugRoute
   '/excursionista/checkin': typeof ExcursionistaCheckinRoute
   '/excursionista/editar': typeof ExcursionistaEditarRoute
   '/excursionista/financeiro': typeof ExcursionistaFinanceiroRoute
@@ -433,6 +440,7 @@ export interface FileRoutesByTo {
   '/app/pendentes': typeof AppPendentesRoute
   '/app/perfil': typeof AppPerfilRoute
   '/app/relatorios': typeof AppRelatoriosRoute
+  '/e/$slug': typeof ESlugRoute
   '/excursionista/checkin': typeof ExcursionistaCheckinRoute
   '/excursionista/editar': typeof ExcursionistaEditarRoute
   '/excursionista/financeiro': typeof ExcursionistaFinanceiroRoute
@@ -493,6 +501,7 @@ export interface FileRoutesById {
   '/app/pendentes': typeof AppPendentesRoute
   '/app/perfil': typeof AppPerfilRoute
   '/app/relatorios': typeof AppRelatoriosRoute
+  '/e/$slug': typeof ESlugRoute
   '/excursionista/checkin': typeof ExcursionistaCheckinRoute
   '/excursionista/editar': typeof ExcursionistaEditarRoute
   '/excursionista/financeiro': typeof ExcursionistaFinanceiroRoute
@@ -555,6 +564,7 @@ export interface FileRouteTypes {
     | '/app/pendentes'
     | '/app/perfil'
     | '/app/relatorios'
+    | '/e/$slug'
     | '/excursionista/checkin'
     | '/excursionista/editar'
     | '/excursionista/financeiro'
@@ -611,6 +621,7 @@ export interface FileRouteTypes {
     | '/app/pendentes'
     | '/app/perfil'
     | '/app/relatorios'
+    | '/e/$slug'
     | '/excursionista/checkin'
     | '/excursionista/editar'
     | '/excursionista/financeiro'
@@ -670,6 +681,7 @@ export interface FileRouteTypes {
     | '/app/pendentes'
     | '/app/perfil'
     | '/app/relatorios'
+    | '/e/$slug'
     | '/excursionista/checkin'
     | '/excursionista/editar'
     | '/excursionista/financeiro'
@@ -724,6 +736,7 @@ export interface RootRouteChildren {
   PassageiroRoute: typeof PassageiroRouteWithChildren
   SelecionarPerfilRoute: typeof SelecionarPerfilRoute
   StaffRoute: typeof StaffRouteWithChildren
+  ESlugRoute: typeof ESlugRoute
   InviteExcursionistaIdRoute: typeof InviteExcursionistaIdRoute
   InvitePassageiroTokenRoute: typeof InvitePassageiroTokenRoute
   InviteStaffTokenRoute: typeof InviteStaffTokenRoute
@@ -954,6 +967,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/excursionista/checkin'
       preLoaderRoute: typeof ExcursionistaCheckinRouteImport
       parentRoute: typeof ExcursionistaRoute
+    }
+    '/e/$slug': {
+      id: '/e/$slug'
+      path: '/e/$slug'
+      fullPath: '/e/$slug'
+      preLoaderRoute: typeof ESlugRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/app/relatorios': {
       id: '/app/relatorios'
@@ -1299,6 +1319,7 @@ const rootRouteChildren: RootRouteChildren = {
   PassageiroRoute: PassageiroRouteWithChildren,
   SelecionarPerfilRoute: SelecionarPerfilRoute,
   StaffRoute: StaffRouteWithChildren,
+  ESlugRoute: ESlugRoute,
   InviteExcursionistaIdRoute: InviteExcursionistaIdRoute,
   InvitePassageiroTokenRoute: InvitePassageiroTokenRoute,
   InviteStaffTokenRoute: InviteStaffTokenRoute,
@@ -1306,13 +1327,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
