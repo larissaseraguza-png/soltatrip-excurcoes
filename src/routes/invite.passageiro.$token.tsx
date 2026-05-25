@@ -34,9 +34,18 @@ function InvitePassageiroPage() {
     },
   });
 
+  // Se a reserva já foi vinculada a este usuário, abre a reserva direto
   useEffect(() => {
-    if (!user) localStorage.setItem("pending_pax_invite", token);
-  }, [user, token]);
+    if (authLoading || !invite) return;
+    if (invite.ja_usado && user && invite.user_id === user.id && invite.reserva_id) {
+      localStorage.removeItem("pending_pax_invite");
+      navigate({ to: "/passageiro/reserva/$id", params: { id: invite.reserva_id }, replace: true });
+    }
+  }, [invite, user, authLoading, navigate]);
+
+  useEffect(() => {
+    if (!user && invite && !invite.ja_usado) localStorage.setItem("pending_pax_invite", token);
+  }, [user, token, invite]);
 
   async function aceitar() {
     setError(null);
