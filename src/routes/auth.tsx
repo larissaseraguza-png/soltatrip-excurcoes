@@ -136,21 +136,28 @@ function AuthPage() {
   const [step, setStep] = useState<"role" | "credentials">("role");
   const [selectedRole, setSelectedRole] = useState<AppRole | null>(null);
 
-  const [email, setEmail] = useState(() => {
-    if (typeof window === "undefined") return "";
-    return localStorage.getItem("st_last_email") ?? "";
-  });
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [remember, setRemember] = useState(() => {
-    if (typeof window === "undefined") return true;
-    return localStorage.getItem("st_remember") !== "0";
-  });
+  const [remember, setRemember] = useState(true);
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+
+  // Carregar preferências do localStorage apenas no cliente (após montagem)
+  // evita hydration mismatch entre SSR e cliente.
+  useEffect(() => {
+    try {
+      const savedEmail = localStorage.getItem("st_last_email");
+      if (savedEmail) setEmail(savedEmail);
+      const savedRemember = localStorage.getItem("st_remember");
+      if (savedRemember !== null) setRemember(savedRemember !== "0");
+    } catch {
+      /* ignora */
+    }
+  }, []);
 
   if (loading || (!busy && user && roleLoading)) {
     return (
