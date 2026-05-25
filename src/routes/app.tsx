@@ -21,14 +21,9 @@ function AppLayout() {
   const { user, loading } = useAuth();
   const { pathname } = useLocation();
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <Loader2 className="h-6 w-6 animate-spin text-primary" />
-      </div>
-    );
-  }
-  if (!user) return <Navigate to="/auth" />;
+  // Sem fullscreen spinner: renderiza o shell e deixa RoleGuard/queries cuidarem
+  // do conteúdo. Evita flash branco/preto a cada navegação.
+  if (!loading && !user) return <Navigate to="/auth" />;
 
   // Esconde a subnav em páginas internas da excursão (já têm o próprio header)
   const showTabs = !pathname.startsWith("/app/excursao");
