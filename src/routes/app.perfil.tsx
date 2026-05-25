@@ -221,76 +221,91 @@ function Perfil() {
         <StatCard icon={DollarSign} label="Receita total" value={`R$ ${Number(stats?.receita ?? 0).toLocaleString("pt-BR", { maximumFractionDigits: 0 })}`} hint="pagamentos confirmados" />
       </div>
 
-      <div className="glass rounded-3xl p-5 mb-4 relative overflow-hidden">
-        <div className="absolute -top-16 -right-16 size-40 rounded-full bg-neon-purple/20 blur-3xl pointer-events-none" />
-        <div className="relative">
-          <div className="flex items-center gap-2 mb-1">
-            <Link2 className="h-4 w-4 text-neon-pink" />
-            <h3 className="font-display font-bold text-sm uppercase tracking-wider">Meu link de divulgação</h3>
-          </div>
-          <p className="text-xs text-muted-foreground mb-4">
-            Compartilhe sua página pública. Apenas suas excursões aparecem para quem entrar pelo seu link.
-          </p>
-
-          <label className="block">
-            <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Seu slug</span>
-            <div className="mt-1 flex items-stretch rounded-xl bg-input border border-border focus-within:border-neon-pink overflow-hidden">
-              <span className="px-3 grid place-items-center text-xs text-muted-foreground bg-background/40 border-r border-border">
-                soltatrip.app/e/
-              </span>
-              <input
-                value={form.slug ?? ""}
-                onChange={(e) => setForm({ ...form, slug: e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, "") })}
-                placeholder="seu-nome"
-                maxLength={40}
-                className="flex-1 px-3 h-11 text-sm outline-none bg-transparent"
-              />
+      <SafeBoundary label="Link de divulgação">
+        <div className="glass rounded-3xl p-5 mb-4 relative overflow-hidden">
+          <div className="absolute -top-16 -right-16 size-40 rounded-full bg-neon-purple/20 blur-3xl pointer-events-none" />
+          <div className="relative">
+            <div className="flex items-center gap-2 mb-1">
+              <Link2 className="h-4 w-4 text-neon-pink" />
+              <h3 className="font-display font-bold text-sm uppercase tracking-wider">Meu link de divulgação</h3>
             </div>
-            <span className="text-[10px] text-muted-foreground">
-              3-40 caracteres. Letras minúsculas, números, "-" e "_".
-            </span>
-          </label>
-
-          {publicUrl && (
-            <>
-              <div className="mt-3 rounded-xl border border-border bg-background/40 px-3 py-2.5 text-xs font-mono break-all">
-                {publicUrl}
-              </div>
-              <div className="mt-3 grid grid-cols-3 gap-2">
-                <button
-                  onClick={copyLink}
-                  className="h-10 rounded-xl border border-border bg-card text-xs font-semibold inline-flex items-center justify-center gap-1.5 hover:bg-secondary transition"
-                >
-                  {copied ? <Check className="h-3.5 w-3.5 text-neon-green" /> : <Copy className="h-3.5 w-3.5" />}
-                  {copied ? "Copiado" : "Copiar"}
-                </button>
-                <button
-                  onClick={shareLink}
-                  className="h-10 rounded-xl border border-border bg-card text-xs font-semibold inline-flex items-center justify-center gap-1.5 hover:bg-secondary transition"
-                >
-                  <Share2 className="h-3.5 w-3.5" /> Compartilhar
-                </button>
-                <a
-                  href={publicUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="h-10 rounded-xl bg-primary text-primary-foreground text-xs font-semibold inline-flex items-center justify-center gap-1.5 glow-primary hover:opacity-90 transition"
-                >
-                  <ExternalLink className="h-3.5 w-3.5" /> Abrir
-                </a>
-              </div>
-              <p className="mt-3 text-[10px] text-muted-foreground">
-                QR Code em breve.
-              </p>
-            </>
-          )}
-          {!publicUrl && (
-            <p className="mt-3 text-xs text-muted-foreground">
-              Defina um slug e clique em <strong>Salvar perfil</strong> para gerar seu link.
+            <p className="text-xs text-muted-foreground mb-4">
+              Compartilhe sua página pública. Apenas suas excursões aparecem para quem entrar pelo seu link.
             </p>
-          )}
+
+            <label className="block">
+              <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Seu slug</span>
+              <div className="mt-1 flex items-stretch rounded-xl bg-input border border-border focus-within:border-neon-pink overflow-hidden">
+                <span className="px-3 grid place-items-center text-xs text-muted-foreground bg-background/40 border-r border-border">
+                  soltatrip.app/e/
+                </span>
+                <input
+                  value={form.slug ?? ""}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      slug: e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, "").slice(0, 40),
+                    })
+                  }
+                  placeholder="seu-nome"
+                  maxLength={40}
+                  className="flex-1 px-3 h-11 text-sm outline-none bg-transparent"
+                />
+              </div>
+              <span className="text-[10px] text-muted-foreground">
+                3-40 caracteres. Letras minúsculas, números, "-" e "_". Deve começar e terminar com letra ou número.
+              </span>
+              {form.slug && !slugValid && (
+                <span className="block mt-1 text-[10px] text-destructive">
+                  Slug inválido. Ajuste para começar/terminar com letra ou número e ter pelo menos 3 caracteres.
+                </span>
+              )}
+              {slugValid && slugDirty && (
+                <span className="block mt-1 text-[10px] text-muted-foreground">
+                  Clique em <strong>Salvar perfil</strong> para ativar este link.
+                </span>
+              )}
+            </label>
+
+            {publicUrl ? (
+              <>
+                <div className="mt-3 rounded-xl border border-border bg-background/40 px-3 py-2.5 text-xs font-mono break-all">
+                  {publicUrl}
+                </div>
+                <div className="mt-3 grid grid-cols-3 gap-2">
+                  <button
+                    onClick={copyLink}
+                    className="h-10 rounded-xl border border-border bg-card text-xs font-semibold inline-flex items-center justify-center gap-1.5 hover:bg-secondary transition"
+                  >
+                    {copied ? <Check className="h-3.5 w-3.5 text-neon-green" /> : <Copy className="h-3.5 w-3.5" />}
+                    {copied ? "Copiado" : "Copiar"}
+                  </button>
+                  <button
+                    onClick={shareLink}
+                    className="h-10 rounded-xl border border-border bg-card text-xs font-semibold inline-flex items-center justify-center gap-1.5 hover:bg-secondary transition"
+                  >
+                    <Share2 className="h-3.5 w-3.5" /> Compartilhar
+                  </button>
+                  <a
+                    href={publicUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="h-10 rounded-xl bg-primary text-primary-foreground text-xs font-semibold inline-flex items-center justify-center gap-1.5 glow-primary hover:opacity-90 transition"
+                  >
+                    <ExternalLink className="h-3.5 w-3.5" /> Abrir
+                  </a>
+                </div>
+                <p className="mt-3 text-[10px] text-muted-foreground">QR Code em breve.</p>
+              </>
+            ) : (
+              <p className="mt-3 text-xs text-muted-foreground">
+                Defina um slug válido e clique em <strong>Salvar perfil</strong> para gerar seu link.
+              </p>
+            )}
+          </div>
         </div>
-      </div>
+      </SafeBoundary>
+
 
       <Section title="Dados pessoais">
 
