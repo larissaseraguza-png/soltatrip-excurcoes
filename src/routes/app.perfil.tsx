@@ -83,7 +83,7 @@ function Perfil() {
     if (data) setForm(data);
     else if (user) setForm({
       id: user.id, full_name: "", phone: "", avatar_url: null,
-      company_name: "", city: "", bio: "", instagram_url: "", website_url: "",
+      company_name: "", city: "", bio: "", instagram_url: "", website_url: "", slug: null,
     });
   }, [data, user]);
 
