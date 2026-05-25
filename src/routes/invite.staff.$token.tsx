@@ -54,6 +54,8 @@ function InviteStaffPage() {
       const { error } = await supabase.rpc("accept_staff_invitation", { p_token: token });
       if (error) throw error;
       localStorage.removeItem("pending_staff_invite");
+      invalidateRoles(user?.id);
+      setActiveRole("staff");
       setDone(true);
       setTimeout(() => navigate({ to: "/staff", replace: true }), 1200);
     } catch (err: any) {

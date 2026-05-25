@@ -44,6 +44,8 @@ function InvitePassageiroPage() {
       const { data, error } = await supabase.rpc("claim_passageiro_invite", { p_token: token });
       if (error) throw error;
       localStorage.removeItem("pending_pax_invite");
+      invalidateRoles(user?.id);
+      setActiveRole("passageiro");
       setDone(true);
       const reservaId = data as unknown as string;
       setTimeout(() => navigate({ to: "/passageiro/reserva/$id", params: { id: reservaId }, replace: true }), 1000);
