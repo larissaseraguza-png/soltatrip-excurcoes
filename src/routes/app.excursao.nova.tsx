@@ -3,6 +3,7 @@ import { useMemo, useRef, useState, type FormEvent } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { ArrowLeft, Loader2, AlertCircle, Plus, Trash2, MapPin, ImagePlus, X } from "lucide-react";
+import { BannerCropper } from "@/components/BannerCropper";
 
 export const Route = createFileRoute("/app/excursao/nova")({
   component: NovaExcursao,
