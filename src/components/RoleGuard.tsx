@@ -1,5 +1,4 @@
 import { Navigate } from "@tanstack/react-router";
-import { Loader2 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useRoleForUser, roleHome, type AppRole } from "@/hooks/use-role";
 
@@ -7,13 +6,9 @@ export function RoleGuard({ allow, children }: { allow: AppRole; children: React
   const { user, loading: aLoading } = useAuth();
   const { role, loading: rLoading } = useRoleForUser(user, aLoading);
 
-  if (aLoading || rLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <Loader2 className="h-6 w-6 animate-spin text-primary" />
-      </div>
-    );
-  }
+  // Enquanto resolve auth/role, renderiza o shell silenciosamente para evitar
+  // flash de loader de tela inteira em cada navegação.
+  if (aLoading || rLoading) return <>{children}</>;
   if (!user) return <Navigate to="/auth" />;
   if (!role) return <Navigate to="/auth" />;
   if (role !== allow) return <Navigate to={roleHome[role]} />;
