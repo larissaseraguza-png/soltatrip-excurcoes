@@ -54,10 +54,23 @@ function NovaExcursao() {
   const [bannerPreview, setBannerPreview] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  function handleBannerChange(f: File | null) {
-    setBannerFile(f);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
+
+  function setCroppedBanner(blob: Blob | null) {
     if (bannerPreview) URL.revokeObjectURL(bannerPreview);
-    setBannerPreview(f ? URL.createObjectURL(f) : null);
+    if (!blob) {
+      setBannerFile(null);
+      setBannerPreview(null);
+      return;
+    }
+    const f = new File([blob], `capa-${Date.now()}.jpg`, { type: "image/jpeg" });
+    setBannerFile(f);
+    setBannerPreview(URL.createObjectURL(f));
+  }
+
+  function pickFile(f: File | null) {
+    if (!f) return;
+    setPendingFile(f);
   }
 
   function set<K extends keyof typeof form>(k: K, v: string) {
