@@ -109,6 +109,7 @@ function Perfil() {
     if (!user || !form) return;
     setSaving(true);
     try {
+      const cleanSlug = form.slug?.trim().toLowerCase() || null;
       const { error } = await supabase.from("profiles").upsert({
         id: user.id,
         full_name: form.full_name,
@@ -119,14 +120,47 @@ function Perfil() {
         bio: form.bio,
         instagram_url: form.instagram_url,
         website_url: form.website_url,
+        slug: cleanSlug,
       });
       if (error) throw error;
       toast.success("Perfil salvo");
       qc.invalidateQueries({ queryKey: ["profile", user.id] });
     } catch (e: any) {
-      toast.error(e.message ?? "Erro ao salvar");
+      const msg = e?.message ?? "";
+      if (msg.includes("slug_invalid_length")) toast.error("Slug precisa ter entre 3 e 40 caracteres");
+      else if (msg.includes("slug_invalid_format")) toast.error("Slug aceita apenas letras minúsculas, números, '-' e '_'");
+      else if (msg.includes("slug_reserved")) toast.error("Esse slug é reservado, escolha outro");
+      else if (msg.includes("duplicate") || msg.includes("unique")) toast.error("Esse link já está em uso");
+      else toast.error(msg || "Erro ao salvar");
     } finally {
       setSaving(false);
+    }
+  }
+
+  const publicUrl = form?.slug
+    ? `${typeof window !== "undefined" ? window.location.origin : ""}/e/${form.slug}`
+    : null;
+  const [copied, setCopied] = useState(false);
+  async function copyLink() {
+    if (!publicUrl) return;
+    try {
+      await navigator.clipboard.writeText(publicUrl);
+      setCopied(true);
+      toast.success("Link copiado");
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      toast.error("Não foi possível copiar");
+    }
+  }
+  async function shareLink() {
+    if (!publicUrl) return;
+    const name = form?.company_name || form?.full_name || "Excursionista";
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: `${name} no SoltaTrip`, url: publicUrl });
+      } catch {}
+    } else {
+      copyLink();
     }
   }
 
