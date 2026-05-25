@@ -1,6 +1,6 @@
 import { createFileRoute, Outlet, Navigate, Link, useLocation } from "@tanstack/react-router";
 import { useAuth } from "@/hooks/use-auth";
-import { Loader2, LayoutDashboard, History, BarChart3, UserCircle2, Wallet } from "lucide-react";
+import { LayoutDashboard, History, BarChart3, UserCircle2, Wallet } from "lucide-react";
 import { RoleGuard } from "@/components/RoleGuard";
 import { RoleHeader } from "@/components/RoleHeader";
 
