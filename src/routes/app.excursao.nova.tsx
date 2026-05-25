@@ -193,7 +193,7 @@ function NovaExcursao() {
         <div>
           <span className="text-xs font-semibold text-muted-foreground mb-1.5 block">Imagem de capa *</span>
           <div
-            className={`relative h-40 rounded-2xl overflow-hidden border border-dashed bg-secondary/30 cursor-pointer hover:border-primary transition ${show && errors.banner ? "border-red-500" : "border-border"}`}
+            className={`relative w-full aspect-[16/9] rounded-2xl overflow-hidden border border-dashed bg-secondary/30 cursor-pointer hover:border-primary transition ${show && errors.banner ? "border-red-500" : "border-border"}`}
             style={
               bannerPreview
                 ? { backgroundImage: `url(${bannerPreview})`, backgroundSize: "cover", backgroundPosition: "center" }
@@ -202,22 +202,34 @@ function NovaExcursao() {
             onClick={() => fileRef.current?.click()}
           >
             {!bannerPreview ? (
-              <div className="absolute inset-0 flex flex-col items-center justify-center text-muted-foreground gap-1.5">
+              <div className="absolute inset-0 flex flex-col items-center justify-center text-muted-foreground gap-1.5 px-4 text-center">
                 <ImagePlus className="h-6 w-6" />
                 <span className="text-xs font-semibold">Toque para enviar imagem</span>
-                <span className="text-[10px]">(JPG ou PNG)</span>
+                <span className="text-[10px] leading-tight">Recomendado: 1600×900 px • Proporção 16:9 • JPG ou PNG</span>
               </div>
             ) : (
-              <button
-                type="button"
-                onClick={(e) => { e.stopPropagation(); handleBannerChange(null); }}
-                className="absolute top-2 right-2 h-7 w-7 rounded-full bg-background/80 backdrop-blur flex items-center justify-center"
-                aria-label="Remover imagem"
-              >
-                <X className="h-3.5 w-3.5" />
-              </button>
+              <>
+                {/* Área segura: o que ficar dentro do retângulo central aparece em todos os aparelhos */}
+                <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+                  <div className="w-[88%] h-[78%] border border-white/60 border-dashed rounded-xl" />
+                </div>
+                <span className="pointer-events-none absolute bottom-2 left-2 text-[10px] font-semibold text-white bg-black/60 px-2 py-0.5 rounded-full backdrop-blur">
+                  Área segura
+                </span>
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); handleBannerChange(null); }}
+                  className="absolute top-2 right-2 h-9 w-9 rounded-full bg-background/80 backdrop-blur flex items-center justify-center"
+                  aria-label="Remover imagem"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </>
             )}
           </div>
+          <p className="mt-1.5 text-[11px] text-muted-foreground leading-tight">
+            Use imagem horizontal 16:9 (ex: 1600×900). Mantenha o conteúdo principal centralizado para não ser cortado em Android e iPhone.
+          </p>
           {show && errors.banner && <p className="mt-1 text-xs text-red-400">{errors.banner}</p>}
           <input
             ref={fileRef}
