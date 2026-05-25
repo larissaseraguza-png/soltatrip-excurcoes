@@ -136,13 +136,23 @@ function SelecionarPerfilPage() {
 function renderCard(p: Perfil, novo: boolean, onClick: (p: Perfil) => void) {
   const a = accents[p.tone];
   const Icon = p.icon;
+  const hint = novo
+    ? p.id === "excursionista"
+      ? "Crie uma excursão para ativar este perfil automaticamente."
+      : p.id === "staff"
+        ? "Aceite um convite de equipe para ativar este perfil."
+        : "Compre uma excursão (ou aceite um convite) para ativar."
+    : null;
+
   return (
     <button
       key={p.id}
-      onClick={() => onClick(p)}
-      className={`group text-left glass rounded-3xl p-7 transition-all duration-300 border ${a.border} hover:-translate-y-1 relative overflow-hidden ${novo ? "opacity-80" : ""}`}
+      type="button"
+      onClick={novo ? undefined : () => onClick(p)}
+      disabled={novo}
+      className={`group text-left glass rounded-3xl p-7 transition-all duration-300 border ${a.border} relative overflow-hidden ${novo ? "opacity-60 cursor-default" : "hover:-translate-y-1"}`}
     >
-      <div className={`absolute -top-20 -right-20 h-48 w-48 bg-gradient-to-br ${a.glow} rounded-full blur-3xl opacity-60 group-hover:opacity-100 transition`} />
+      <div className={`absolute -top-20 -right-20 h-48 w-48 bg-gradient-to-br ${a.glow} rounded-full blur-3xl opacity-60 ${novo ? "" : "group-hover:opacity-100"} transition`} />
       <div className="relative">
         <div className="flex items-center justify-between mb-6">
           <span className={`text-[10px] font-bold tracking-[0.18em] ${a.text}`}>{p.tag}</span>
@@ -150,10 +160,15 @@ function renderCard(p: Perfil, novo: boolean, onClick: (p: Perfil) => void) {
         </div>
         <h3 className="font-display text-2xl font-bold leading-tight">{p.titulo}</h3>
         <p className="mt-3 text-sm text-muted-foreground leading-relaxed">{p.desc}</p>
-        <div className={`mt-6 inline-flex items-center gap-1.5 text-sm font-semibold ${a.text} group-hover:gap-2.5 transition-all`}>
-          {novo ? "Adicionar este perfil" : `Entrar como ${p.titulo.toLowerCase()}`} <ArrowRight className="h-4 w-4" />
-        </div>
+        {novo ? (
+          <p className="mt-4 text-[11px] text-muted-foreground italic">{hint}</p>
+        ) : (
+          <div className={`mt-6 inline-flex items-center gap-1.5 text-sm font-semibold ${a.text} group-hover:gap-2.5 transition-all`}>
+            Entrar como {p.titulo.toLowerCase()} <ArrowRight className="h-4 w-4" />
+          </div>
+        )}
       </div>
     </button>
   );
 }
+
