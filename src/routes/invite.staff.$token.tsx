@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { invalidateRoles, setActiveRole } from "@/hooks/use-role";
 import { isFlowLocked } from "@/config/flow-mode";
 import { Bus, Loader2, CheckCircle2, AlertCircle, ShieldCheck } from "lucide-react";
 
@@ -54,6 +55,8 @@ function InviteStaffPage() {
       const { error } = await supabase.rpc("accept_staff_invitation", { p_token: token });
       if (error) throw error;
       localStorage.removeItem("pending_staff_invite");
+      invalidateRoles(user?.id);
+      setActiveRole("staff");
       setDone(true);
       setTimeout(() => navigate({ to: "/staff", replace: true }), 1200);
     } catch (err: any) {

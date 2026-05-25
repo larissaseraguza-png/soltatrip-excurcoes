@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { invalidateRoles, setActiveRole } from "@/hooks/use-role";
 import { isFlowLocked } from "@/config/flow-mode";
 import { Bus, Loader2, CheckCircle2, AlertCircle, Ticket } from "lucide-react";
 
@@ -44,6 +45,8 @@ function InvitePassageiroPage() {
       const { data, error } = await supabase.rpc("claim_passageiro_invite", { p_token: token });
       if (error) throw error;
       localStorage.removeItem("pending_pax_invite");
+      invalidateRoles(user?.id);
+      setActiveRole("passageiro");
       setDone(true);
       const reservaId = data as unknown as string;
       setTimeout(() => navigate({ to: "/passageiro/reserva/$id", params: { id: reservaId }, replace: true }), 1000);

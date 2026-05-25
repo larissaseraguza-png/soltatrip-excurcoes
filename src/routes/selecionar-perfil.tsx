@@ -1,5 +1,6 @@
 import { createFileRoute, Navigate, useNavigate, redirect } from "@tanstack/react-router";
 import { useAuth } from "@/hooks/use-auth";
+import { useRole, setActiveRole, type AppRole } from "@/hooks/use-role";
 import { isFlowLocked } from "@/config/flow-mode";
 import { Bus, Crown, Shield, Ticket, ArrowRight, Loader2 } from "lucide-react";
 
@@ -14,7 +15,7 @@ export const Route = createFileRoute("/selecionar-perfil")({
 });
 
 type Perfil = {
-  id: "excursionista" | "staff" | "passageiro";
+  id: AppRole;
   titulo: string;
   desc: string;
   icon: typeof Crown;
@@ -61,9 +62,10 @@ const accents = {
 
 function SelecionarPerfilPage() {
   const { user, loading } = useAuth();
+  const { roles, loading: rLoading } = useRole();
   const navigate = useNavigate();
 
-  if (loading) {
+  if (loading || rLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="h-6 w-6 animate-spin text-primary" />
@@ -73,11 +75,12 @@ function SelecionarPerfilPage() {
   if (!user) return <Navigate to="/auth" />;
 
   function escolher(p: Perfil) {
-    try {
-      localStorage.setItem("soltatrip:perfil", p.id);
-    } catch {}
+    setActiveRole(p.id);
     navigate({ to: p.to });
   }
+
+  const meus = perfis.filter((p) => roles.includes(p.id));
+  const outros = perfis.filter((p) => !roles.includes(p.id));
 
   return (
     <div className="min-h-screen bg-background text-foreground p-4 sm:p-8">
@@ -96,37 +99,76 @@ function SelecionarPerfilPage() {
             Selecione seu <span className="text-gradient">perfil</span>
           </h1>
           <p className="mt-4 text-sm sm:text-base text-muted-foreground">
-            Cada perfil tem sua própria navegação e permissões.
+            {meus.length > 1
+              ? "Sua conta tem mais de um perfil. Escolha como quer entrar agora — você pode alternar a qualquer momento."
+              : meus.length === 1
+                ? "Você está conectado. Continue ou adicione outro perfil à mesma conta."
+                : "Cada perfil tem sua própria navegação e permissões."}
           </p>
         </div>
 
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          {perfis.map((p) => {
-            const a = accents[p.tone];
-            const Icon = p.icon;
-            return (
-              <button
-                key={p.id}
-                onClick={() => escolher(p)}
-                className={`group text-left glass rounded-3xl p-7 transition-all duration-300 border ${a.border} hover:-translate-y-1 relative overflow-hidden`}
-              >
-                <div className={`absolute -top-20 -right-20 h-48 w-48 bg-gradient-to-br ${a.glow} rounded-full blur-3xl opacity-60 group-hover:opacity-100 transition`} />
-                <div className="relative">
-                  <div className="flex items-center justify-between mb-6">
-                    <span className={`text-[10px] font-bold tracking-[0.18em] ${a.text}`}>{p.tag}</span>
-                    <Icon className={`h-5 w-5 ${a.text}`} />
-                  </div>
-                  <h3 className="font-display text-2xl font-bold leading-tight">{p.titulo}</h3>
-                  <p className="mt-3 text-sm text-muted-foreground leading-relaxed">{p.desc}</p>
-                  <div className={`mt-6 inline-flex items-center gap-1.5 text-sm font-semibold ${a.text} group-hover:gap-2.5 transition-all`}>
-                    Entrar como {p.titulo.toLowerCase()} <ArrowRight className="h-4 w-4" />
-                  </div>
-                </div>
-              </button>
-            );
-          })}
-        </div>
+        {meus.length > 0 && (
+          <>
+            <h2 className="text-[11px] font-bold tracking-[0.18em] text-muted-foreground mb-3">
+              SEUS PERFIS
+            </h2>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-10">
+              {meus.map((p) => renderCard(p, false, escolher))}
+            </div>
+          </>
+        )}
+
+        {outros.length > 0 && (
+          <>
+            <h2 className="text-[11px] font-bold tracking-[0.18em] text-muted-foreground mb-3">
+              ADICIONAR PERFIL
+            </h2>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+              {outros.map((p) => renderCard(p, true, escolher))}
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
 }
+
+function renderCard(p: Perfil, novo: boolean, onClick: (p: Perfil) => void) {
+  const a = accents[p.tone];
+  const Icon = p.icon;
+  const hint = novo
+    ? p.id === "excursionista"
+      ? "Crie uma excursão para ativar este perfil automaticamente."
+      : p.id === "staff"
+        ? "Aceite um convite de equipe para ativar este perfil."
+        : "Compre uma excursão (ou aceite um convite) para ativar."
+    : null;
+
+  return (
+    <button
+      key={p.id}
+      type="button"
+      onClick={novo ? undefined : () => onClick(p)}
+      disabled={novo}
+      className={`group text-left glass rounded-3xl p-7 transition-all duration-300 border ${a.border} relative overflow-hidden ${novo ? "opacity-60 cursor-default" : "hover:-translate-y-1"}`}
+    >
+      <div className={`absolute -top-20 -right-20 h-48 w-48 bg-gradient-to-br ${a.glow} rounded-full blur-3xl opacity-60 ${novo ? "" : "group-hover:opacity-100"} transition`} />
+      <div className="relative">
+        <div className="flex items-center justify-between mb-6">
+          <span className={`text-[10px] font-bold tracking-[0.18em] ${a.text}`}>{p.tag}</span>
+          <Icon className={`h-5 w-5 ${a.text}`} />
+        </div>
+        <h3 className="font-display text-2xl font-bold leading-tight">{p.titulo}</h3>
+        <p className="mt-3 text-sm text-muted-foreground leading-relaxed">{p.desc}</p>
+        {novo ? (
+          <p className="mt-4 text-[11px] text-muted-foreground italic">{hint}</p>
+        ) : (
+          <div className={`mt-6 inline-flex items-center gap-1.5 text-sm font-semibold ${a.text} group-hover:gap-2.5 transition-all`}>
+            Entrar como {p.titulo.toLowerCase()} <ArrowRight className="h-4 w-4" />
+          </div>
+        )}
+      </div>
+    </button>
+  );
+}
+

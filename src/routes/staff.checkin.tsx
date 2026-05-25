@@ -7,7 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useStaffExcursao } from "@/hooks/use-staff-excursao";
 import { useRealtimeSync } from "@/hooks/use-realtime-sync";
-import { CheckCircle2, XCircle, UserCheck, Loader2, Search, Camera, X, AlertTriangle, Bus } from "lucide-react";
+import { CheckCircle2, XCircle, UserCheck, Loader2, Search, Camera, X, AlertTriangle, Bus, RotateCcw } from "lucide-react";
 
 export const Route = createFileRoute("/staff/checkin")({
   component: CheckinStaff,
@@ -132,6 +132,28 @@ function CheckinStaff() {
     qc.invalidateQueries({ queryKey: ["staff-checkin-pax", excursao.id, onibusId] });
     qc.invalidateQueries({ queryKey: ["staff-checkins", excursao.id, onibusId] });
   }
+
+  async function desembarcar(passageiroId: string) {
+    if (!excursao) return;
+    const pax = paxById.get(passageiroId);
+    if (!pax) return;
+    if (!confirm(`Remover embarque de ${pax.nome}? O passageiro poderá embarcar novamente.`)) return;
+    // Status volta para 'confirmado' (se houver pagamento) ou 'pendente'.
+    const novoStatus = pax.payment_status === "paid" ? "confirmado" : "pendente";
+    const { error } = await supabase
+      .from("passageiros")
+      .update({ embarcado_em: null, status: novoStatus })
+      .eq("id", passageiroId);
+    if (error) {
+      showFeedback(false, error.message);
+      return;
+    }
+    showFeedback(true, `Embarque de ${pax.nome} removido.`);
+    toast.success(`${pax.nome} foi desembarcado.`);
+    qc.invalidateQueries({ queryKey: ["staff-checkin-pax", excursao.id, onibusId] });
+    qc.invalidateQueries({ queryKey: ["staff-checkins", excursao.id, onibusId] });
+  }
+
 
   async function handleQrResult(decoded: string) {
     const clean = decoded.trim();
@@ -269,9 +291,16 @@ function CheckinStaff() {
                         Poltrona {p.assento ?? "—"} · {p.ponto?.nome ?? "—"}
                       </div>
                     </div>
-                    <span className="text-[10px] text-neon-green font-bold">
+                    <span className="text-[10px] text-neon-green font-bold shrink-0">
                       {p.embarcado_em ? new Date(p.embarcado_em).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }) : ""}
                     </span>
+                    <button
+                      onClick={() => desembarcar(p.id)}
+                      className="h-8 px-2 rounded-lg border border-yellow-500/30 text-yellow-400 text-[10px] font-bold inline-flex items-center gap-1 shrink-0 hover:bg-yellow-500/10"
+                      aria-label={`Remover embarque de ${p.nome}`}
+                    >
+                      <RotateCcw className="size-3" /> Desembarcar
+                    </button>
                   </div>
                 ))}
               </div>
