@@ -96,6 +96,17 @@
     color: var(--color-foreground);
     font-family: var(--font-body);
     -webkit-font-smoothing: antialiased;
+    /* Evita overflow horizontal em telas pequenas */
+    overflow-x: hidden;
+    /* Respeita notch / barras em iOS/Android */
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+
+  html {
+    /* Previne ajuste automático de fonte em rotação no iOS */
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
   }
 
   body {
@@ -107,6 +118,28 @@
   }
 
   h1, h2, h3, h4 { font-family: var(--font-display); letter-spacing: -0.02em; }
+
+  /* Inputs: 16px evita zoom automático no iOS Safari ao focar.
+     min-height 44px = tap target recomendado pela Apple HIG. */
+  input, select, textarea, button {
+    font-size: 16px;
+  }
+  input[type="time"], input[type="date"], input[type="datetime-local"], input[type="number"] {
+    min-height: 44px;
+    /* garante espaço pro placeholder/valor não ser cortado em Android (--:-- --) */
+    min-width: 7.5rem;
+    /* normaliza aparência entre WebKit e Chromium Android */
+    -webkit-appearance: none;
+    appearance: none;
+  }
+  /* Botão "limpar" do input time em alguns Androids gera corte; mantemos espaço */
+  input[type="time"]::-webkit-calendar-picker-indicator,
+  input[type="date"]::-webkit-calendar-picker-indicator {
+    opacity: 0.7;
+    cursor: pointer;
+  }
+  /* Mídia preserva proporção */
+  img, video { max-width: 100%; height: auto; }
 }
 
 @layer utilities {
