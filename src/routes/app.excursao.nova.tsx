@@ -250,7 +250,7 @@ function NovaExcursao() {
             type="file"
             accept="image/*"
             className="hidden"
-            onChange={(e) => handleBannerChange(e.target.files?.[0] ?? null)}
+            onChange={(e) => { pickFile(e.target.files?.[0] ?? null); e.target.value = ""; }}
           />
         </div>
 
