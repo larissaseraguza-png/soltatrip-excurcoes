@@ -110,7 +110,13 @@ function Perfil() {
     if (!user || !form) return;
     setSaving(true);
     try {
-      const cleanSlug = form.slug?.trim().toLowerCase() || null;
+      const rawSlug = form.slug?.trim().toLowerCase() || "";
+      const cleanSlug = rawSlug || null;
+      if (cleanSlug && !/^[a-z0-9][a-z0-9_-]{1,38}[a-z0-9]$/.test(cleanSlug)) {
+        toast.error("Slug inválido. Use 3-40 caracteres começando/terminando com letra ou número.");
+        setSaving(false);
+        return;
+      }
       const { error } = await supabase.from("profiles").upsert({
         id: user.id,
         full_name: form.full_name,
