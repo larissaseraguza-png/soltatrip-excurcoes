@@ -45,6 +45,11 @@ type ExPub = {
   cor: string | null;
 };
 
+function fmtDateBR(iso: string) {
+  const [y, m, d] = iso.split("-");
+  return `${d}/${m}/${y}`;
+}
+
 function SlugPage() {
   const { slug } = Route.useParams();
   const { user, loading: authLoading } = useAuth();
