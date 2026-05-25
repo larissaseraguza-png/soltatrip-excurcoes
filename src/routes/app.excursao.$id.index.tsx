@@ -7,6 +7,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useRealtimeSync } from "@/hooks/use-realtime-sync";
 import { ArrowLeft, Calendar, MapPin, Clock, Users, DollarSign, Loader2, Trash2, ChevronRight, Wallet, QrCode, MapPinned, UserCog, Ban, ImagePlus, Bus, MessageCircle, Save, Ticket } from "lucide-react";
 import { SafeBoundary } from "@/components/SafeBoundary";
+import { BannerCropper } from "@/components/BannerCropper";
 
 export const Route = createFileRoute("/app/excursao/$id/")({
   component: ExcursaoDetalhe,
@@ -19,6 +20,7 @@ function ExcursaoDetalhe() {
   const qc = useQueryClient();
   const fileRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState<null | "cancel" | "delete" | "upload">(null);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
 
   const { data, isLoading } = useQuery({
     queryKey: ["excursao", id],
@@ -81,15 +83,14 @@ function ExcursaoDetalhe() {
     }
   }
 
-  async function handleBannerUpload(file: File) {
+  async function handleBannerUpload(file: File | Blob) {
     if (!user) return;
     setBusy("upload");
     try {
-      const ext = file.name.split(".").pop() || "jpg";
-      const path = `${user.id}/${id}-${Date.now()}.${ext}`;
+      const path = `${user.id}/${id}-${Date.now()}.jpg`;
       const { error: upErr } = await supabase.storage
         .from("excursao-banners")
-        .upload(path, file, { upsert: true, cacheControl: "3600" });
+        .upload(path, file, { upsert: true, cacheControl: "3600", contentType: "image/jpeg" });
       if (upErr) throw upErr;
       const { data: pub } = supabase.storage.from("excursao-banners").getPublicUrl(path);
       const { error: updErr } = await supabase
@@ -105,6 +106,7 @@ function ExcursaoDetalhe() {
     }
   }
 
+
   if (isLoading) {
     return <div className="flex justify-center py-20"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>;
   }
@@ -112,6 +114,13 @@ function ExcursaoDetalhe() {
 
   return (
     <div>
+      {pendingFile && (
+        <BannerCropper
+          file={pendingFile}
+          onCancel={() => setPendingFile(null)}
+          onConfirm={(blob) => { setPendingFile(null); handleBannerUpload(blob); }}
+        />
+      )}
       <Link to="/app" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4">
         <ArrowLeft className="h-4 w-4" /> Voltar
       </Link>
@@ -142,7 +151,7 @@ function ExcursaoDetalhe() {
           className="hidden"
           onChange={(e) => {
             const f = e.target.files?.[0];
-            if (f) handleBannerUpload(f);
+            if (f) setPendingFile(f);
             e.target.value = "";
           }}
         />

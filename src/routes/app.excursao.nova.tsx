@@ -3,6 +3,7 @@ import { useMemo, useRef, useState, type FormEvent } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { ArrowLeft, Loader2, AlertCircle, Plus, Trash2, MapPin, ImagePlus, X } from "lucide-react";
+import { BannerCropper } from "@/components/BannerCropper";
 
 export const Route = createFileRoute("/app/excursao/nova")({
   component: NovaExcursao,
@@ -53,10 +54,23 @@ function NovaExcursao() {
   const [bannerPreview, setBannerPreview] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  function handleBannerChange(f: File | null) {
-    setBannerFile(f);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
+
+  function setCroppedBanner(blob: Blob | null) {
     if (bannerPreview) URL.revokeObjectURL(bannerPreview);
-    setBannerPreview(f ? URL.createObjectURL(f) : null);
+    if (!blob) {
+      setBannerFile(null);
+      setBannerPreview(null);
+      return;
+    }
+    const f = new File([blob], `capa-${Date.now()}.jpg`, { type: "image/jpeg" });
+    setBannerFile(f);
+    setBannerPreview(URL.createObjectURL(f));
+  }
+
+  function pickFile(f: File | null) {
+    if (!f) return;
+    setPendingFile(f);
   }
 
   function set<K extends keyof typeof form>(k: K, v: string) {
@@ -181,6 +195,13 @@ function NovaExcursao() {
 
   return (
     <div>
+      {pendingFile && (
+        <BannerCropper
+          file={pendingFile}
+          onCancel={() => setPendingFile(null)}
+          onConfirm={(blob) => { setCroppedBanner(blob); setPendingFile(null); }}
+        />
+      )}
       <Link to="/app" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4">
         <ArrowLeft className="h-4 w-4" /> Voltar
       </Link>
@@ -209,16 +230,17 @@ function NovaExcursao() {
               </div>
             ) : (
               <>
-                {/* Área segura: o que ficar dentro do retângulo central aparece em todos os aparelhos */}
-                <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-                  <div className="w-[88%] h-[78%] border border-white/60 border-dashed rounded-xl" />
-                </div>
-                <span className="pointer-events-none absolute bottom-2 left-2 text-[10px] font-semibold text-white bg-black/60 px-2 py-0.5 rounded-full backdrop-blur">
-                  Área segura
-                </span>
+                <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent pointer-events-none" />
                 <button
                   type="button"
-                  onClick={(e) => { e.stopPropagation(); handleBannerChange(null); }}
+                  onClick={(e) => { e.stopPropagation(); if (bannerFile) setPendingFile(bannerFile); }}
+                  className="absolute bottom-2 left-2 inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-full bg-background/80 backdrop-blur hover:bg-background"
+                >
+                  <ImagePlus className="h-3 w-3" /> Ajustar
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); setCroppedBanner(null); }}
                   className="absolute top-2 right-2 h-9 w-9 rounded-full bg-background/80 backdrop-blur flex items-center justify-center"
                   aria-label="Remover imagem"
                 >
@@ -228,7 +250,7 @@ function NovaExcursao() {
             )}
           </div>
           <p className="mt-1.5 text-[11px] text-muted-foreground leading-tight">
-            Use imagem horizontal 16:9 (ex: 1600×900). Mantenha o conteúdo principal centralizado para não ser cortado em Android e iPhone.
+            Use imagem horizontal 16:9 (ex: 1600×900). Após selecionar, você pode mover, dar zoom e enquadrar a foto.
           </p>
           {show && errors.banner && <p className="mt-1 text-xs text-red-400">{errors.banner}</p>}
           <input
@@ -236,7 +258,7 @@ function NovaExcursao() {
             type="file"
             accept="image/*"
             className="hidden"
-            onChange={(e) => handleBannerChange(e.target.files?.[0] ?? null)}
+            onChange={(e) => { pickFile(e.target.files?.[0] ?? null); e.target.value = ""; }}
           />
         </div>
 
