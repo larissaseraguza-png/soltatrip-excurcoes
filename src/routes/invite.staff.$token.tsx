@@ -43,10 +43,23 @@ function InviteStaffPage() {
     },
   });
 
-  // Guarda token para voltar após login
+  // Se convite já foi usado por este mesmo usuário, vai direto pra área de staff
   useEffect(() => {
-    if (!user) localStorage.setItem("pending_staff_invite", token);
-  }, [user, token]);
+    if (authLoading || !invite) return;
+    if (invite.used && user && invite.used_by === user.id) {
+      localStorage.removeItem("pending_staff_invite");
+      navigate({ to: "/staff", replace: true });
+    }
+  }, [invite, user, authLoading, navigate]);
+
+  // Guarda token só se ainda for utilizável (não usado e não expirado)
+  useEffect(() => {
+    if (!invite || user) return;
+    const expirado = new Date(invite.expires_at) < new Date();
+    if (!invite.used && !expirado) {
+      localStorage.setItem("pending_staff_invite", token);
+    }
+  }, [user, token, invite]);
 
   async function aceitar() {
     setError(null);
