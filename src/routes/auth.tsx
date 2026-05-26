@@ -541,8 +541,8 @@ function AuthPage() {
                 )}
                 <Field
                   label={mode === "signin" ? "E-mail ou telefone" : "E-mail"}
-                  type={mode === "signin" ? "text" : "email"}
-                  inputMode={mode === "signin" ? "email" : undefined}
+                  type="text"
+                  inputMode="email"
                   autoComplete={mode === "signin" ? "username" : "email"}
                   icon={<Mail className="h-4 w-4" />}
                   value={email}
