@@ -861,6 +861,7 @@ export type Database = {
             }
             Returns: string
           }
+      get_email_by_phone: { Args: { p_phone: string }; Returns: string }
       get_excursao_payment_info: {
         Args: { p_excursao_id: string }
         Returns: {
