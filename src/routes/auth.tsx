@@ -4,6 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useRoleForUser, roleHome, type AppRole } from "@/hooks/use-role";
 import { isFlowLocked } from "@/config/flow-mode";
+import { useSlowLoad } from "@/hooks/use-slow-load";
+import { SlowFallback } from "@/components/SlowFallback";
 import {
   Bus,
   Loader2,
