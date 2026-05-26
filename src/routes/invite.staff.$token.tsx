@@ -33,7 +33,7 @@ function InviteStaffPage() {
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
 
-  const { data: invite, isLoading } = useQuery({
+  const { data: invite, isLoading, error: inviteError, refetch } = useQuery({
     queryKey: ["invite", token],
     queryFn: async () => {
       const { data, error } = await (supabase as any)
@@ -43,6 +43,7 @@ function InviteStaffPage() {
       return data;
     },
   });
+  const slow = useSlowLoad(authLoading || isLoading, 4000);
 
   // Se convite já foi usado por este mesmo usuário, vai direto pra área de staff
   useEffect(() => {
