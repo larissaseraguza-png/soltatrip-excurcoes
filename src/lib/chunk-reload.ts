@@ -9,19 +9,34 @@
 const CHUNK_ERROR_RE =
   /Failed to fetch dynamically imported module|Importing a module script failed|ChunkLoadError|Loading chunk \d+ failed|error loading dynamically imported module/i;
 
-const RELOAD_KEY = "st_chunk_reload_at";
-// Janela para evitar loop: só recarrega de novo se passou >30s do último.
-const RELOAD_COOLDOWN_MS = 30_000;
+// Erros de mutação de DOM tipicamente causados por extensões do navegador
+// ou tradução automática (Chrome Translate) interferindo com o React.
+// Sintoma: tela branca + "insertBefore"/"removeChild"/"The node ... is not a child".
+// Tratamento: tratar como recuperável → reload limpo. Sem isso, o usuário
+// fica preso no SafeBoundary toda vez que volta ao app.
+const DOM_MUTATION_ERROR_RE =
+  /Failed to execute '(insertBefore|removeChild|appendChild)' on 'Node'|The node before which the new node is to be inserted is not a child of this node|The node to be removed is not a child of this node|NotFoundError.*Node/i;
+
+function getMsg(err: unknown): string {
+  return (err as Error)?.message ?? (typeof err === "string" ? err : "") ?? "";
+}
 
 export function isChunkError(err: unknown): boolean {
   if (!err) return false;
-  const msg =
-    (err as Error)?.message ??
-    (typeof err === "string" ? err : "") ??
-    "";
+  const msg = getMsg(err);
   const name = (err as Error)?.name ?? "";
   return CHUNK_ERROR_RE.test(msg) || name === "ChunkLoadError";
 }
+
+export function isDomMutationError(err: unknown): boolean {
+  if (!err) return false;
+  return DOM_MUTATION_ERROR_RE.test(getMsg(err));
+}
+
+export function isRecoverableRenderError(err: unknown): boolean {
+  return isChunkError(err) || isDomMutationError(err);
+}
+
 
 async function clearCachesAndSW() {
   try {
