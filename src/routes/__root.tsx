@@ -149,7 +149,9 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <SafeBoundary label="App root">
-        <Outlet />
+        <div className="notranslate" translate="no">
+          <Outlet />
+        </div>
       </SafeBoundary>
       <Toaster position="top-center" richColors />
     </QueryClientProvider>
