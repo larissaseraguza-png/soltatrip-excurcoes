@@ -1,7 +1,7 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { Bus, LogOut, Repeat, UserCircle2 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { signOutAndClean } from "@/lib/auth-cleanup";
 import { roleHome, useRole, setActiveRole, type AppRole } from "@/hooks/use-role";
 
 const ROLE_LABEL: Record<AppRole, string> = {
@@ -16,7 +16,7 @@ export function RoleHeader({ role, label }: { role: AppRole; label: string }) {
   const { roles } = useRole();
 
   async function logout() {
-    await supabase.auth.signOut();
+    await signOutAndClean();
     queryClient.clear();
     navigate({ to: "/auth" });
   }
@@ -70,7 +70,7 @@ export function RoleHeader({ role, label }: { role: AppRole; label: string }) {
             to="/auth"
             onClick={async (e) => {
               e.preventDefault();
-              await supabase.auth.signOut();
+              await signOutAndClean();
               queryClient.clear();
               navigate({ to: "/auth" });
             }}
