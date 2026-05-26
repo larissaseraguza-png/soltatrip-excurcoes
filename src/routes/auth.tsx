@@ -328,7 +328,7 @@ function AuthPage() {
         // Verificação de e-mail desativada: se por algum motivo não vier sessão,
         // faz login imediato com as credenciais recém-criadas.
         if (!data.session) {
-          const { error: signInErr } = await supabase.auth.signInWithPassword({ email, password });
+          const { error: signInErr } = await supabase.auth.signInWithPassword({ email: signupEmail, password });
           if (signInErr) throw new Error(getAuthErrorMessage(signInErr, "Não foi possível entrar após o cadastro."));
         }
 
