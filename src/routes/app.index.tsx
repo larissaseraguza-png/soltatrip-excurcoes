@@ -69,9 +69,9 @@ function Dashboard() {
   });
 
   useRealtimeSync(
-    `excursoes-org-${user?.id ?? "anon"}`,
-    user ? [{ table: "excursoes", filter: `organizer_id=eq.${user.id}` }] : [],
-    [["excursoes", user?.id]],
+    `excursoes-managed-${user?.id ?? "anon"}`,
+    user ? [{ table: "equipe_excursoes", filter: `staff_user_id=eq.${user.id}` }] : [],
+    [["excursoes-managed", user?.id]],
   );
 
   const total = excursoes?.length ?? 0;
