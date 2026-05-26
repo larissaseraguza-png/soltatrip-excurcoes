@@ -15,17 +15,20 @@ type Invite = {
 
 type Socio = {
   id: string;
-  staff_user_id: string | null;
-  convite_email: string | null;
+  socio_user_id: string | null;
   status: string;
+  nome: string | null;
+  email: string | null;
 };
 
 /**
- * Gestão de SÓCIOS (co-organizadores) embutida no contexto da excursão.
- * Renderiza apenas para o excursionista raiz (organizer_id === user.id).
- * Não existe como página isolada — sempre vinculada à excursão atual.
+ * Gestão de SÓCIOS globais do excursionista raiz.
+ * - Vínculo é por raiz (não por excursão): sócio passa a ver TODAS as excursões do raiz.
+ * - Convite tem papel='socio_raiz' (excursao_id NULL) e é de uso único.
+ * - Apenas o raiz pode gerar/revogar convites e remover sócios.
+ * - Sócio NÃO vê esta seção e NÃO pode criar outros sócios.
  */
-export function SociosSection({ excursaoId }: { excursaoId: string }) {
+export function SociosSection() {
   const { user } = useAuth();
   const qc = useQueryClient();
   const [busy, setBusy] = useState(false);
@@ -34,34 +37,29 @@ export function SociosSection({ excursaoId }: { excursaoId: string }) {
   const [open, setOpen] = useState(false);
 
   const { data: invites = [], isLoading: invLoading } = useQuery({
-    queryKey: ["invites-socios", excursaoId],
+    queryKey: ["invites-socios-raiz", user?.id],
+    enabled: !!user && open,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("invitations")
         .select("id, token, papel, expires_at, used, created_at")
-        .eq("excursao_id", excursaoId)
-        .eq("papel", "coorganizador")
+        .eq("created_by", user!.id)
+        .eq("papel", "socio_raiz")
         .order("created_at", { ascending: false });
       if (error) throw error;
       return (data ?? []) as Invite[];
     },
-    enabled: open,
     staleTime: 30_000,
   });
 
   const { data: socios = [] } = useQuery({
-    queryKey: ["socios", excursaoId],
+    queryKey: ["socios-raiz", user?.id],
+    enabled: !!user && open,
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("equipe_excursoes")
-        .select("id, staff_user_id, convite_email, status")
-        .eq("excursao_id", excursaoId)
-        .eq("papel", "coorganizador")
-        .eq("status", "ativo");
+      const { data, error } = await (supabase as any).rpc("list_my_socios");
       if (error) throw error;
       return (data ?? []) as Socio[];
     },
-    enabled: open,
     staleTime: 30_000,
   });
 
@@ -72,9 +70,9 @@ export function SociosSection({ excursaoId }: { excursaoId: string }) {
       if (!user) throw new Error("Não autenticado");
       const { error } = await supabase
         .from("invitations")
-        .insert({ excursao_id: excursaoId, papel: "coorganizador", created_by: user.id });
+        .insert({ papel: "socio_raiz", created_by: user.id, excursao_id: null as any });
       if (error) throw error;
-      qc.invalidateQueries({ queryKey: ["invites-socios", excursaoId] });
+      qc.invalidateQueries({ queryKey: ["invites-socios-raiz", user.id] });
     } catch (err: any) {
       setError(err.message ?? "Erro ao gerar link");
     } finally {
@@ -85,13 +83,13 @@ export function SociosSection({ excursaoId }: { excursaoId: string }) {
   async function revogar(invId: string) {
     if (!confirm("Revogar este convite?")) return;
     await supabase.from("invitations").delete().eq("id", invId);
-    qc.invalidateQueries({ queryKey: ["invites-socios", excursaoId] });
+    qc.invalidateQueries({ queryKey: ["invites-socios-raiz", user?.id] });
   }
 
   async function removerSocio(mId: string) {
-    if (!confirm("Remover este sócio? Ele perderá o acesso à excursão.")) return;
-    await supabase.from("equipe_excursoes").delete().eq("id", mId);
-    qc.invalidateQueries({ queryKey: ["socios", excursaoId] });
+    if (!confirm("Remover este sócio? Ele perderá acesso a todas as suas excursões.")) return;
+    await supabase.from("excursionista_socios").delete().eq("id", mId);
+    qc.invalidateQueries({ queryKey: ["socios-raiz", user?.id] });
   }
 
   function copiar(token: string, invId: string) {
@@ -102,7 +100,7 @@ export function SociosSection({ excursaoId }: { excursaoId: string }) {
   }
 
   return (
-    <div className="glass rounded-2xl overflow-hidden border border-neon-pink/20">
+    <div className="glass rounded-3xl overflow-hidden border border-neon-pink/20 mb-4">
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
@@ -112,9 +110,11 @@ export function SociosSection({ excursaoId }: { excursaoId: string }) {
           <Handshake className="h-5 w-5" />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="font-semibold text-sm">Sócios desta excursão</p>
+          <p className="font-semibold text-sm">Meus sócios</p>
           <p className="text-[11px] text-muted-foreground">
-            {socios.length > 0 ? `${socios.length} ativo(s)` : "Co-organizadores com acesso total"}
+            {socios.length > 0
+              ? `${socios.length} sócio(s) com acesso total às suas excursões`
+              : "Co-organizadores com acesso a todas as suas excursões"}
           </p>
         </div>
         <span className="text-xs text-muted-foreground">{open ? "−" : "+"}</span>
@@ -126,7 +126,8 @@ export function SociosSection({ excursaoId }: { excursaoId: string }) {
             <Crown className="h-4 w-4 text-neon-pink shrink-0 mt-0.5" />
             <p>
               <span className="font-semibold text-foreground">Você é o excursionista raiz.</span>{" "}
-              Sócios não podem transferir a excursão, gerar novos convites de sócio nem alterar o link principal.
+              Sócios veem e editam todas as suas excursões, mas não podem alterar o link público,
+              transferir a operação nem gerar novos convites de sócio.
             </p>
           </div>
 
@@ -202,9 +203,9 @@ export function SociosSection({ excursaoId }: { excursaoId: string }) {
                       <Handshake className="h-4 w-4" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-xs truncate">Sócio</p>
+                      <p className="font-semibold text-xs truncate">{m.nome ?? "Sócio"}</p>
                       <p className="text-[10px] text-muted-foreground truncate">
-                        {m.convite_email ?? `ID ${m.staff_user_id?.slice(0, 8)}`}
+                        {m.email ?? (m.socio_user_id ? `ID ${m.socio_user_id.slice(0, 8)}` : "—")}
                       </p>
                     </div>
                     <button

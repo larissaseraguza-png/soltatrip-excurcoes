@@ -19,6 +19,7 @@ export const Route = createFileRoute("/invite/staff/$token")({
 
 const PAPEL_LABEL: Record<string, string> = {
   coorganizador: "Co-organizador",
+  socio_raiz: "Sócio(a)",
   motorista: "Motorista",
   apoio: "Apoio",
   seguranca: "Segurança",
@@ -28,7 +29,7 @@ const PAPEL_LABEL: Record<string, string> = {
 };
 
 function destinoPorPapel(papel: string | undefined | null) {
-  return papel === "coorganizador" ? "/app" : "/staff";
+  return papel === "coorganizador" || papel === "socio_raiz" ? "/app" : "/staff";
 }
 
 function InviteStaffPage() {
@@ -75,14 +76,14 @@ function InviteStaffPage() {
     setError(null);
     setAccepting(true);
     try {
-      const { error } = await supabase.rpc("accept_staff_invitation", { p_token: token });
+      const rpc = invite?.papel === "socio_raiz" ? "accept_socio_raiz_invitation" : "accept_staff_invitation";
+      const { error } = await supabase.rpc(rpc, { p_token: token });
       if (error) throw error;
       localStorage.removeItem("pending_staff_invite");
       invalidateRoles(user?.id);
       const destino = destinoPorPapel(invite?.papel);
       setActiveRole(destino === "/app" ? "excursionista" : "staff");
       setDone(true);
-      // Hard navigation: garante que o painel monte do zero.
       setTimeout(() => {
         if (typeof window !== "undefined") window.location.replace(destino);
       }, 800);
@@ -91,6 +92,7 @@ function InviteStaffPage() {
       if (msg.includes("expired")) setError("Este convite expirou.");
       else if (msg.includes("already_used")) setError("Este convite já foi usado.");
       else if (msg.includes("invalid_token")) setError("Convite inválido.");
+      else if (msg.includes("cannot_be_own_socio")) setError("Você não pode aceitar seu próprio convite.");
       else setError(msg || "Erro ao aceitar convite.");
     } finally {
       setAccepting(false);
@@ -153,11 +155,20 @@ function InviteStaffPage() {
           <div className="size-12 rounded-2xl bg-gradient-to-br from-neon-purple to-neon-green grid place-items-center mb-4 glow-primary">
             <ShieldCheck className="size-6" />
           </div>
-          <p className="text-[10px] font-bold tracking-[0.18em] text-neon-purple mb-1">CONVITE DE STAFF</p>
-          <h1 className="font-display text-2xl font-bold mb-1">{exc?.titulo ?? "Excursão"}</h1>
+          <p className="text-[10px] font-bold tracking-[0.18em] text-neon-purple mb-1">
+            {invite.papel === "socio_raiz" ? "CONVITE DE SÓCIO" : "CONVITE DE STAFF"}
+          </p>
+          <h1 className="font-display text-2xl font-bold mb-1">
+            {invite.papel === "socio_raiz"
+              ? (invite as any).raiz_nome ?? "Excursionista raiz"
+              : exc?.titulo ?? "Excursão"}
+          </h1>
           <p className="text-sm text-muted-foreground mb-5">
-            Você foi convidado como <span className="font-semibold text-foreground">{PAPEL_LABEL[invite.papel] ?? invite.papel}</span>
-            {exc?.destino ? ` para ${exc.destino}` : ""}.
+            {invite.papel === "socio_raiz" ? (
+              <>Você foi convidado(a) como <span className="font-semibold text-foreground">sócio(a)</span> e terá acesso a todas as excursões deste excursionista.</>
+            ) : (
+              <>Você foi convidado como <span className="font-semibold text-foreground">{PAPEL_LABEL[invite.papel] ?? invite.papel}</span>{exc?.destino ? ` para ${exc.destino}` : ""}.</>
+            )}
           </p>
 
           {invite.used ? (
