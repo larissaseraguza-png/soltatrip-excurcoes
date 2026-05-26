@@ -79,12 +79,12 @@ function InviteStaffPage() {
       if (error) throw error;
       localStorage.removeItem("pending_staff_invite");
       invalidateRoles(user?.id);
-      setActiveRole("staff");
+      const destino = destinoPorPapel(invite?.papel);
+      setActiveRole(destino === "/app" ? "excursionista" : "staff");
       setDone(true);
-      // Hard navigation: garante que /staff monte do zero, sem resíduos de
-      // estado React do invite (que causavam tela branca/insertBefore).
+      // Hard navigation: garante que o painel monte do zero.
       setTimeout(() => {
-        if (typeof window !== "undefined") window.location.replace("/staff");
+        if (typeof window !== "undefined") window.location.replace(destino);
       }, 800);
     } catch (err: any) {
       const msg = err.message ?? "";
