@@ -451,9 +451,21 @@ function OnibusFormModal({
         }
       }
 
+      // Recalcula total_vagas da festa (soma das capacidades de ônibus ativos)
+      const { data: todos } = await supabase
+        .from("onibus")
+        .select("capacidade, ativo")
+        .eq("excursao_id", excursaoId);
+      const total = (todos ?? [])
+        .filter((o: any) => o.ativo !== false)
+        .reduce((sum: number, o: any) => sum + Number(o.capacidade ?? 0), 0);
+      await supabase.from("excursoes").update({ total_vagas: total }).eq("id", excursaoId);
+
       qc.invalidateQueries({ queryKey: ["onibus", excursaoId] });
       qc.invalidateQueries({ queryKey: ["onibus-primeiro-embarque", excursaoId] });
+      qc.invalidateQueries({ queryKey: ["excursao", excursaoId] });
       onClose();
+
     } catch (err: any) {
       setError(err.message ?? "Erro ao salvar.");
     } finally {
