@@ -102,6 +102,17 @@ function OnibusListPage() {
     [["onibus", id], ["onibus-ocupacao", id], ["onibus-primeiro-embarque", id]],
   );
 
+  async function recomputeTotalVagas() {
+    const { data } = await supabase
+      .from("onibus")
+      .select("capacidade, ativo")
+      .eq("excursao_id", id);
+    const total = (data ?? [])
+      .filter((o: any) => o.ativo !== false)
+      .reduce((sum: number, o: any) => sum + Number(o.capacidade ?? 0), 0);
+    await supabase.from("excursoes").update({ total_vagas: total }).eq("id", id);
+  }
+
   async function handleDelete(o: Onibus) {
     const count = ocupacao[o.id] ?? 0;
     if (count > 0) {
@@ -114,10 +125,12 @@ function OnibusListPage() {
       await supabase.from("seats").delete().eq("onibus_id", o.id);
       const { error } = await supabase.from("onibus").delete().eq("id", o.id);
       if (error) throw error;
+      await recomputeTotalVagas();
       qc.invalidateQueries({ queryKey: ["onibus", id] });
     } catch (err: any) {
       toast.error(err.message ?? "Erro ao excluir.");
     }
+
   }
 
   return (
