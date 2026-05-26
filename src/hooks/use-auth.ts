@@ -39,6 +39,15 @@ function init() {
   supabase.auth.onAuthStateChange((_e, s) => {
     setState({ session: s, user: s?.user ?? null, loading: false });
   });
+
+  // Failsafe: se getSession() travar (rede móvel ruim, CORS, DNS),
+  // desbloqueia a UI depois de 6s. A landing/auth ficam acessíveis em vez
+  // de spinner infinito; o usuário pode tentar login manual.
+  setTimeout(() => {
+    if (state.loading) {
+      setState({ loading: false });
+    }
+  }, 6000);
 }
 
 function subscribe(l: () => void) {
