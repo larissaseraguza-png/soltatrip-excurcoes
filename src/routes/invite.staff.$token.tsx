@@ -46,14 +46,16 @@ function InviteStaffPage() {
   });
   const slow = useSlowLoad(authLoading || isLoading, 4000);
 
-  // Se convite já foi usado por este mesmo usuário, vai direto pra área de staff
+  // Se convite já foi usado por este mesmo usuário, vai direto pra área de staff.
+  // Usa navegação hard (window.location) para garantir render limpo — evita
+  // erros de DOM mutation (extensão/tradução) durante a transição React.
   useEffect(() => {
     if (authLoading || !invite) return;
     if (invite.used && user && invite.used_by === user.id) {
       localStorage.removeItem("pending_staff_invite");
-      navigate({ to: "/staff", replace: true });
+      if (typeof window !== "undefined") window.location.replace("/staff");
     }
-  }, [invite, user, authLoading, navigate]);
+  }, [invite, user, authLoading]);
 
   // Guarda token só se ainda for utilizável (não usado e não expirado)
   useEffect(() => {
