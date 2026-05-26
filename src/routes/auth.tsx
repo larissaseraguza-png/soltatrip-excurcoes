@@ -649,6 +649,67 @@ function AuthPage() {
               </form>
             </>
           )}
+
+          {step === "forgot" && (
+            <>
+              <button
+                type="button"
+                onClick={() => {
+                  setStep(selectedRole ? "credentials" : "role");
+                  setError(null);
+                  setInfo(null);
+                }}
+                className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground mb-4 transition"
+              >
+                <ArrowLeft className="h-3.5 w-3.5" /> Voltar para o login
+              </button>
+
+              <h1 className="font-display text-2xl font-bold mb-1">Recuperar acesso</h1>
+              <p className="text-sm text-muted-foreground mb-6">
+                Informe o e-mail cadastrado e enviaremos um link seguro para você criar uma
+                nova senha. O link expira em 1 hora e só pode ser usado uma vez.
+              </p>
+
+              <form onSubmit={handleForgotSubmit} className="space-y-3">
+                <Field
+                  label="E-mail cadastrado"
+                  type="email"
+                  inputMode="email"
+                  autoComplete="email"
+                  icon={<Mail className="h-4 w-4" />}
+                  value={forgotEmail}
+                  onChange={setForgotEmail}
+                  required
+                  placeholder="voce@email.com"
+                />
+
+                {error && (
+                  <div className="flex items-start gap-2 text-sm text-red-400 bg-red-500/10 border border-red-500/30 rounded-lg px-3 py-2">
+                    <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" />
+                    <span>{error}</span>
+                  </div>
+                )}
+                {info && (
+                  <div className="text-sm text-neon-green bg-neon-green/10 border border-neon-green/30 rounded-lg px-3 py-2">
+                    {info}
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={forgotBusy}
+                  className="w-full h-12 rounded-xl bg-primary text-primary-foreground font-semibold glow-primary hover:opacity-90 transition flex items-center justify-center gap-2 disabled:opacity-50"
+                >
+                  {forgotBusy && <Loader2 className="h-4 w-4 animate-spin" />}
+                  Enviar link de recuperação
+                </button>
+
+                <p className="text-[11px] text-muted-foreground text-center pt-1">
+                  Recuperação por telefone/WhatsApp será disponibilizada em breve.
+                </p>
+              </form>
+            </>
+          )}
         </div>
       </div>
     </div>
