@@ -516,14 +516,23 @@ function AuthPage() {
                   </>
                 )}
                 <Field
-                  label="E-mail"
-                  type="email"
+                  label={mode === "signin" ? "E-mail ou telefone" : "E-mail"}
+                  type={mode === "signin" ? "text" : "email"}
+                  inputMode={mode === "signin" ? "email" : undefined}
+                  autoComplete={mode === "signin" ? "username" : "email"}
                   icon={<Mail className="h-4 w-4" />}
                   value={email}
                   onChange={setEmail}
                   required
-                  placeholder="voce@email.com"
+                  placeholder={
+                    mode === "signin" ? "voce@email.com ou (11) 99999-0000" : "voce@email.com"
+                  }
                 />
+                {mode === "signin" && (
+                  <p className="text-[11px] text-muted-foreground -mt-1.5 pl-1">
+                    Você pode entrar com o e-mail cadastrado ou com o telefone (com DDD).
+                  </p>
+                )}
                 {mode === "signup" && (
                   <Field
                     label="Telefone (com DDD)"
