@@ -354,7 +354,7 @@ function AuthPage() {
           navigate({ to: roleHome[selectedRole], replace: true });
         }
       } else {
-        // Login híbrido: aceita e-mail ou telefone no mesmo campo.
+        // Login híbrido: aceita e-mail, telefone ou identificador fake (dev).
         let loginEmail = email.trim();
         if (isPhoneIdentifier(loginEmail)) {
           const resolved = await resolveEmailFromPhone(loginEmail);
@@ -364,6 +364,8 @@ function AuthPage() {
             );
           }
           loginEmail = resolved;
+        } else if (!loginEmail.includes("@")) {
+          loginEmail = `${loginEmail.toLowerCase().replace(/[^a-z0-9._-]/g, "")}@dev.local`;
         }
 
         const { data, error } = await supabase.auth.signInWithPassword({
