@@ -297,8 +297,10 @@ function AuthPage() {
       if (mode === "signup") {
         const cleanPhone = phone.replace(/\D/g, "");
         if (cleanPhone.length < 10) throw new Error("Telefone inválido. Inclua DDD.");
+        // Modo dev: aceita "identificador" sem @ — anexa domínio fake para o Supabase.
+        const signupEmail = email.includes("@") ? email.trim() : `${email.trim().toLowerCase().replace(/[^a-z0-9._-]/g, "")}@dev.local`;
         const { data, error } = await supabase.auth.signUp({
-          email,
+          email: signupEmail,
           password,
           options: {
             data: { full_name: fullName, phone: cleanPhone, role: selectedRole },
