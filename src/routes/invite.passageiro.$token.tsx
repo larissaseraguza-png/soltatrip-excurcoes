@@ -25,7 +25,7 @@ function InvitePassageiroPage() {
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
 
-  const { data: invite, isLoading } = useQuery({
+  const { data: invite, isLoading, error: inviteError, refetch } = useQuery({
     queryKey: ["passageiro-invite", token],
     queryFn: async () => {
       const { data, error } = await (supabase as any)
@@ -35,6 +35,7 @@ function InvitePassageiroPage() {
       return data;
     },
   });
+  const slow = useSlowLoad(authLoading || isLoading, 4000);
 
   // Se a reserva já foi vinculada a este usuário, abre a reserva direto
   useEffect(() => {
