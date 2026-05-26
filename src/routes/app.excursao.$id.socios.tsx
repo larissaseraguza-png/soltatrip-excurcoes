@@ -1,19 +1,13 @@
-import { createFileRoute, Link, useParams } from "@tanstack/react-router";
+import { createFileRoute, Link, useParams, Navigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, Loader2, Trash2, LinkIcon, Copy, Check, ShieldCheck, Users } from "lucide-react";
+import { useAuth } from "@/hooks/use-auth";
+import { ArrowLeft, Loader2, Trash2, LinkIcon, Copy, Check, Crown, Handshake } from "lucide-react";
 
-export const Route = createFileRoute("/app/excursao/$id/equipe")({
-  component: EquipePage,
+export const Route = createFileRoute("/app/excursao/$id/socios")({
+  component: SociosPage,
 });
-
-const PAPEIS = [
-  { value: "apoio", label: "Apoio" },
-  { value: "motorista", label: "Motorista" },
-  { value: "seguranca", label: "Segurança" },
-  { value: "coordenador", label: "Coordenador" },
-];
 
 type Invite = {
   id: string;
@@ -24,60 +18,93 @@ type Invite = {
   created_at: string;
 };
 
-type Membro = {
+type Socio = {
   id: string;
   staff_user_id: string | null;
-  papel: string;
+  convite_email: string | null;
   status: string;
 };
 
-function EquipePage() {
-  const { id } = useParams({ from: "/app/excursao/$id/equipe" });
+function SociosPage() {
+  const { id } = useParams({ from: "/app/excursao/$id/socios" });
+  const { user } = useAuth();
   const qc = useQueryClient();
-  const [papel, setPapel] = useState("apoio");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
+  // Apenas o dono raiz pode gerenciar sócios.
+  const { data: excursao, isLoading: exLoading } = useQuery({
+    queryKey: ["excursao-owner", id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("excursoes")
+        .select("id, organizer_id, titulo")
+        .eq("id", id)
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    staleTime: 60_000,
+  });
+
   const { data: invites = [], isLoading: invLoading } = useQuery({
-    queryKey: ["invites", id],
+    queryKey: ["invites-socios", id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("invitations")
         .select("id, token, papel, expires_at, used, created_at")
         .eq("excursao_id", id)
-        .neq("papel", "coorganizador")
+        .eq("papel", "coorganizador")
         .order("created_at", { ascending: false });
       if (error) throw error;
       return (data ?? []) as Invite[];
     },
+    staleTime: 30_000,
   });
 
-  const { data: equipe = [] } = useQuery({
-    queryKey: ["equipe", id],
+  const { data: socios = [] } = useQuery({
+    queryKey: ["socios", id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("equipe_excursoes")
-        .select("id, staff_user_id, papel, status")
+        .select("id, staff_user_id, convite_email, status")
         .eq("excursao_id", id)
-        .eq("status", "ativo")
-        .neq("papel", "coorganizador");
+        .eq("papel", "coorganizador")
+        .eq("status", "ativo");
       if (error) throw error;
-      return (data ?? []) as Membro[];
+      return (data ?? []) as Socio[];
     },
+    staleTime: 30_000,
   });
+
+  if (exLoading) {
+    return <div className="flex justify-center py-12"><Loader2 className="h-5 w-5 animate-spin text-primary" /></div>;
+  }
+  if (!excursao) return <Navigate to="/app" />;
+  if (excursao.organizer_id !== user?.id) {
+    return (
+      <div>
+        <Link to="/app/excursao/$id" params={{ id }} className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4">
+          <ArrowLeft className="h-4 w-4" /> Voltar
+        </Link>
+        <div className="glass rounded-2xl p-6 text-center text-sm text-muted-foreground">
+          Apenas o excursionista raiz pode convidar sócios.
+        </div>
+      </div>
+    );
+  }
 
   async function gerarLink() {
     setError(null);
     setBusy(true);
     try {
-      const { data: u } = await supabase.auth.getUser();
-      if (!u.user) throw new Error("Não autenticado");
+      if (!user) throw new Error("Não autenticado");
       const { error } = await supabase
         .from("invitations")
-        .insert({ excursao_id: id, papel, created_by: u.user.id });
+        .insert({ excursao_id: id, papel: "coorganizador", created_by: user.id });
       if (error) throw error;
-      qc.invalidateQueries({ queryKey: ["invites", id] });
+      qc.invalidateQueries({ queryKey: ["invites-socios", id] });
     } catch (err: any) {
       setError(err.message ?? "Erro ao gerar link");
     } finally {
@@ -88,13 +115,13 @@ function EquipePage() {
   async function revogar(invId: string) {
     if (!confirm("Revogar este convite?")) return;
     await supabase.from("invitations").delete().eq("id", invId);
-    qc.invalidateQueries({ queryKey: ["invites", id] });
+    qc.invalidateQueries({ queryKey: ["invites-socios", id] });
   }
 
-  async function removerMembro(mId: string) {
-    if (!confirm("Remover este staff da equipe?")) return;
+  async function removerSocio(mId: string) {
+    if (!confirm("Remover este sócio? Ele perderá o acesso à excursão.")) return;
     await supabase.from("equipe_excursoes").delete().eq("id", mId);
-    qc.invalidateQueries({ queryKey: ["equipe", id] });
+    qc.invalidateQueries({ queryKey: ["socios", id] });
   }
 
   function copiar(token: string, invId: string) {
@@ -110,32 +137,32 @@ function EquipePage() {
         <ArrowLeft className="h-4 w-4" /> Voltar
       </Link>
 
-      <h1 className="font-display text-2xl font-bold mb-1">Equipe (staff)</h1>
-      <p className="text-sm text-muted-foreground mb-6">
-        Gere um link único por função para staff de operação (apoio, motorista, segurança, coordenador). Para convidar sócios, use a área de Sócios.
+      <div className="flex items-center gap-2 mb-1">
+        <Handshake className="h-5 w-5 text-neon-pink" />
+        <h1 className="font-display text-2xl font-bold">Sócios da excursão</h1>
+      </div>
+      <p className="text-sm text-muted-foreground mb-4">
+        Sócios têm acesso total para gerenciar e editar esta excursão junto com você.
       </p>
 
+      <div className="glass rounded-2xl p-4 mb-6 border border-neon-pink/20">
+        <div className="flex items-start gap-2 text-xs text-muted-foreground">
+          <Crown className="h-4 w-4 text-neon-pink shrink-0 mt-0.5" />
+          <p>
+            <span className="font-semibold text-foreground">Você é o excursionista raiz.</span> Sócios não podem transferir a excursão nem alterar o link principal — essas ações são exclusivas suas.
+          </p>
+        </div>
+      </div>
+
       <div className="glass rounded-3xl p-5 mb-6 space-y-3">
-        <label className="block">
-          <span className="text-xs font-semibold text-muted-foreground mb-1.5 block">Função</span>
-          <select
-            value={papel}
-            onChange={(e) => setPapel(e.target.value)}
-            className="w-full h-11 rounded-xl bg-secondary/40 border border-border focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 transition text-sm px-3"
-          >
-            {PAPEIS.map((p) => (
-              <option key={p.value} value={p.value}>{p.label}</option>
-            ))}
-          </select>
-        </label>
         {error && <p className="text-sm text-red-400">{error}</p>}
         <button
           onClick={gerarLink}
           disabled={busy}
-          className="w-full h-11 rounded-xl bg-primary text-primary-foreground font-semibold glow-primary hover:opacity-90 flex items-center justify-center gap-2 disabled:opacity-50"
+          className="w-full h-11 rounded-xl bg-gradient-to-r from-neon-pink to-neon-purple text-primary-foreground font-semibold glow-primary hover:opacity-90 flex items-center justify-center gap-2 disabled:opacity-50"
         >
           {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <LinkIcon className="h-4 w-4" />}
-          Gerar link de convite
+          Gerar link de convite de sócio
         </button>
       </div>
 
@@ -146,7 +173,7 @@ function EquipePage() {
         <div className="flex justify-center py-6"><Loader2 className="h-5 w-5 animate-spin text-primary" /></div>
       ) : invites.length === 0 ? (
         <p className="glass rounded-2xl p-5 text-center text-sm text-muted-foreground mb-6">
-          Nenhum convite gerado ainda.
+          Nenhum convite de sócio gerado ainda.
         </p>
       ) : (
         <ul className="space-y-2 mb-6">
@@ -158,7 +185,7 @@ function EquipePage() {
             return (
               <li key={inv.id} className="glass rounded-2xl p-3.5">
                 <div className="flex items-center gap-2 mb-2">
-                  <span className="text-xs font-semibold capitalize">{PAPEIS.find(p => p.value === inv.papel)?.label ?? inv.papel}</span>
+                  <span className="text-xs font-semibold">Sócio (co-organizador)</span>
                   <span className={`text-[10px] uppercase tracking-wider ${cor}`}>{status}</span>
                   <span className="ml-auto text-[10px] text-muted-foreground">
                     expira {new Date(inv.expires_at).toLocaleDateString("pt-BR")}
@@ -189,29 +216,27 @@ function EquipePage() {
       )}
 
       <h2 className="text-xs uppercase tracking-widest text-muted-foreground mb-3 flex items-center gap-2">
-        <Users className="h-3.5 w-3.5" /> Staff vinculado ({equipe.length})
+        <Handshake className="h-3.5 w-3.5" /> Sócios ativos ({socios.length})
       </h2>
-      {equipe.length === 0 ? (
+      {socios.length === 0 ? (
         <p className="glass rounded-2xl p-5 text-center text-sm text-muted-foreground">
-          Ninguém vinculado ainda.
+          Nenhum sócio vinculado ainda.
         </p>
       ) : (
         <ul className="space-y-2">
-          {equipe.map((m) => (
+          {socios.map((m) => (
             <li key={m.id} className="glass rounded-2xl p-4 flex items-center gap-3">
-              <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-neon-green to-neon-purple grid place-items-center">
-                <ShieldCheck className="h-5 w-5" />
+              <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-neon-pink to-neon-purple grid place-items-center">
+                <Handshake className="h-5 w-5" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="font-semibold text-sm truncate capitalize">
-                  {PAPEIS.find(p => p.value === m.papel)?.label ?? m.papel}
-                </p>
+                <p className="font-semibold text-sm truncate">Sócio</p>
                 <p className="text-[11px] text-muted-foreground truncate">
-                  ID {m.staff_user_id?.slice(0, 8)}
+                  {m.convite_email ?? `ID ${m.staff_user_id?.slice(0, 8)}`}
                 </p>
               </div>
               <button
-                onClick={() => removerMembro(m.id)}
+                onClick={() => removerSocio(m.id)}
                 className="size-9 grid place-items-center rounded-xl border border-red-500/30 text-red-400 hover:bg-red-500/10"
                 aria-label="Remover"
               >
