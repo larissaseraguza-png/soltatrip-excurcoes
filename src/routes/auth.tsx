@@ -24,6 +24,30 @@ import {
   consumePendingExcursionistaInvite,
   getPendingExcursionistaInvite,
 } from "@/lib/excursionista-link";
+import { signOutAndClean } from "@/lib/auth-cleanup";
+
+// Detecta se o identificador digitado é telefone (≥10 dígitos) ou e-mail.
+function isPhoneIdentifier(raw: string): boolean {
+  const trimmed = raw.trim();
+  if (trimmed.includes("@")) return false;
+  const digits = trimmed.replace(/\D/g, "");
+  return digits.length >= 10;
+}
+
+// Resolve telefone → e-mail via RPC pública (search por digitos normalizados).
+// Estrutura preparada para futura validação por WhatsApp OTP: a mesma
+// chave de busca (telefone) será usada para enviar/verificar código.
+async function resolveEmailFromPhone(phone: string): Promise<string | null> {
+  const digits = phone.replace(/\D/g, "");
+  if (digits.length < 10) return null;
+  const rpc = supabase.rpc as unknown as (
+    fn: "get_email_by_phone",
+    args: { p_phone: string },
+  ) => Promise<{ data: string | null; error: { message?: string } | null }>;
+  const { data, error } = await rpc("get_email_by_phone", { p_phone: digits });
+  if (error) throw new Error(error.message ?? "Falha ao validar telefone.");
+  return data ?? null;
+}
 
 export const Route = createFileRoute("/auth")({
   beforeLoad: () => {
