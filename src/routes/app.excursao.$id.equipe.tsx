@@ -110,9 +110,9 @@ function EquipePage() {
         <ArrowLeft className="h-4 w-4" /> Voltar
       </Link>
 
-      <h1 className="font-display text-2xl font-bold mb-1">Equipe da excursão</h1>
+      <h1 className="font-display text-2xl font-bold mb-1">Equipe (staff)</h1>
       <p className="text-sm text-muted-foreground mb-6">
-        Gere um link único por função e envie ao staff. Ao abrir e fazer login, ele já é vinculado.
+        Gere um link único por função para staff de operação (apoio, motorista, segurança, coordenador). Para convidar sócios, use a área de Sócios.
       </p>
 
       <div className="glass rounded-3xl p-5 mb-6 space-y-3">
