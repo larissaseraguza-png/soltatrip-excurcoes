@@ -1,5 +1,6 @@
 import React from "react";
 import { AlertCircle } from "lucide-react";
+import { isChunkError, forceFreshReload } from "@/lib/chunk-reload";
 
 type Props = { children: React.ReactNode; label?: string; fallback?: React.ReactNode };
 type State = { hasError: boolean; message?: string };
@@ -14,29 +15,7 @@ export class SafeBoundary extends React.Component<Props, State> {
   componentDidCatch(error: unknown) {
     // eslint-disable-next-line no-console
     console.warn("[SafeBoundary]", this.props.label ?? "", error);
-
-    // Auto-reload silencioso quando o preview/produção é reconstruído e o
-    // navegador tenta carregar um chunk antigo que não existe mais. Acontece
-    // em celulares de voluntários que abrem um link salvo de build anterior.
-    // sessionStorage evita loop infinito.
-    const msg = (error as Error)?.message ?? "";
-    const name = (error as Error)?.name ?? "";
-    const isChunkError =
-      /Failed to fetch dynamically imported module|Importing a module script failed|ChunkLoadError|Loading chunk \d+ failed/i.test(
-        msg,
-      ) || name === "ChunkLoadError";
-
-    if (isChunkError && typeof window !== "undefined") {
-      try {
-        const key = "st_chunk_reload";
-        if (!sessionStorage.getItem(key)) {
-          sessionStorage.setItem(key, "1");
-          window.location.reload();
-        }
-      } catch {
-        /* storage indisponível */
-      }
-    }
+    if (isChunkError(error)) forceFreshReload();
   }
 
   reset = () => this.setState({ hasError: false, message: undefined });
