@@ -332,13 +332,9 @@ function AuthPage() {
           await consumePendingExcursionistaInvite();
         }
         if (pendingStaff) {
-          navigate({ to: "/invite/staff/$token", params: { token: pendingStaff }, replace: true });
+          window.location.replace(`/invite/staff/${pendingStaff}`);
         } else if (pendingPax) {
-          navigate({
-            to: "/invite/passageiro/$token",
-            params: { token: pendingPax },
-            replace: true,
-          });
+          window.location.replace(`/invite/passageiro/${pendingPax}`);
         } else {
           navigate({ to: roleHome[userRole], replace: true });
         }
