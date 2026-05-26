@@ -1,6 +1,6 @@
 import React from "react";
 import { AlertCircle } from "lucide-react";
-import { isChunkError, forceFreshReload } from "@/lib/chunk-reload";
+import { isRecoverableRenderError, forceFreshReload } from "@/lib/chunk-reload";
 
 type Props = { children: React.ReactNode; label?: string; fallback?: React.ReactNode };
 type State = { hasError: boolean; message?: string };
@@ -15,7 +15,9 @@ export class SafeBoundary extends React.Component<Props, State> {
   componentDidCatch(error: unknown) {
     // eslint-disable-next-line no-console
     console.warn("[SafeBoundary]", this.props.label ?? "", error);
-    if (isChunkError(error)) forceFreshReload();
+    // Erros de chunk (build novo) OU de mutação de DOM (extensão/tradução
+    // mexendo no DOM) são recuperáveis com reload limpo.
+    if (isRecoverableRenderError(error)) forceFreshReload();
   }
 
   reset = () => this.setState({ hasError: false, message: undefined });
