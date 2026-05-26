@@ -6,6 +6,8 @@ import { useAuth } from "@/hooks/use-auth";
 import { invalidateRoles, setActiveRole } from "@/hooks/use-role";
 import { isFlowLocked } from "@/config/flow-mode";
 import { Bus, Loader2, CheckCircle2, AlertCircle, Ticket } from "lucide-react";
+import { useSlowLoad } from "@/hooks/use-slow-load";
+import { SlowFallback } from "@/components/SlowFallback";
 
 export const Route = createFileRoute("/invite/passageiro/$token")({
   beforeLoad: () => {
@@ -23,7 +25,7 @@ function InvitePassageiroPage() {
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
 
-  const { data: invite, isLoading } = useQuery({
+  const { data: invite, isLoading, error: inviteError, refetch } = useQuery({
     queryKey: ["passageiro-invite", token],
     queryFn: async () => {
       const { data, error } = await (supabase as any)
@@ -33,6 +35,7 @@ function InvitePassageiroPage() {
       return data;
     },
   });
+  const slow = useSlowLoad(authLoading || isLoading, 4000);
 
   // Se a reserva já foi vinculada a este usuário, abre a reserva direto
   useEffect(() => {
@@ -70,16 +73,34 @@ function InvitePassageiroPage() {
   }
 
   if (authLoading || isLoading) {
+    if (slow) return <SlowFallback onRetry={() => refetch()} />;
     return <Center><Loader2 className="h-6 w-6 animate-spin text-primary" /></Center>;
   }
 
-  if (!invite) {
+  if (inviteError || !invite) {
     return (
       <Center>
         <div className="glass rounded-3xl p-8 max-w-md text-center">
           <AlertCircle className="h-10 w-10 text-red-400 mx-auto mb-3" />
-          <h1 className="font-display text-xl font-bold mb-2">Convite inválido</h1>
-          <p className="text-sm text-muted-foreground">Este link não existe ou foi removido.</p>
+          <h1 className="font-display text-xl font-bold mb-2">Convite indisponível</h1>
+          <p className="text-sm text-muted-foreground mb-4">
+            {inviteError
+              ? "Não conseguimos carregar o convite. Verifique sua conexão e tente novamente."
+              : "Este link não existe ou foi removido."}
+          </p>
+          <div className="flex flex-col gap-2">
+            {inviteError && (
+              <button
+                onClick={() => refetch()}
+                className="w-full h-11 rounded-xl bg-primary text-primary-foreground font-semibold glow-primary"
+              >
+                Tentar novamente
+              </button>
+            )}
+            <Link to="/" className="w-full h-11 rounded-xl border border-border bg-card font-semibold flex items-center justify-center">
+              Ir para a página inicial
+            </Link>
+          </div>
         </div>
       </Center>
     );

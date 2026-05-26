@@ -11,6 +11,11 @@ export const getRouter = () => {
         gcTime: 5 * 60_000,
         refetchOnWindowFocus: false,
         refetchOnMount: false,
+        // Em redes móveis instáveis, o default de 3 retries com backoff
+        // exponencial pode travar a UI por 30s+. Mantemos 1 retry rápido.
+        retry: 1,
+        retryDelay: 1500,
+        networkMode: "offlineFirst",
       },
     },
   });

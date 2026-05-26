@@ -4,6 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useRoleForUser, roleHome, type AppRole } from "@/hooks/use-role";
 import { isFlowLocked } from "@/config/flow-mode";
+import { useSlowLoad } from "@/hooks/use-slow-load";
+import { SlowFallback } from "@/components/SlowFallback";
 import {
   Bus,
   Loader2,
@@ -185,7 +187,17 @@ function AuthPage() {
     }
   }, [busy, user, role, navigate]);
 
+  const slowAuth = useSlowLoad(loading || (!busy && !!user && roleLoading), 4500);
+
   if (loading || (!busy && user && roleLoading)) {
+    if (slowAuth) {
+      return (
+        <SlowFallback
+          message="Não conseguimos validar sua sessão. Você pode tentar entrar manualmente."
+          onRetry={() => window.location.reload()}
+        />
+      );
+    }
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="h-6 w-6 animate-spin text-primary" />
