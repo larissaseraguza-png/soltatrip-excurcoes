@@ -85,19 +85,28 @@ function SlugPage() {
   useEffect(() => {
     if (!orgId || authLoading || roleLoading || linking) return;
     if (user && role === "passageiro") {
+      // Guard de sessão: só tenta vincular uma vez por sessão+slug.
+      // Evita qualquer chance de loop de re-tentativa caso o RPC falhe.
+      const guardKey = `st_link_attempt_${slug}`;
+      try {
+        if (sessionStorage.getItem(guardKey) === "1") return;
+        sessionStorage.setItem(guardKey, "1");
+      } catch {
+        /* storage indisponível: segue sem guard */
+      }
       setLinking(true);
       linkPassageiroToExcursionista(orgId)
         .then(() => {
           clearPendingExcursionistaInvite();
           toast.success("Vinculado ao organizador!");
-          navigate({ to: "/passageiro", replace: true });
+          if (typeof window !== "undefined") window.location.replace("/passageiro");
         })
         .catch((e) => {
           toast.error(e?.message ?? "Erro ao vincular");
           setLinking(false);
         });
     }
-  }, [user, role, authLoading, roleLoading, orgId, navigate, linking]);
+  }, [user, role, authLoading, roleLoading, orgId, slug, linking]);
 
   function handleEntrar() {
     if (orgId) rememberExcursionistaInvite(orgId);
