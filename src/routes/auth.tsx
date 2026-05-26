@@ -185,7 +185,17 @@ function AuthPage() {
     }
   }, [busy, user, role, navigate]);
 
+  const slowAuth = useSlowLoad(loading || (!busy && !!user && roleLoading), 4500);
+
   if (loading || (!busy && user && roleLoading)) {
+    if (slowAuth) {
+      return (
+        <SlowFallback
+          message="Não conseguimos validar sua sessão. Você pode tentar entrar manualmente."
+          onRetry={() => window.location.reload()}
+        />
+      );
+    }
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="h-6 w-6 animate-spin text-primary" />
