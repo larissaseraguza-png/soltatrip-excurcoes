@@ -193,11 +193,14 @@ function ExcursaoDetalhe() {
         <NavCard to="/app/excursao/$id/financeiro" id={id} icon={Wallet} title="Financeiro" desc="Lançar pagamentos e acompanhar entradas" />
         <NavCard to="/app/excursao/$id/itens" id={id} icon={Ticket} title="Promoter · Itens da festa" desc="Ingressos, camping, VIP, combos e pedidos" />
         <NavCard to="/app/excursao/$id/checkin" id={id} icon={QrCode} title="Check-in QR" desc="Embarcar passageiros com leitor de QR" />
-        {data.organizer_id === user?.id && (
-          <NavCard to="/app/excursao/$id/socios" id={id} icon={UserCog} title="Sócios" desc="Convidar co-organizadores com acesso total à excursão" />
-        )}
         <NavCard to="/app/excursao/$id/equipe" id={id} icon={UserCog} title="Equipe (staff)" desc="Convidar staff de operação: apoio, motorista, segurança" />
       </div>
+
+      {data.organizer_id === user?.id && (
+        <div className="mb-6">
+          <SociosSection excursaoId={id} />
+        </div>
+      )}
 
       <SafeBoundary label="Grupos de WhatsApp">
         <WhatsappLinks excursao={data} />
