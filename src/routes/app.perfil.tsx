@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Loader2, Save, Upload, User as UserIcon, Phone, Mail, MapPin, Instagram, Globe, Building2, FileText, Bus, Users as UsersIcon, CalendarClock, DollarSign, Link2, Copy, Share2, ExternalLink, Check } from "lucide-react";
 import { SafeBoundary } from "@/components/SafeBoundary";
+import { SociosSection } from "@/components/excursionista/SociosSection";
 
 export const Route = createFileRoute("/app/perfil")({
   head: () => ({ meta: [{ title: "Meu perfil — SoltaTrip" }, { name: "robots", content: "noindex" }] }),
