@@ -159,8 +159,10 @@ function AuthPage() {
   const navigate = useNavigate();
 
   const [mode, setMode] = useState<"signin" | "signup">("signin");
-  const [step, setStep] = useState<"role" | "credentials">("role");
+  const [step, setStep] = useState<"role" | "credentials" | "forgot">("role");
   const [selectedRole, setSelectedRole] = useState<AppRole | null>(null);
+  const [forgotEmail, setForgotEmail] = useState("");
+  const [forgotBusy, setForgotBusy] = useState(false);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
