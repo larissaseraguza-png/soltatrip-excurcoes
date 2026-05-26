@@ -275,6 +275,21 @@ function Perfil() {
         <StatCard icon={DollarSign} label="Receita total" value={`R$ ${Number(stats?.receita ?? 0).toLocaleString("pt-BR", { maximumFractionDigits: 0 })}`} hint="pagamentos confirmados" />
       </div>
 
+      {!isSocio && <SociosSection />}
+
+      {isSocio && socioInfo?.rootName && (
+        <div className="glass rounded-2xl p-4 mb-4 flex items-center gap-3 border border-neon-pink/20">
+          <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-neon-pink to-neon-purple grid place-items-center">
+            <Building2 className="h-5 w-5" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Você é sócio(a) de</p>
+            <p className="font-semibold text-sm truncate">{socioInfo.rootName}</p>
+          </div>
+        </div>
+      )}
+
+
       <SafeBoundary label="Link de divulgação">
         <div className="glass rounded-3xl p-5 mb-4 relative overflow-hidden">
           <div className="absolute -top-16 -right-16 size-40 rounded-full bg-neon-purple/20 blur-3xl pointer-events-none" />
