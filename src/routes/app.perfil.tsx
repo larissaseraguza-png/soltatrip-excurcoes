@@ -158,7 +158,8 @@ function Perfil() {
         bio: form.bio,
         instagram_url: form.instagram_url,
         website_url: form.website_url,
-        slug: cleanSlug,
+        // Sócio não pode definir slug próprio — usa o link do raiz.
+        ...(isSocio ? {} : { slug: cleanSlug }),
       });
       if (error) throw error;
       toast.success("Perfil salvo");
@@ -175,13 +176,13 @@ function Perfil() {
     }
   }
 
-  const savedSlug = data?.slug ?? null;
+  const savedSlug = isSocio ? socioInfo?.rootSlug ?? null : data?.slug ?? null;
   const slugValid =
     !!form?.slug &&
     form.slug.length >= 3 &&
     form.slug.length <= 40 &&
     /^[a-z0-9][a-z0-9_-]*[a-z0-9]$/.test(form.slug);
-  const slugDirty = (form?.slug ?? "") !== (savedSlug ?? "");
+  const slugDirty = (form?.slug ?? "") !== (data?.slug ?? "");
   const publicUrl = savedSlug
     ? `${typeof window !== "undefined" ? window.location.origin : "https://soltatrip.app"}/e/${savedSlug}`
     : null;
