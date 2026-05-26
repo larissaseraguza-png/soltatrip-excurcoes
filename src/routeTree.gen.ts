@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as StaffRouteImport } from './routes/staff'
 import { Route as SelecionarPerfilRouteImport } from './routes/selecionar-perfil'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as PassageiroRouteImport } from './routes/passageiro'
 import { Route as ExcursionistaRouteImport } from './routes/excursionista'
 import { Route as AuthRouteImport } from './routes/auth'
@@ -77,6 +78,11 @@ const StaffRoute = StaffRouteImport.update({
 const SelecionarPerfilRoute = SelecionarPerfilRouteImport.update({
   id: '/selecionar-perfil',
   path: '/selecionar-perfil',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PassageiroRoute = PassageiroRouteImport.update({
@@ -374,6 +380,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/excursionista': typeof ExcursionistaRouteWithChildren
   '/passageiro': typeof PassageiroRouteWithChildren
+  '/reset-password': typeof ResetPasswordRoute
   '/selecionar-perfil': typeof SelecionarPerfilRoute
   '/staff': typeof StaffRouteWithChildren
   '/app/custos': typeof AppCustosRoute
@@ -432,6 +439,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/selecionar-perfil': typeof SelecionarPerfilRoute
   '/app/custos': typeof AppCustosRoute
   '/app/historico': typeof AppHistoricoRoute
@@ -492,6 +500,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/excursionista': typeof ExcursionistaRouteWithChildren
   '/passageiro': typeof PassageiroRouteWithChildren
+  '/reset-password': typeof ResetPasswordRoute
   '/selecionar-perfil': typeof SelecionarPerfilRoute
   '/staff': typeof StaffRouteWithChildren
   '/app/custos': typeof AppCustosRoute
@@ -555,6 +564,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/excursionista'
     | '/passageiro'
+    | '/reset-password'
     | '/selecionar-perfil'
     | '/staff'
     | '/app/custos'
@@ -613,6 +623,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/reset-password'
     | '/selecionar-perfil'
     | '/app/custos'
     | '/app/historico'
@@ -672,6 +683,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/excursionista'
     | '/passageiro'
+    | '/reset-password'
     | '/selecionar-perfil'
     | '/staff'
     | '/app/custos'
@@ -734,6 +746,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   ExcursionistaRoute: typeof ExcursionistaRouteWithChildren
   PassageiroRoute: typeof PassageiroRouteWithChildren
+  ResetPasswordRoute: typeof ResetPasswordRoute
   SelecionarPerfilRoute: typeof SelecionarPerfilRoute
   StaffRoute: typeof StaffRouteWithChildren
   ESlugRoute: typeof ESlugRoute
@@ -756,6 +769,13 @@ declare module '@tanstack/react-router' {
       path: '/selecionar-perfil'
       fullPath: '/selecionar-perfil'
       preLoaderRoute: typeof SelecionarPerfilRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/passageiro': {
@@ -1317,6 +1337,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   ExcursionistaRoute: ExcursionistaRouteWithChildren,
   PassageiroRoute: PassageiroRouteWithChildren,
+  ResetPasswordRoute: ResetPasswordRoute,
   SelecionarPerfilRoute: SelecionarPerfilRoute,
   StaffRoute: StaffRouteWithChildren,
   ESlugRoute: ESlugRoute,
