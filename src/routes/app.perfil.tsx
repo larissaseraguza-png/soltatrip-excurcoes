@@ -43,6 +43,37 @@ function Perfil() {
     },
   });
 
+  // Detecta se o usuário é sócio (co-organizador). Em caso afirmativo, o link
+  // de divulgação é compartilhado com o raiz e não pode ser editado.
+  const { data: socioInfo } = useQuery({
+    queryKey: ["socio-of", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data: vinculo } = await supabase
+        .from("equipe_excursoes")
+        .select("excursao_id, excursoes!inner(organizer_id)")
+        .eq("staff_user_id", user!.id)
+        .eq("papel", "coorganizador")
+        .eq("status", "ativo")
+        .limit(1)
+        .maybeSingle();
+      const rootId = (vinculo as any)?.excursoes?.organizer_id ?? null;
+      if (!rootId) return { isSocio: false as const };
+      const { data: rootProfile } = await supabase
+        .from("profiles")
+        .select("slug, full_name, company_name")
+        .eq("id", rootId)
+        .maybeSingle();
+      return {
+        isSocio: true as const,
+        rootSlug: rootProfile?.slug ?? null,
+        rootName: rootProfile?.company_name || rootProfile?.full_name || "Excursionista raiz",
+      };
+    },
+    staleTime: 60_000,
+  });
+  const isSocio = socioInfo?.isSocio === true;
+
   const { data: stats } = useQuery({
     queryKey: ["profile-stats", user?.id],
     enabled: !!user,
