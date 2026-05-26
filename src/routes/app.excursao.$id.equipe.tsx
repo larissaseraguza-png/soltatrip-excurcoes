@@ -46,6 +46,7 @@ function EquipePage() {
         .from("invitations")
         .select("id, token, papel, expires_at, used, created_at")
         .eq("excursao_id", id)
+        .neq("papel", "coorganizador")
         .order("created_at", { ascending: false });
       if (error) throw error;
       return (data ?? []) as Invite[];
@@ -59,7 +60,8 @@ function EquipePage() {
         .from("equipe_excursoes")
         .select("id, staff_user_id, papel, status")
         .eq("excursao_id", id)
-        .eq("status", "ativo");
+        .eq("status", "ativo")
+        .neq("papel", "coorganizador");
       if (error) throw error;
       return (data ?? []) as Membro[];
     },
