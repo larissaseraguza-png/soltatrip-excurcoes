@@ -192,32 +192,39 @@ function ExcursaoDetalhe() {
         <NavCard to="/app/excursao/$id/financeiro" id={id} icon={Wallet} title="Financeiro" desc="Lançar pagamentos e acompanhar entradas" />
         <NavCard to="/app/excursao/$id/itens" id={id} icon={Ticket} title="Promoter · Itens da festa" desc="Ingressos, camping, VIP, combos e pedidos" />
         <NavCard to="/app/excursao/$id/checkin" id={id} icon={QrCode} title="Check-in QR" desc="Embarcar passageiros com leitor de QR" />
-        <NavCard to="/app/excursao/$id/equipe" id={id} icon={UserCog} title="Equipe / Staff" desc="Convidar e gerenciar staff desta excursão" />
+        {data.organizer_id === user?.id && (
+          <NavCard to="/app/excursao/$id/equipe" id={id} icon={UserCog} title="Equipe / Sócios" desc="Convidar co-organizadores e staff desta excursão" />
+        )}
       </div>
 
       <SafeBoundary label="Grupos de WhatsApp">
         <WhatsappLinks excursao={data} />
       </SafeBoundary>
 
-
-      <div className="grid grid-cols-2 gap-2">
-        {data.status !== "cancelada" && (
+      {data.organizer_id === user?.id ? (
+        <div className="grid grid-cols-2 gap-2">
+          {data.status !== "cancelada" && (
+            <button
+              onClick={handleCancel}
+              disabled={busy !== null}
+              className="h-11 rounded-xl border border-yellow-500/30 text-yellow-400 font-semibold hover:bg-yellow-500/10 transition flex items-center justify-center gap-2 disabled:opacity-50"
+            >
+              {busy === "cancel" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Ban className="h-4 w-4" />} Cancelar
+            </button>
+          )}
           <button
-            onClick={handleCancel}
+            onClick={handleDelete}
             disabled={busy !== null}
-            className="h-11 rounded-xl border border-yellow-500/30 text-yellow-400 font-semibold hover:bg-yellow-500/10 transition flex items-center justify-center gap-2 disabled:opacity-50"
+            className={`h-11 rounded-xl border border-red-500/30 text-red-400 font-semibold hover:bg-red-500/10 transition flex items-center justify-center gap-2 disabled:opacity-50 ${data.status === "cancelada" ? "col-span-2" : ""}`}
           >
-            {busy === "cancel" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Ban className="h-4 w-4" />} Cancelar
+            {busy === "delete" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />} Excluir definitivamente
           </button>
-        )}
-        <button
-          onClick={handleDelete}
-          disabled={busy !== null}
-          className={`h-11 rounded-xl border border-red-500/30 text-red-400 font-semibold hover:bg-red-500/10 transition flex items-center justify-center gap-2 disabled:opacity-50 ${data.status === "cancelada" ? "col-span-2" : ""}`}
-        >
-          {busy === "delete" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />} Excluir definitivamente
-        </button>
-      </div>
+        </div>
+      ) : (
+        <div className="glass rounded-2xl p-3 text-center text-[11px] text-muted-foreground">
+          Você opera como sócio desta excursão. Apenas o excursionista principal pode renomear, alterar o link ou excluir.
+        </div>
+      )}
     </div>
   );
 }

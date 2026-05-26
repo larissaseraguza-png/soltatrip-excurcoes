@@ -9,6 +9,7 @@ export const Route = createFileRoute("/app/excursao/$id/equipe")({
 });
 
 const PAPEIS = [
+  { value: "coorganizador", label: "Co-organizador (sócio)" },
   { value: "motorista", label: "Motorista" },
   { value: "apoio", label: "Apoio" },
   { value: "seguranca", label: "Segurança" },

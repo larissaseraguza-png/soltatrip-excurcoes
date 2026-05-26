@@ -18,6 +18,7 @@ export const Route = createFileRoute("/invite/staff/$token")({
 });
 
 const PAPEL_LABEL: Record<string, string> = {
+  coorganizador: "Co-organizador",
   motorista: "Motorista",
   apoio: "Apoio",
   seguranca: "Segurança",
@@ -25,6 +26,10 @@ const PAPEL_LABEL: Record<string, string> = {
   staff: "Staff",
   lider: "Líder",
 };
+
+function destinoPorPapel(papel: string | undefined | null) {
+  return papel === "coorganizador" ? "/app" : "/staff";
+}
 
 function InviteStaffPage() {
   const { token } = useParams({ from: "/invite/staff/$token" });
@@ -53,7 +58,7 @@ function InviteStaffPage() {
     if (authLoading || !invite) return;
     if (invite.used && user && invite.used_by === user.id) {
       localStorage.removeItem("pending_staff_invite");
-      if (typeof window !== "undefined") window.location.replace("/staff");
+      if (typeof window !== "undefined") window.location.replace(destinoPorPapel(invite.papel));
     }
   }, [invite, user, authLoading]);
 
@@ -74,12 +79,12 @@ function InviteStaffPage() {
       if (error) throw error;
       localStorage.removeItem("pending_staff_invite");
       invalidateRoles(user?.id);
-      setActiveRole("staff");
+      const destino = destinoPorPapel(invite?.papel);
+      setActiveRole(destino === "/app" ? "excursionista" : "staff");
       setDone(true);
-      // Hard navigation: garante que /staff monte do zero, sem resíduos de
-      // estado React do invite (que causavam tela branca/insertBefore).
+      // Hard navigation: garante que o painel monte do zero.
       setTimeout(() => {
-        if (typeof window !== "undefined") window.location.replace("/staff");
+        if (typeof window !== "undefined") window.location.replace(destino);
       }, 800);
     } catch (err: any) {
       const msg = err.message ?? "";
