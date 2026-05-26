@@ -571,17 +571,35 @@ function AuthPage() {
                   placeholder="••••••••"
                 />
 
-                <label className="flex items-center gap-2 select-none cursor-pointer pt-1">
-                  <input
-                    type="checkbox"
-                    checked={remember}
-                    onChange={(e) => setRemember(e.target.checked)}
-                    className="h-4 w-4 rounded border-border bg-secondary/40 text-primary focus:ring-2 focus:ring-primary/30"
-                  />
-                  <span className="text-xs text-muted-foreground">
-                    Lembrar de mim neste dispositivo
-                  </span>
-                </label>
+                <div className="flex items-center justify-between pt-1">
+                  <label className="flex items-center gap-2 select-none cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={remember}
+                      onChange={(e) => setRemember(e.target.checked)}
+                      className="h-4 w-4 rounded border-border bg-secondary/40 text-primary focus:ring-2 focus:ring-primary/30"
+                    />
+                    <span className="text-xs text-muted-foreground">
+                      Lembrar de mim
+                    </span>
+                  </label>
+                  {mode === "signin" && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setError(null);
+                        setInfo(null);
+                        setForgotEmail(email.includes("@") ? email : "");
+                        setStep("forgot");
+                      }}
+                      className="text-xs font-semibold text-primary hover:underline"
+                    >
+                      Esqueci minha senha
+                    </button>
+                  )}
+                </div>
+
+
 
 
 
