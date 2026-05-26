@@ -297,8 +297,10 @@ function AuthPage() {
       if (mode === "signup") {
         const cleanPhone = phone.replace(/\D/g, "");
         if (cleanPhone.length < 10) throw new Error("Telefone inválido. Inclua DDD.");
+        // Modo dev: aceita "identificador" sem @ — anexa domínio fake para o Supabase.
+        const signupEmail = email.includes("@") ? email.trim() : `${email.trim().toLowerCase().replace(/[^a-z0-9._-]/g, "")}@dev.local`;
         const { data, error } = await supabase.auth.signUp({
-          email,
+          email: signupEmail,
           password,
           options: {
             data: { full_name: fullName, phone: cleanPhone, role: selectedRole },
@@ -326,7 +328,7 @@ function AuthPage() {
         // Verificação de e-mail desativada: se por algum motivo não vier sessão,
         // faz login imediato com as credenciais recém-criadas.
         if (!data.session) {
-          const { error: signInErr } = await supabase.auth.signInWithPassword({ email, password });
+          const { error: signInErr } = await supabase.auth.signInWithPassword({ email: signupEmail, password });
           if (signInErr) throw new Error(getAuthErrorMessage(signInErr, "Não foi possível entrar após o cadastro."));
         }
 
@@ -352,7 +354,7 @@ function AuthPage() {
           navigate({ to: roleHome[selectedRole], replace: true });
         }
       } else {
-        // Login híbrido: aceita e-mail ou telefone no mesmo campo.
+        // Login híbrido: aceita e-mail, telefone ou identificador fake (dev).
         let loginEmail = email.trim();
         if (isPhoneIdentifier(loginEmail)) {
           const resolved = await resolveEmailFromPhone(loginEmail);
@@ -362,6 +364,8 @@ function AuthPage() {
             );
           }
           loginEmail = resolved;
+        } else if (!loginEmail.includes("@")) {
+          loginEmail = `${loginEmail.toLowerCase().replace(/[^a-z0-9._-]/g, "")}@dev.local`;
         }
 
         const { data, error } = await supabase.auth.signInWithPassword({
@@ -541,8 +545,8 @@ function AuthPage() {
                 )}
                 <Field
                   label={mode === "signin" ? "E-mail ou telefone" : "E-mail"}
-                  type={mode === "signin" ? "text" : "email"}
-                  inputMode={mode === "signin" ? "email" : undefined}
+                  type="text"
+                  inputMode="email"
                   autoComplete={mode === "signin" ? "username" : "email"}
                   icon={<Mail className="h-4 w-4" />}
                   value={email}
