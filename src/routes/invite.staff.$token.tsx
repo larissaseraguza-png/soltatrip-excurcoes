@@ -58,7 +58,7 @@ function InviteStaffPage() {
     if (authLoading || !invite) return;
     if (invite.used && user && invite.used_by === user.id) {
       localStorage.removeItem("pending_staff_invite");
-      if (typeof window !== "undefined") window.location.replace("/staff");
+      if (typeof window !== "undefined") window.location.replace(destinoPorPapel(invite.papel));
     }
   }, [invite, user, authLoading]);
 
