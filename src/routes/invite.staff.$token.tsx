@@ -155,11 +155,20 @@ function InviteStaffPage() {
           <div className="size-12 rounded-2xl bg-gradient-to-br from-neon-purple to-neon-green grid place-items-center mb-4 glow-primary">
             <ShieldCheck className="size-6" />
           </div>
-          <p className="text-[10px] font-bold tracking-[0.18em] text-neon-purple mb-1">CONVITE DE STAFF</p>
-          <h1 className="font-display text-2xl font-bold mb-1">{exc?.titulo ?? "Excursão"}</h1>
+          <p className="text-[10px] font-bold tracking-[0.18em] text-neon-purple mb-1">
+            {invite.papel === "socio_raiz" ? "CONVITE DE SÓCIO" : "CONVITE DE STAFF"}
+          </p>
+          <h1 className="font-display text-2xl font-bold mb-1">
+            {invite.papel === "socio_raiz"
+              ? (invite as any).raiz_nome ?? "Excursionista raiz"
+              : exc?.titulo ?? "Excursão"}
+          </h1>
           <p className="text-sm text-muted-foreground mb-5">
-            Você foi convidado como <span className="font-semibold text-foreground">{PAPEL_LABEL[invite.papel] ?? invite.papel}</span>
-            {exc?.destino ? ` para ${exc.destino}` : ""}.
+            {invite.papel === "socio_raiz" ? (
+              <>Você foi convidado(a) como <span className="font-semibold text-foreground">sócio(a)</span> e terá acesso a todas as excursões deste excursionista.</>
+            ) : (
+              <>Você foi convidado como <span className="font-semibold text-foreground">{PAPEL_LABEL[invite.papel] ?? invite.papel}</span>{exc?.destino ? ` para ${exc.destino}` : ""}.</>
+            )}
           </p>
 
           {invite.used ? (
