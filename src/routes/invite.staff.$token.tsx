@@ -76,7 +76,11 @@ function InviteStaffPage() {
       invalidateRoles(user?.id);
       setActiveRole("staff");
       setDone(true);
-      setTimeout(() => navigate({ to: "/staff", replace: true }), 1200);
+      // Hard navigation: garante que /staff monte do zero, sem resíduos de
+      // estado React do invite (que causavam tela branca/insertBefore).
+      setTimeout(() => {
+        if (typeof window !== "undefined") window.location.replace("/staff");
+      }, 800);
     } catch (err: any) {
       const msg = err.message ?? "";
       if (msg.includes("expired")) setError("Este convite expirou.");
