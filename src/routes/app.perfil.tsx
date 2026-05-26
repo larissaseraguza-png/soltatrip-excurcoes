@@ -44,21 +44,36 @@ function Perfil() {
     },
   });
 
-  // Detecta se o usuário é sócio (co-organizador). Em caso afirmativo, o link
-  // de divulgação é compartilhado com o raiz e não pode ser editado.
+  // Detecta se o usuário é sócio global de algum raiz. Prioriza vínculo global
+  // (excursionista_socios); se não existir, mantém fallback ao vínculo legado
+  // (equipe_excursoes com papel='coorganizador') para sócios antigos.
   const { data: socioInfo } = useQuery({
     queryKey: ["socio-of", user?.id],
     enabled: !!user,
     queryFn: async () => {
-      const { data: vinculo } = await supabase
-        .from("equipe_excursoes")
-        .select("excursao_id, excursoes!inner(organizer_id)")
-        .eq("staff_user_id", user!.id)
-        .eq("papel", "coorganizador")
+      // 1) vínculo global
+      const { data: global } = await supabase
+        .from("excursionista_socios")
+        .select("raiz_id")
+        .eq("socio_user_id", user!.id)
         .eq("status", "ativo")
         .limit(1)
         .maybeSingle();
-      const rootId = (vinculo as any)?.excursoes?.organizer_id ?? null;
+      let rootId: string | null = (global as any)?.raiz_id ?? null;
+
+      // 2) fallback legado por excursão
+      if (!rootId) {
+        const { data: vinculo } = await supabase
+          .from("equipe_excursoes")
+          .select("excursao_id, excursoes!inner(organizer_id)")
+          .eq("staff_user_id", user!.id)
+          .eq("papel", "coorganizador")
+          .eq("status", "ativo")
+          .limit(1)
+          .maybeSingle();
+        rootId = (vinculo as any)?.excursoes?.organizer_id ?? null;
+      }
+
       if (!rootId) return { isSocio: false as const };
       const { data: rootProfile } = await supabase
         .from("profiles")
