@@ -4,7 +4,7 @@ import { Bell, Lock, LogOut, Save, Loader2, User as UserIcon } from "lucide-reac
 import { useEffect, useState } from "react";
 import { useProfile, formatPhone, formatCPF, validateCPF } from "@/hooks/use-profile";
 import { useAuth } from "@/hooks/use-auth";
-import { supabase } from "@/integrations/supabase/client";
+import { signOutAndClean } from "@/lib/auth-cleanup";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/passageiro/perfil")({
@@ -55,7 +55,7 @@ function Perfil() {
   }
 
   async function logout() {
-    await supabase.auth.signOut();
+    await signOutAndClean();
     navigate({ to: "/auth", replace: true });
   }
 

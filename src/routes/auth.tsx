@@ -24,6 +24,30 @@ import {
   consumePendingExcursionistaInvite,
   getPendingExcursionistaInvite,
 } from "@/lib/excursionista-link";
+import { signOutAndClean } from "@/lib/auth-cleanup";
+
+// Detecta se o identificador digitado é telefone (≥10 dígitos) ou e-mail.
+function isPhoneIdentifier(raw: string): boolean {
+  const trimmed = raw.trim();
+  if (trimmed.includes("@")) return false;
+  const digits = trimmed.replace(/\D/g, "");
+  return digits.length >= 10;
+}
+
+// Resolve telefone → e-mail via RPC pública (search por digitos normalizados).
+// Estrutura preparada para futura validação por WhatsApp OTP: a mesma
+// chave de busca (telefone) será usada para enviar/verificar código.
+async function resolveEmailFromPhone(phone: string): Promise<string | null> {
+  const digits = phone.replace(/\D/g, "");
+  if (digits.length < 10) return null;
+  const rpc = supabase.rpc as unknown as (
+    fn: "get_email_by_phone",
+    args: { p_phone: string },
+  ) => Promise<{ data: string | null; error: { message?: string } | null }>;
+  const { data, error } = await rpc("get_email_by_phone", { p_phone: digits });
+  if (error) throw new Error(error.message ?? "Falha ao validar telefone.");
+  return data ?? null;
+}
 
 export const Route = createFileRoute("/auth")({
   beforeLoad: () => {
@@ -152,8 +176,9 @@ function AuthPage() {
   // evita hydration mismatch entre SSR e cliente.
   useEffect(() => {
     try {
-      const savedEmail = localStorage.getItem("st_last_email");
-      if (savedEmail) setEmail(savedEmail);
+      const savedIdentifier =
+        localStorage.getItem("st_last_identifier") ?? localStorage.getItem("st_last_email");
+      if (savedIdentifier) setEmail(savedIdentifier);
       const savedRemember = localStorage.getItem("st_remember");
       if (savedRemember !== null) setRemember(savedRemember !== "0");
     } catch {
@@ -230,7 +255,13 @@ function AuthPage() {
       // Persistir preferências de login antes da chamada de auth.
       try {
         localStorage.setItem("st_remember", remember ? "1" : "0");
-        if (email) localStorage.setItem("st_last_email", email);
+        if (remember && email) {
+          localStorage.setItem("st_last_identifier", email);
+          localStorage.setItem("st_last_email", email); // compat
+        } else if (!remember) {
+          localStorage.removeItem("st_last_identifier");
+          localStorage.removeItem("st_last_email");
+        }
         sessionStorage.setItem("st_session_alive", "1");
       } catch {
         /* ignora */
@@ -297,8 +328,22 @@ function AuthPage() {
           navigate({ to: roleHome[selectedRole], replace: true });
         }
       } else {
-        // Login
-        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+        // Login híbrido: aceita e-mail ou telefone no mesmo campo.
+        let loginEmail = email.trim();
+        if (isPhoneIdentifier(loginEmail)) {
+          const resolved = await resolveEmailFromPhone(loginEmail);
+          if (!resolved) {
+            throw new Error(
+              "Não encontramos uma conta com esse telefone. Confira o número (com DDD) ou use o e-mail cadastrado.",
+            );
+          }
+          loginEmail = resolved;
+        }
+
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email: loginEmail,
+          password,
+        });
         if (error) throw new Error(getAuthErrorMessage(error, "Não foi possível entrar."));
         if (!data.user) throw new Error("Falha ao entrar.");
 
@@ -322,7 +367,7 @@ function AuthPage() {
         }
 
         if (userRole !== selectedRole) {
-          await supabase.auth.signOut();
+          await signOutAndClean();
           throw new Error("Você não tem acesso a este tipo de perfil");
         }
         const pendingStaff = localStorage.getItem("pending_staff_invite");
@@ -471,14 +516,23 @@ function AuthPage() {
                   </>
                 )}
                 <Field
-                  label="E-mail"
-                  type="email"
+                  label={mode === "signin" ? "E-mail ou telefone" : "E-mail"}
+                  type={mode === "signin" ? "text" : "email"}
+                  inputMode={mode === "signin" ? "email" : undefined}
+                  autoComplete={mode === "signin" ? "username" : "email"}
                   icon={<Mail className="h-4 w-4" />}
                   value={email}
                   onChange={setEmail}
                   required
-                  placeholder="voce@email.com"
+                  placeholder={
+                    mode === "signin" ? "voce@email.com ou (11) 99999-0000" : "voce@email.com"
+                  }
                 />
+                {mode === "signin" && (
+                  <p className="text-[11px] text-muted-foreground -mt-1.5 pl-1">
+                    Você pode entrar com o e-mail cadastrado ou com o telefone (com DDD).
+                  </p>
+                )}
                 {mode === "signup" && (
                   <Field
                     label="Telefone (com DDD)"
@@ -565,6 +619,8 @@ function Field({
   icon,
   actionIcon,
   minLength,
+  inputMode,
+  autoComplete,
 }: {
   label: string;
   value: string;
@@ -575,6 +631,8 @@ function Field({
   icon?: React.ReactNode;
   actionIcon?: React.ReactNode;
   minLength?: number;
+  inputMode?: React.HTMLAttributes<HTMLInputElement>["inputMode"];
+  autoComplete?: string;
 }) {
   return (
     <label className="block">
@@ -591,6 +649,8 @@ function Field({
           minLength={minLength}
           placeholder={placeholder}
           value={value}
+          inputMode={inputMode}
+          autoComplete={autoComplete}
           onChange={(e) => onChange(e.target.value)}
           className={`w-full h-11 rounded-xl bg-secondary/40 border border-border focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 transition text-sm ${icon ? "pl-10" : "pl-3"} ${actionIcon ? "pr-10" : "pr-3"}`}
         />
