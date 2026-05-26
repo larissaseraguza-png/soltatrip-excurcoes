@@ -23,6 +23,8 @@ type Excursao = {
   custo_onibus: number;
   cor: string | null;
   banner_url: string | null;
+  organizer_id?: string;
+  is_owner?: boolean;
 };
 
 type PaxRow = { excursao_id: string; total_price: number; amount_paid: number; status: string };
@@ -40,14 +42,12 @@ function Dashboard() {
   const { user } = useAuth();
 
   const { data: excursoes, isLoading } = useQuery({
-    queryKey: ["excursoes", user?.id],
+    queryKey: ["excursoes-managed", user?.id],
     enabled: !!user,
+    staleTime: 30_000,
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("excursoes")
-        .select("id,titulo,destino,data_evento,status,preco,total_vagas,custo_onibus,cor,banner_url")
-        .eq("organizer_id", user!.id)
-        .order("data_evento", { ascending: true });
+      // Inclui excursões próprias E aquelas onde o usuário é sócio (co-organizador).
+      const { data, error } = await (supabase as any).rpc("list_managed_excursoes");
       if (error) throw error;
       return (data ?? []) as Excursao[];
     },
