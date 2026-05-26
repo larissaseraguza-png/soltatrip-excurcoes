@@ -37,6 +37,11 @@ export function isRecoverableRenderError(err: unknown): boolean {
   return isChunkError(err) || isDomMutationError(err);
 }
 
+const RELOAD_KEY = "st_chunk_reload_at";
+// Janela para evitar loop: só recarrega de novo se passou >30s do último.
+const RELOAD_COOLDOWN_MS = 30_000;
+
+
 
 async function clearCachesAndSW() {
   try {
