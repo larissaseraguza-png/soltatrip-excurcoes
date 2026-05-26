@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { useProfile, formatPhone, formatCPF, validateCPF } from "@/hooks/use-profile";
 import { useAuth } from "@/hooks/use-auth";
 import { useStaffExcursao } from "@/hooks/use-staff-excursao";
-import { supabase } from "@/integrations/supabase/client";
+import { signOutAndClean } from "@/lib/auth-cleanup";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/staff/perfil")({
@@ -56,7 +56,7 @@ function StaffPerfil() {
   }
 
   async function logout() {
-    await supabase.auth.signOut();
+    await signOutAndClean();
     navigate({ to: "/auth", replace: true });
   }
 
