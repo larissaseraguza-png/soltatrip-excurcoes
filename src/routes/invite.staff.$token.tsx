@@ -7,6 +7,7 @@ import { invalidateRoles, setActiveRole } from "@/hooks/use-role";
 import { useSlowLoad } from "@/hooks/use-slow-load";
 import { isFlowLocked } from "@/config/flow-mode";
 import { Bus, Loader2, CheckCircle2, AlertCircle, ShieldCheck } from "lucide-react";
+import { SlowFallback } from "@/components/SlowFallback";
 
 export const Route = createFileRoute("/invite/staff/$token")({
   beforeLoad: () => {
