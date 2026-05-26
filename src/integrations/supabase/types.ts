@@ -172,8 +172,10 @@ export type Database = {
           created_at: string
           custo_onibus: number
           data_evento: string
+          data_fim: string | null
           descricao: string | null
           destino: string
+          estado: string | null
           horario_retorno: string | null
           horario_saida: string | null
           id: string
@@ -193,8 +195,10 @@ export type Database = {
           created_at?: string
           custo_onibus?: number
           data_evento: string
+          data_fim?: string | null
           descricao?: string | null
           destino: string
+          estado?: string | null
           horario_retorno?: string | null
           horario_saida?: string | null
           id?: string
@@ -214,8 +218,10 @@ export type Database = {
           created_at?: string
           custo_onibus?: number
           data_evento?: string
+          data_fim?: string | null
           descricao?: string | null
           destino?: string
+          estado?: string | null
           horario_retorno?: string | null
           horario_saida?: string | null
           id?: string
@@ -278,11 +284,39 @@ export type Database = {
           },
         ]
       }
+      locais_salvos: {
+        Row: {
+          created_at: string
+          endereco: string | null
+          id: string
+          nome: string
+          organizer_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          endereco?: string | null
+          id?: string
+          nome: string
+          organizer_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          endereco?: string | null
+          id?: string
+          nome?: string
+          organizer_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       onibus: {
         Row: {
           ativo: boolean
           capacidade: number
           created_at: string
+          custo: number
           excursao_id: string
           horario_retorno: string | null
           horario_saida: string | null
@@ -297,6 +331,7 @@ export type Database = {
           ativo?: boolean
           capacidade?: number
           created_at?: string
+          custo?: number
           excursao_id: string
           horario_retorno?: string | null
           horario_saida?: string | null
@@ -311,6 +346,7 @@ export type Database = {
           ativo?: boolean
           capacidade?: number
           created_at?: string
+          custo?: number
           excursao_id?: string
           horario_retorno?: string | null
           horario_saida?: string | null
