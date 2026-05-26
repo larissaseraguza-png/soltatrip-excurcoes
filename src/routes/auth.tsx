@@ -176,8 +176,9 @@ function AuthPage() {
   // evita hydration mismatch entre SSR e cliente.
   useEffect(() => {
     try {
-      const savedEmail = localStorage.getItem("st_last_email");
-      if (savedEmail) setEmail(savedEmail);
+      const savedIdentifier =
+        localStorage.getItem("st_last_identifier") ?? localStorage.getItem("st_last_email");
+      if (savedIdentifier) setEmail(savedIdentifier);
       const savedRemember = localStorage.getItem("st_remember");
       if (savedRemember !== null) setRemember(savedRemember !== "0");
     } catch {
