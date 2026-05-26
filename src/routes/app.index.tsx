@@ -148,11 +148,13 @@ function Dashboard() {
         <div className="flex justify-center py-20">
           <Loader2 className="h-6 w-6 animate-spin text-primary" />
         </div>
-      ) : !proximas.length ? (
+      ) : !(excursoes?.length) ? (
         <EmptyState />
       ) : (
-        <div className="grid sm:grid-cols-2 gap-4">
-          {proximas.map((e) => <ExcursaoCard key={e.id} ex={e} />)}
+        <div className="grid sm:grid-cols-2 gap-4 pb-24">
+          {[...(excursoes ?? [])]
+            .sort((a, b) => (a.data_evento < b.data_evento ? 1 : -1))
+            .map((e) => <ExcursaoCard key={e.id} ex={e} />)}
         </div>
       )}
 
