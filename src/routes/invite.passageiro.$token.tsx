@@ -34,9 +34,18 @@ function InvitePassageiroPage() {
     },
   });
 
+  // Se a reserva já foi vinculada a este usuário, abre a reserva direto
   useEffect(() => {
-    if (!user) localStorage.setItem("pending_pax_invite", token);
-  }, [user, token]);
+    if (authLoading || !invite) return;
+    if (invite.ja_usado && user && invite.user_id === user.id && invite.reserva_id) {
+      localStorage.removeItem("pending_pax_invite");
+      navigate({ to: "/passageiro/reserva/$id", params: { id: invite.reserva_id }, replace: true });
+    }
+  }, [invite, user, authLoading, navigate]);
+
+  useEffect(() => {
+    if (!user && invite && !invite.ja_usado) localStorage.setItem("pending_pax_invite", token);
+  }, [user, token, invite]);
 
   async function aceitar() {
     setError(null);
@@ -98,7 +107,25 @@ function InvitePassageiroPage() {
           <p className="text-sm mb-5">Reserva no nome de <span className="font-bold">{invite.nome}</span>.</p>
 
           {invite.ja_usado ? (
-            <Msg tone="error" icon={AlertCircle}>Este convite já foi utilizado.</Msg>
+            user && invite.user_id === user.id ? (
+              <Msg tone="success" icon={CheckCircle2}>Reserva já vinculada. Abrindo…</Msg>
+            ) : !user ? (
+              <>
+                <p className="text-xs text-muted-foreground mb-3">
+                  Esta reserva já está vinculada a uma conta. Faça login para acessá-la.
+                </p>
+                <Link
+                  to="/auth"
+                  className="w-full h-11 rounded-xl bg-primary text-primary-foreground font-semibold glow-primary hover:opacity-90 flex items-center justify-center"
+                >
+                  Fazer login
+                </Link>
+              </>
+            ) : (
+              <Msg tone="error" icon={AlertCircle}>
+                Esta reserva foi vinculada a outra conta. Saia e entre com a conta correta.
+              </Msg>
+            )
           ) : done ? (
             <Msg tone="success" icon={CheckCircle2}>Reserva vinculada! Abrindo…</Msg>
           ) : !user ? (

@@ -43,10 +43,23 @@ function InviteStaffPage() {
     },
   });
 
-  // Guarda token para voltar após login
+  // Se convite já foi usado por este mesmo usuário, vai direto pra área de staff
   useEffect(() => {
-    if (!user) localStorage.setItem("pending_staff_invite", token);
-  }, [user, token]);
+    if (authLoading || !invite) return;
+    if (invite.used && user && invite.used_by === user.id) {
+      localStorage.removeItem("pending_staff_invite");
+      navigate({ to: "/staff", replace: true });
+    }
+  }, [invite, user, authLoading, navigate]);
+
+  // Guarda token só se ainda for utilizável (não usado e não expirado)
+  useEffect(() => {
+    if (!invite || user) return;
+    const expirado = new Date(invite.expires_at) < new Date();
+    if (!invite.used && !expirado) {
+      localStorage.setItem("pending_staff_invite", token);
+    }
+  }, [user, token, invite]);
 
   async function aceitar() {
     setError(null);
@@ -116,9 +129,27 @@ function InviteStaffPage() {
           </p>
 
           {invite.used ? (
-            <Msg tone="error" icon={AlertCircle}>Este convite já foi utilizado.</Msg>
+            user && invite.used_by === user.id ? (
+              <Msg tone="success" icon={CheckCircle2}>Convite já vinculado. Abrindo área de staff…</Msg>
+            ) : !user ? (
+              <>
+                <p className="text-xs text-muted-foreground mb-3">
+                  Este convite já foi aceito. Entre com a sua conta para acessar a área de staff.
+                </p>
+                <Link
+                  to="/auth"
+                  className="w-full h-11 rounded-xl bg-primary text-primary-foreground font-semibold glow-primary hover:opacity-90 flex items-center justify-center"
+                >
+                  Fazer login
+                </Link>
+              </>
+            ) : (
+              <Msg tone="error" icon={AlertCircle}>
+                Este convite foi aceito por outra conta. Saia e entre com a conta correta.
+              </Msg>
+            )
           ) : expirado ? (
-            <Msg tone="error" icon={AlertCircle}>Este convite expirou.</Msg>
+            <Msg tone="error" icon={AlertCircle}>Este convite expirou. Peça um novo ao organizador.</Msg>
           ) : done ? (
             <Msg tone="success" icon={CheckCircle2}>Vínculo criado! Redirecionando…</Msg>
           ) : !user ? (
