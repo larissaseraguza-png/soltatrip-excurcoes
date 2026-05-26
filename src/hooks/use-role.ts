@@ -89,6 +89,29 @@ export type RoleSnapshot = {
   loading: boolean;
 };
 
+// Cache de snapshots já computados para que getSnapshot retorne SEMPRE
+// a mesma referência quando nada mudou. Sem isso, useSyncExternalStore
+// dispara "Maximum update depth exceeded" (React detecta que o snapshot
+// é um objeto novo a cada chamada e re-renderiza em loop).
+type SnapKey = string;
+const snapshotCache = new Map<SnapKey, RoleSnapshot>();
+
+function computeSnapshot(userId: string | null, authLoading: boolean): RoleSnapshot {
+  if (authLoading) return LOADING_ENTRY as RoleSnapshot;
+  if (!userId) return NO_USER_ENTRY as RoleSnapshot;
+  const entry = cache.get(userId) ?? LOADING_ENTRY;
+  if (entry.loading) return LOADING_ENTRY as RoleSnapshot;
+  const active = readActive();
+  const role =
+    active && entry.roles.includes(active) ? active : entry.roles[0] ?? null;
+  const key: SnapKey = `${userId}|${role ?? ""}|${entry.roles.join(",")}`;
+  const cached = snapshotCache.get(key);
+  if (cached) return cached;
+  const snap: RoleSnapshot = { role, roles: entry.roles, loading: false };
+  snapshotCache.set(key, snap);
+  return snap;
+}
+
 export function useRoleForUser(user: User | null, authLoading: boolean): RoleSnapshot {
   const userId = user?.id ?? null;
 
@@ -102,16 +125,7 @@ export function useRoleForUser(user: User | null, authLoading: boolean): RoleSna
 
   return useSyncExternalStore(
     subscribe,
-    () => {
-      if (authLoading) return LOADING_ENTRY as RoleSnapshot;
-      if (!userId) return NO_USER_ENTRY as RoleSnapshot;
-      const entry = cache.get(userId) ?? LOADING_ENTRY;
-      if (entry.loading) return entry as RoleSnapshot;
-      const active = readActive();
-      const role =
-        active && entry.roles.includes(active) ? active : entry.roles[0] ?? null;
-      return { role, roles: entry.roles, loading: false };
-    },
+    () => computeSnapshot(userId, authLoading),
     () => LOADING_ENTRY as RoleSnapshot,
   );
 }
