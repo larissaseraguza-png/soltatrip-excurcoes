@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { invalidateRoles, setActiveRole } from "@/hooks/use-role";
+import { useSlowLoad } from "@/hooks/use-slow-load";
 import { isFlowLocked } from "@/config/flow-mode";
 import { Bus, Loader2, CheckCircle2, AlertCircle, ShieldCheck } from "lucide-react";
 
