@@ -27,6 +27,10 @@ function init() {
     const alive = sessionStorage.getItem("st_session_alive");
     if (remember === "0" && !alive) {
       supabase.auth.signOut().catch(() => {});
+      // "Lembrar de mim" desativado: limpa identificador previamente preenchido
+      // para que a tela de login volte totalmente limpa na próxima abertura.
+      localStorage.removeItem("st_last_identifier");
+      localStorage.removeItem("st_last_email");
     }
     sessionStorage.setItem("st_session_alive", "1");
   } catch {
