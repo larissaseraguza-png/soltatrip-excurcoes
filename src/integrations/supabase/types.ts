@@ -165,6 +165,36 @@ export type Database = {
         }
         Relationships: []
       }
+      excursionista_socios: {
+        Row: {
+          convite_email: string | null
+          created_at: string
+          id: string
+          raiz_id: string
+          socio_user_id: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          convite_email?: string | null
+          created_at?: string
+          id?: string
+          raiz_id: string
+          socio_user_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          convite_email?: string | null
+          created_at?: string
+          id?: string
+          raiz_id?: string
+          socio_user_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       excursoes: {
         Row: {
           banner_url: string | null
@@ -241,7 +271,7 @@ export type Database = {
         Row: {
           created_at: string
           created_by: string
-          excursao_id: string
+          excursao_id: string | null
           expires_at: string
           id: string
           papel: string
@@ -253,7 +283,7 @@ export type Database = {
         Insert: {
           created_at?: string
           created_by: string
-          excursao_id: string
+          excursao_id?: string | null
           expires_at?: string
           id?: string
           papel?: string
@@ -265,7 +295,7 @@ export type Database = {
         Update: {
           created_at?: string
           created_by?: string
-          excursao_id?: string
+          excursao_id?: string | null
           expires_at?: string
           id?: string
           papel?: string
@@ -870,6 +900,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      accept_socio_raiz_invitation: {
+        Args: { p_token: string }
+        Returns: string
+      }
       accept_staff_invitation: { Args: { p_token: string }; Returns: string }
       claim_passageiro_invite: { Args: { p_token: string }; Returns: string }
       complete_signup_profile: {
@@ -987,6 +1021,8 @@ export type Database = {
           expires_at: string
           id: string
           papel: string
+          raiz_id: string
+          raiz_nome: string
           used: boolean
           used_by: string
         }[]
@@ -1041,6 +1077,17 @@ export type Database = {
           status: string
           titulo: string
           total_vagas: number
+        }[]
+      }
+      list_my_socios: {
+        Args: never
+        Returns: {
+          created_at: string
+          email: string
+          id: string
+          nome: string
+          socio_user_id: string
+          status: string
         }[]
       }
       list_my_staff_onibus: {
