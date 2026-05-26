@@ -159,8 +159,10 @@ function AuthPage() {
   const navigate = useNavigate();
 
   const [mode, setMode] = useState<"signin" | "signup">("signin");
-  const [step, setStep] = useState<"role" | "credentials">("role");
+  const [step, setStep] = useState<"role" | "credentials" | "forgot">("role");
   const [selectedRole, setSelectedRole] = useState<AppRole | null>(null);
+  const [forgotEmail, setForgotEmail] = useState("");
+  const [forgotBusy, setForgotBusy] = useState(false);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -243,6 +245,32 @@ function AuthPage() {
     setStep("role");
     setError(null);
     setInfo(null);
+  }
+
+  async function handleForgotSubmit(e: FormEvent) {
+    e.preventDefault();
+    setError(null);
+    setInfo(null);
+    const target = forgotEmail.trim();
+    if (!target || !target.includes("@")) {
+      setError("Informe o e-mail cadastrado para receber o link de recuperação.");
+      return;
+    }
+    setForgotBusy(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(target, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      if (error) throw new Error(getAuthErrorMessage(error, "Não foi possível enviar o link."));
+      setInfo(
+        `Se ${target} estiver cadastrado, enviamos um link de redefinição. Verifique sua caixa de entrada e o spam. O link expira em 1 hora.`,
+      );
+    } catch (err) {
+      // Não revela se o e-mail existe ou não, mas mostra erros de rede/limite.
+      setError(getAuthErrorMessage(err, "Não foi possível enviar o link agora. Tente novamente."));
+    } finally {
+      setForgotBusy(false);
+    }
   }
 
   async function handleSubmit(e: FormEvent) {
@@ -569,17 +597,35 @@ function AuthPage() {
                   placeholder="••••••••"
                 />
 
-                <label className="flex items-center gap-2 select-none cursor-pointer pt-1">
-                  <input
-                    type="checkbox"
-                    checked={remember}
-                    onChange={(e) => setRemember(e.target.checked)}
-                    className="h-4 w-4 rounded border-border bg-secondary/40 text-primary focus:ring-2 focus:ring-primary/30"
-                  />
-                  <span className="text-xs text-muted-foreground">
-                    Lembrar de mim neste dispositivo
-                  </span>
-                </label>
+                <div className="flex items-center justify-between pt-1">
+                  <label className="flex items-center gap-2 select-none cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={remember}
+                      onChange={(e) => setRemember(e.target.checked)}
+                      className="h-4 w-4 rounded border-border bg-secondary/40 text-primary focus:ring-2 focus:ring-primary/30"
+                    />
+                    <span className="text-xs text-muted-foreground">
+                      Lembrar de mim
+                    </span>
+                  </label>
+                  {mode === "signin" && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setError(null);
+                        setInfo(null);
+                        setForgotEmail(email.includes("@") ? email : "");
+                        setStep("forgot");
+                      }}
+                      className="text-xs font-semibold text-primary hover:underline"
+                    >
+                      Esqueci minha senha
+                    </button>
+                  )}
+                </div>
+
+
 
 
 
@@ -600,6 +646,67 @@ function AuthPage() {
                     ? `Entrar como ${currentRole.titulo}`
                     : `Criar conta de ${currentRole.titulo}`}
                 </button>
+              </form>
+            </>
+          )}
+
+          {step === "forgot" && (
+            <>
+              <button
+                type="button"
+                onClick={() => {
+                  setStep(selectedRole ? "credentials" : "role");
+                  setError(null);
+                  setInfo(null);
+                }}
+                className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground mb-4 transition"
+              >
+                <ArrowLeft className="h-3.5 w-3.5" /> Voltar para o login
+              </button>
+
+              <h1 className="font-display text-2xl font-bold mb-1">Recuperar acesso</h1>
+              <p className="text-sm text-muted-foreground mb-6">
+                Informe o e-mail cadastrado e enviaremos um link seguro para você criar uma
+                nova senha. O link expira em 1 hora e só pode ser usado uma vez.
+              </p>
+
+              <form onSubmit={handleForgotSubmit} className="space-y-3">
+                <Field
+                  label="E-mail cadastrado"
+                  type="email"
+                  inputMode="email"
+                  autoComplete="email"
+                  icon={<Mail className="h-4 w-4" />}
+                  value={forgotEmail}
+                  onChange={setForgotEmail}
+                  required
+                  placeholder="voce@email.com"
+                />
+
+                {error && (
+                  <div className="flex items-start gap-2 text-sm text-red-400 bg-red-500/10 border border-red-500/30 rounded-lg px-3 py-2">
+                    <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" />
+                    <span>{error}</span>
+                  </div>
+                )}
+                {info && (
+                  <div className="text-sm text-neon-green bg-neon-green/10 border border-neon-green/30 rounded-lg px-3 py-2">
+                    {info}
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={forgotBusy}
+                  className="w-full h-12 rounded-xl bg-primary text-primary-foreground font-semibold glow-primary hover:opacity-90 transition flex items-center justify-center gap-2 disabled:opacity-50"
+                >
+                  {forgotBusy && <Loader2 className="h-4 w-4 animate-spin" />}
+                  Enviar link de recuperação
+                </button>
+
+                <p className="text-[11px] text-muted-foreground text-center pt-1">
+                  Recuperação por telefone/WhatsApp será disponibilizada em breve.
+                </p>
               </form>
             </>
           )}
