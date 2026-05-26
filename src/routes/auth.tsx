@@ -255,7 +255,13 @@ function AuthPage() {
       // Persistir preferências de login antes da chamada de auth.
       try {
         localStorage.setItem("st_remember", remember ? "1" : "0");
-        if (email) localStorage.setItem("st_last_email", email);
+        if (remember && email) {
+          localStorage.setItem("st_last_identifier", email);
+          localStorage.setItem("st_last_email", email); // compat
+        } else if (!remember) {
+          localStorage.removeItem("st_last_identifier");
+          localStorage.removeItem("st_last_email");
+        }
         sessionStorage.setItem("st_session_alive", "1");
       } catch {
         /* ignora */
@@ -322,8 +328,22 @@ function AuthPage() {
           navigate({ to: roleHome[selectedRole], replace: true });
         }
       } else {
-        // Login
-        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+        // Login híbrido: aceita e-mail ou telefone no mesmo campo.
+        let loginEmail = email.trim();
+        if (isPhoneIdentifier(loginEmail)) {
+          const resolved = await resolveEmailFromPhone(loginEmail);
+          if (!resolved) {
+            throw new Error(
+              "Não encontramos uma conta com esse telefone. Confira o número (com DDD) ou use o e-mail cadastrado.",
+            );
+          }
+          loginEmail = resolved;
+        }
+
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email: loginEmail,
+          password,
+        });
         if (error) throw new Error(getAuthErrorMessage(error, "Não foi possível entrar."));
         if (!data.user) throw new Error("Falha ao entrar.");
 
@@ -347,7 +367,7 @@ function AuthPage() {
         }
 
         if (userRole !== selectedRole) {
-          await supabase.auth.signOut();
+          await signOutAndClean();
           throw new Error("Você não tem acesso a este tipo de perfil");
         }
         const pendingStaff = localStorage.getItem("pending_staff_invite");
