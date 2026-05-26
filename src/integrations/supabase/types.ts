@@ -974,6 +974,10 @@ export type Database = {
         Args: { _onibus_id: string; _user_id: string }
         Returns: boolean
       }
+      is_coorganizador: {
+        Args: { _excursao_id: string; _user_id: string }
+        Returns: boolean
+      }
       is_linked_to_excursionista: {
         Args: { _org: string; _pax: string }
         Returns: boolean
@@ -985,6 +989,23 @@ export type Database = {
       is_reserva_passageiro: {
         Args: { _reserva_id: string; _user_id: string }
         Returns: boolean
+      }
+      list_managed_excursoes: {
+        Args: never
+        Returns: {
+          banner_url: string
+          cor: string
+          custo_onibus: number
+          data_evento: string
+          destino: string
+          id: string
+          is_owner: boolean
+          organizer_id: string
+          preco: number
+          status: string
+          titulo: string
+          total_vagas: number
+        }[]
       }
       list_my_staff_onibus: {
         Args: never
