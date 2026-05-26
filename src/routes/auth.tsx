@@ -247,6 +247,32 @@ function AuthPage() {
     setInfo(null);
   }
 
+  async function handleForgotSubmit(e: FormEvent) {
+    e.preventDefault();
+    setError(null);
+    setInfo(null);
+    const target = forgotEmail.trim();
+    if (!target || !target.includes("@")) {
+      setError("Informe o e-mail cadastrado para receber o link de recuperação.");
+      return;
+    }
+    setForgotBusy(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(target, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      if (error) throw new Error(getAuthErrorMessage(error, "Não foi possível enviar o link."));
+      setInfo(
+        `Se ${target} estiver cadastrado, enviamos um link de redefinição. Verifique sua caixa de entrada e o spam. O link expira em 1 hora.`,
+      );
+    } catch (err) {
+      // Não revela se o e-mail existe ou não, mas mostra erros de rede/limite.
+      setError(getAuthErrorMessage(err, "Não foi possível enviar o link agora. Tente novamente."));
+    } finally {
+      setForgotBusy(false);
+    }
+  }
+
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     if (!selectedRole) return;
