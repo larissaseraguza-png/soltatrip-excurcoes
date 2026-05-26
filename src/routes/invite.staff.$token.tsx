@@ -18,6 +18,7 @@ export const Route = createFileRoute("/invite/staff/$token")({
 });
 
 const PAPEL_LABEL: Record<string, string> = {
+  coorganizador: "Co-organizador",
   motorista: "Motorista",
   apoio: "Apoio",
   seguranca: "Segurança",
@@ -25,6 +26,10 @@ const PAPEL_LABEL: Record<string, string> = {
   staff: "Staff",
   lider: "Líder",
 };
+
+function destinoPorPapel(papel: string | undefined | null) {
+  return papel === "coorganizador" ? "/app" : "/staff";
+}
 
 function InviteStaffPage() {
   const { token } = useParams({ from: "/invite/staff/$token" });
