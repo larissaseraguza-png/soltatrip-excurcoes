@@ -162,23 +162,25 @@ function AuthPage() {
   }, []);
 
   // Navegação pós-auth: useEffect ao invés de <Navigate> condicional evita
-  // hydration mismatch (SSR sempre renderiza o formulário; cliente navega após hidratação).
+  // hydration mismatch. Para convites pendentes usamos navegação hard
+  // (window.location) — isso elimina erros de DOM mutation que apareciam
+  // na transição rápida auth → invite → área final em celulares Android.
   useEffect(() => {
     if (busy || !user || !role) return;
     try {
       const pendingStaff = localStorage.getItem("pending_staff_invite");
       if (pendingStaff) {
-        navigate({ to: "/invite/staff/$token", params: { token: pendingStaff }, replace: true });
+        window.location.replace(`/invite/staff/${pendingStaff}`);
         return;
       }
       const pendingPax = localStorage.getItem("pending_pax_invite");
       if (pendingPax) {
-        navigate({ to: "/invite/passageiro/$token", params: { token: pendingPax }, replace: true });
+        window.location.replace(`/invite/passageiro/${pendingPax}`);
         return;
       }
       const pendingExc = getPendingExcursionistaInvite();
       if (pendingExc && role === "passageiro") {
-        navigate({ to: "/invite/excursionista/$id", params: { id: pendingExc }, replace: true });
+        window.location.replace(`/invite/excursionista/${pendingExc}`);
         return;
       }
       navigate({ to: roleHome[role], replace: true });
@@ -288,13 +290,9 @@ function AuthPage() {
           await consumePendingExcursionistaInvite();
         }
         if (pendingStaff) {
-          navigate({ to: "/invite/staff/$token", params: { token: pendingStaff }, replace: true });
+          window.location.replace(`/invite/staff/${pendingStaff}`);
         } else if (pendingPax) {
-          navigate({
-            to: "/invite/passageiro/$token",
-            params: { token: pendingPax },
-            replace: true,
-          });
+          window.location.replace(`/invite/passageiro/${pendingPax}`);
         } else {
           navigate({ to: roleHome[selectedRole], replace: true });
         }
@@ -334,13 +332,9 @@ function AuthPage() {
           await consumePendingExcursionistaInvite();
         }
         if (pendingStaff) {
-          navigate({ to: "/invite/staff/$token", params: { token: pendingStaff }, replace: true });
+          window.location.replace(`/invite/staff/${pendingStaff}`);
         } else if (pendingPax) {
-          navigate({
-            to: "/invite/passageiro/$token",
-            params: { token: pendingPax },
-            replace: true,
-          });
+          window.location.replace(`/invite/passageiro/${pendingPax}`);
         } else {
           navigate({ to: roleHome[userRole], replace: true });
         }
