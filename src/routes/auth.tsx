@@ -323,18 +323,14 @@ function AuthPage() {
           return;
         }
 
-        // Verificação de e-mail obrigatória: sem sessão, pedir confirmação e sair.
+        // Verificação de e-mail desativada: se por algum motivo não vier sessão,
+        // faz login imediato com as credenciais recém-criadas.
         if (!data.session) {
-          setInfo(
-            `Enviamos um link de confirmação para ${email}. Abra seu e-mail (verifique também o spam) e clique para ativar sua conta antes de entrar.`,
-          );
-          setMode("signin");
-          setStep("role");
-          setBusy(false);
-          return;
+          const { error: signInErr } = await supabase.auth.signInWithPassword({ email, password });
+          if (signInErr) throw new Error(getAuthErrorMessage(signInErr, "Não foi possível entrar após o cadastro."));
         }
 
-        // Sessão imediata só ocorre se auto-confirm estiver ativo (não em produção).
+        // Auto-confirm ativo: prossegue direto para o perfil correto.
         const { error: profileError } = await completeSignupProfile({
           p_full_name: fullName,
           p_phone: cleanPhone,
