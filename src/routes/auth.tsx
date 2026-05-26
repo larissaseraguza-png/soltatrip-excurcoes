@@ -619,6 +619,8 @@ function Field({
   icon,
   actionIcon,
   minLength,
+  inputMode,
+  autoComplete,
 }: {
   label: string;
   value: string;
@@ -629,6 +631,8 @@ function Field({
   icon?: React.ReactNode;
   actionIcon?: React.ReactNode;
   minLength?: number;
+  inputMode?: React.HTMLAttributes<HTMLInputElement>["inputMode"];
+  autoComplete?: string;
 }) {
   return (
     <label className="block">
@@ -645,6 +649,8 @@ function Field({
           minLength={minLength}
           placeholder={placeholder}
           value={value}
+          inputMode={inputMode}
+          autoComplete={autoComplete}
           onChange={(e) => onChange(e.target.value)}
           className={`w-full h-11 rounded-xl bg-secondary/40 border border-border focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 transition text-sm ${icon ? "pl-10" : "pl-3"} ${actionIcon ? "pr-10" : "pr-3"}`}
         />
