@@ -196,11 +196,7 @@ function ExcursaoDetalhe() {
         <NavCard to="/app/excursao/$id/equipe" id={id} icon={UserCog} title="Equipe (staff)" desc="Convidar staff de operação: apoio, motorista, segurança" />
       </div>
 
-      {data.organizer_id === user?.id && (
-        <div className="mb-6">
-          <SociosSection excursaoId={id} />
-        </div>
-      )}
+      {/* Gestão de sócios foi movida para /app/perfil (vínculo global ao raiz, não por excursão). */}
 
       <SafeBoundary label="Grupos de WhatsApp">
         <WhatsappLinks excursao={data} />
