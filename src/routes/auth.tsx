@@ -188,10 +188,12 @@ function AuthPage() {
     }
   }, []);
 
-  // Navegação pós-auth: useEffect ao invés de <Navigate> condicional evita
-  // hydration mismatch. Para convites pendentes usamos navegação hard
-  // (window.location) — isso elimina erros de DOM mutation que apareciam
-  // na transição rápida auth → invite → área final em celulares Android.
+  // Navegação pós-auth: para sessões PRÉ-EXISTENTES (usuário já logado
+  // quando abriu /auth), mandamos para /selecionar-perfil em vez de
+  // redirecionar para o papel ativo salvo em localStorage. Isso impede
+  // que um usuário com múltiplos papéis seja jogado direto no contexto
+  // antigo (ex.: staff) quando ele veio para trocar de papel. O login
+  // recém-feito navega direto pelo handleSubmit antes deste efeito rodar.
   useEffect(() => {
     if (busy || !user || !role) return;
     try {
@@ -210,10 +212,10 @@ function AuthPage() {
         window.location.replace(`/invite/excursionista/${pendingExc}`);
         return;
       }
-      navigate({ to: roleHome[role], replace: true });
     } catch {
-      navigate({ to: roleHome[role], replace: true });
+      /* ignora */
     }
+    navigate({ to: "/selecionar-perfil", replace: true });
   }, [busy, user, role, navigate]);
 
   const slowAuth = useSlowLoad(loading || (!busy && !!user && roleLoading), 4500);
