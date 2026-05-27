@@ -247,7 +247,6 @@ function ReservaDetalhes() {
   const restante = Math.max(0, total - pago);
   const pct = total > 0 ? Math.min(100, Math.round((pago / total) * 100)) : 0;
   const status = reserva.payment_status as string;
-  const isComprador = reserva.comprador_id === user?.id;
 
   const statusMap: Record<string, { tone: any; label: string }> = {
     pending_payment: { tone: "yellow", label: "Aguardando pagamento" },
