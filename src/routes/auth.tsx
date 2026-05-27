@@ -173,6 +173,9 @@ function AuthPage() {
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  // Marca que o handleSubmit já fez navigate — impede o useEffect de pós-auth
+  // de sobrescrever o destino escolhido pelo usuário no formulário.
+  const submittedRef = useRef(false);
 
   // Carregar preferências do localStorage apenas no cliente (após montagem)
   // evita hydration mismatch entre SSR e cliente.
