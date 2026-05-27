@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { StaffShell, Pill } from "@/components/staff/Shell";
+import { FestaSelectorBanner, NoFestaSelected } from "@/components/staff/FestaSelector";
 import { supabase } from "@/integrations/supabase/client";
 import { useStaffExcursao } from "@/hooks/use-staff-excursao";
 import { useRealtimeSync } from "@/hooks/use-realtime-sync";
@@ -124,7 +125,8 @@ function PassageirosStaff() {
   );
 
   return (
-    <StaffShell title="Controle de Passageiros" subtitle={excursao?.titulo ?? "Atualizações em tempo real"}>
+    <StaffShell title="Controle de Passageiros" subtitle={excursao?.titulo ?? "Selecione uma festa"}>
+      <FestaSelectorBanner />
       {onibus && (
         <div className="glass rounded-2xl p-3 mb-3 flex items-center gap-2 border border-neon-green/30 bg-neon-green/5">
           <Bus className="size-4 text-neon-green shrink-0" />
@@ -134,15 +136,17 @@ function PassageirosStaff() {
           </div>
         </div>
       )}
-      <div className="glass rounded-2xl p-3 flex items-center gap-2 mb-4">
-        <Search className="size-4 text-muted-foreground ml-2" />
-        <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar por nome ou telefone…" className="flex-1 bg-transparent outline-none text-sm" />
-      </div>
+      {excursao && (
+        <div className="glass rounded-2xl p-3 flex items-center gap-2 mb-4">
+          <Search className="size-4 text-muted-foreground ml-2" />
+          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar por nome ou telefone…" className="flex-1 bg-transparent outline-none text-sm" />
+        </div>
+      )}
 
       {loadingExc || loadingPax ? (
         <div className="flex justify-center py-16"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
       ) : !excursao ? (
-        <div className="glass rounded-2xl p-8 text-center text-sm text-muted-foreground">Nenhuma excursão ativa vinculada.</div>
+        <NoFestaSelected />
       ) : filtered.length === 0 ? (
         <div className="glass rounded-2xl p-8 text-center text-sm text-muted-foreground">Nenhum passageiro encontrado.</div>
       ) : (

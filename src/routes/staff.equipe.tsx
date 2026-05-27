@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { StaffShell, Pill } from "@/components/staff/Shell";
+import { FestaSelectorBanner, NoFestaSelected } from "@/components/staff/FestaSelector";
 import { supabase } from "@/integrations/supabase/client";
 import { useStaffExcursao } from "@/hooks/use-staff-excursao";
 import { Loader2, Shield } from "lucide-react";
@@ -27,13 +28,12 @@ function EquipeStaff() {
   });
 
   return (
-    <StaffShell title="Equipe da excursão" subtitle={excursao?.titulo ?? ""} back="/staff">
+    <StaffShell title="Equipe da excursão" subtitle={excursao?.titulo ?? "Selecione uma festa"} back="/staff">
+      <FestaSelectorBanner />
       {loading ? (
         <div className="flex justify-center py-16"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
       ) : !excursao ? (
-        <div className="glass rounded-2xl p-8 text-center text-sm text-muted-foreground">
-          Nenhuma excursão ativa vinculada.
-        </div>
+        <NoFestaSelected />
       ) : (
         <>
           <p className="text-[11px] text-muted-foreground mb-3">
