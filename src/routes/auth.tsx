@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate, redirect } from "@tanstack/react-router";
-import { useState, useEffect, type FormEvent } from "react";
+import { useState, useEffect, useRef, type FormEvent } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useRoleForUser, roleHome, type AppRole } from "@/hooks/use-role";
@@ -173,6 +173,9 @@ function AuthPage() {
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  // Marca que o handleSubmit já fez navigate — impede o useEffect de pós-auth
+  // de sobrescrever o destino escolhido pelo usuário no formulário.
+  const submittedRef = useRef(false);
 
   // Carregar preferências do localStorage apenas no cliente (após montagem)
   // evita hydration mismatch entre SSR e cliente.
@@ -188,11 +191,14 @@ function AuthPage() {
     }
   }, []);
 
-  // Navegação pós-auth: useEffect ao invés de <Navigate> condicional evita
-  // hydration mismatch. Para convites pendentes usamos navegação hard
-  // (window.location) — isso elimina erros de DOM mutation que apareciam
-  // na transição rápida auth → invite → área final em celulares Android.
+  // Navegação pós-auth: para sessões PRÉ-EXISTENTES (usuário já logado
+  // quando abriu /auth), mandamos para /selecionar-perfil em vez de
+  // redirecionar para o papel ativo salvo em localStorage. Isso impede
+  // que um usuário com múltiplos papéis seja jogado direto no contexto
+  // antigo (ex.: staff) quando ele veio para trocar de papel. O login
+  // recém-feito navega direto pelo handleSubmit antes deste efeito rodar.
   useEffect(() => {
+    if (submittedRef.current) return;
     if (busy || !user || !role) return;
     try {
       const pendingStaff = localStorage.getItem("pending_staff_invite");
@@ -210,10 +216,10 @@ function AuthPage() {
         window.location.replace(`/invite/excursionista/${pendingExc}`);
         return;
       }
-      navigate({ to: roleHome[role], replace: true });
     } catch {
-      navigate({ to: roleHome[role], replace: true });
+      /* ignora */
     }
+    navigate({ to: "/selecionar-perfil", replace: true });
   }, [busy, user, role, navigate]);
 
   const slowAuth = useSlowLoad(loading || (!busy && !!user && roleLoading), 4500);
@@ -346,6 +352,7 @@ function AuthPage() {
         if (selectedRole === "passageiro" && pendingExc) {
           await consumePendingExcursionistaInvite();
         }
+        submittedRef.current = true;
         if (pendingStaff) {
           window.location.replace(`/invite/staff/${pendingStaff}`);
         } else if (pendingPax) {
@@ -428,6 +435,7 @@ function AuthPage() {
         if (selectedRole === "passageiro" && pendingExc) {
           await consumePendingExcursionistaInvite();
         }
+        submittedRef.current = true;
         if (pendingStaff) {
           window.location.replace(`/invite/staff/${pendingStaff}`);
         } else if (pendingPax) {
