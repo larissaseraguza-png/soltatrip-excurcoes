@@ -198,6 +198,7 @@ function AuthPage() {
   // antigo (ex.: staff) quando ele veio para trocar de papel. O login
   // recém-feito navega direto pelo handleSubmit antes deste efeito rodar.
   useEffect(() => {
+    if (submittedRef.current) return;
     if (busy || !user || !role) return;
     try {
       const pendingStaff = localStorage.getItem("pending_staff_invite");
