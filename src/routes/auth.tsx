@@ -375,33 +375,48 @@ function AuthPage() {
         if (error) throw new Error(getAuthErrorMessage(error, "Não foi possível entrar."));
         if (!data.user) throw new Error("Falha ao entrar.");
 
-        // Valida função
-        const { data: rRow, error: roleErr } = await supabase
+        // Multi-papel: uma mesma conta pode ser passageiro, staff e excursionista
+        // simultaneamente. Buscamos TODOS os papéis do usuário.
+        const { data: rRows, error: roleErr } = await supabase
           .from("user_roles")
           .select("role")
-          .eq("user_id", data.user.id)
-          .maybeSingle();
+          .eq("user_id", data.user.id);
         if (roleErr) throw roleErr;
 
-        let userRole = rRow?.role as AppRole | undefined;
-        if (!userRole) {
+        const userRoles = (rRows ?? [])
+          .map((r) => r.role as AppRole)
+          .filter((r): r is AppRole => r === "excursionista" || r === "staff" || r === "passageiro");
+
+        // Se o usuário ainda não tem o papel escolhido, adicionamos sem
+        // invalidar os papéis existentes (não há "troca de conta": é a
+        // mesma conta ganhando mais um contexto).
+        if (!userRoles.includes(selectedRole)) {
           const { error: profileError } = await completeSignupProfile({
             p_full_name: "",
             p_phone: null,
             p_role: selectedRole,
           });
           if (profileError) throw profileError;
-          userRole = selectedRole;
+          // complete_signup_profile só insere o papel se nenhum existir.
+          // Quando já existem outros papéis, inserimos o novo diretamente.
+          if (userRoles.length > 0) {
+            await supabase.from("user_roles").insert({ user_id: data.user.id, role: selectedRole });
+          }
+          userRoles.push(selectedRole);
         }
 
-        if (userRole !== selectedRole) {
-          await signOutAndClean();
-          throw new Error("Você não tem acesso a este tipo de perfil");
+        // Marca o papel escolhido como ativo (o RoleHeader permite alternar
+        // entre todos os papéis disponíveis na mesma sessão).
+        try {
+          localStorage.setItem("soltatrip:perfil", selectedRole);
+        } catch {
+          /* ignore */
         }
+
         const pendingStaff = localStorage.getItem("pending_staff_invite");
         const pendingPax = localStorage.getItem("pending_pax_invite");
         const pendingExc = getPendingExcursionistaInvite();
-        if (userRole === "passageiro" && pendingExc) {
+        if (selectedRole === "passageiro" && pendingExc) {
           await consumePendingExcursionistaInvite();
         }
         if (pendingStaff) {
@@ -409,7 +424,7 @@ function AuthPage() {
         } else if (pendingPax) {
           window.location.replace(`/invite/passageiro/${pendingPax}`);
         } else {
-          navigate({ to: roleHome[userRole], replace: true });
+          navigate({ to: roleHome[selectedRole], replace: true });
         }
       }
     } catch (err: unknown) {
