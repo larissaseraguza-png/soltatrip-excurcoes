@@ -52,12 +52,39 @@ function MinhasViagens() {
     queryKey: ["minhas-reservas", user?.id],
     enabled: !!user,
     queryFn: async () => {
-      const { data, error } = await supabase
+      // ISOLAMENTO: usuário só vê reservas onde é comprador OU está
+      // vinculado como passageiro. RLS libera staff/organizer a verem
+      // reservas da excursão — esse filtro impede esse vazamento na área
+      // /passageiro quando a mesma conta acumula múltiplos papéis.
+      const { data: paxLinks } = await supabase
+        .from("passageiros")
+        .select("reserva_id")
+        .eq("user_id", user!.id);
+      const linkedIds = Array.from(
+        new Set((paxLinks ?? []).map((p: any) => p.reserva_id).filter(Boolean)),
+      ) as string[];
+
+      let q = supabase
         .from("reservas")
-        .select("id, quantidade, total_price, amount_paid, payment_status, excursao:excursoes!reservas_excursao_id_fkey(id,titulo,destino,data_evento,preco,cor,status,total_vagas,banner_url)")
-        .order("created_at", { ascending: false });
+        .select(
+          "id, quantidade, total_price, amount_paid, payment_status, comprador_id, excursao:excursoes!reservas_excursao_id_fkey(id,titulo,destino,data_evento,preco,cor,status,total_vagas,banner_url)",
+        );
+      if (linkedIds.length > 0) {
+        q = q.or(`comprador_id.eq.${user!.id},id.in.(${linkedIds.join(",")})`);
+      } else {
+        q = q.eq("comprador_id", user!.id);
+      }
+      const { data, error } = await q.order("created_at", { ascending: false });
       if (error) throw error;
-      return (data ?? []) as unknown as MinhaReserva[];
+      // Defesa em profundidade: descarta no cliente qualquer linha que
+      // tenha escapado (sanity check contra mudanças futuras de RLS).
+      const safe = ((data ?? []) as any[]).filter(
+        (r) => r.comprador_id === user!.id || linkedIds.includes(r.id),
+      );
+      if (safe.length !== (data?.length ?? 0)) {
+        console.error("[CRITICAL DATA MIX DETECTED] /passageiro reservas: linhas alheias foram filtradas no cliente.");
+      }
+      return safe as unknown as MinhaReserva[];
     },
   });
 
