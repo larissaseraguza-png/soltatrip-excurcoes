@@ -36,14 +36,30 @@ function Pagamentos() {
     queryKey: ["reservas-pagto", user?.id, reservaParam],
     enabled: !!user,
     queryFn: async () => {
-      const { data, error } = await supabase
+      // ISOLAMENTO: só reservas do próprio usuário (comprador ou passageiro vinculado).
+      const { data: paxLinks } = await supabase
+        .from("passageiros")
+        .select("reserva_id")
+        .eq("user_id", user!.id);
+      const linkedIds = Array.from(
+        new Set((paxLinks ?? []).map((p: any) => p.reserva_id).filter(Boolean)),
+      ) as string[];
+
+      let q = supabase
         .from("reservas")
         .select(
-          "id, quantidade, total_price, amount_paid, payment_status, excursao:excursoes!reservas_excursao_id_fkey(id, titulo, destino, preco, data_evento)",
-        )
-        .order("created_at", { ascending: false });
+          "id, quantidade, total_price, amount_paid, payment_status, comprador_id, excursao:excursoes!reservas_excursao_id_fkey(id, titulo, destino, preco, data_evento)",
+        );
+      if (linkedIds.length > 0) {
+        q = q.or(`comprador_id.eq.${user!.id},id.in.(${linkedIds.join(",")})`);
+      } else {
+        q = q.eq("comprador_id", user!.id);
+      }
+      const { data, error } = await q.order("created_at", { ascending: false });
       if (error) throw error;
-      return data ?? [];
+      return ((data ?? []) as any[]).filter(
+        (r) => r.comprador_id === user!.id || linkedIds.includes(r.id),
+      );
     },
   });
 
