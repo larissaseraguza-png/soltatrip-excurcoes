@@ -522,7 +522,10 @@ function ReservaDetalhes() {
           const qrPayload = p.qr_code || p.id;
           const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(qrPayload)}`;
           const isPaid = status === "paid";
-          const isVinculadoOuComprador = isComprador || p.user_id === user?.id;
+          // Apenas o comprador (owner da reserva) edita poltrona/embarque.
+          // Convidado é view-only conforme regra de "passageiro convidado".
+          const isVinculadoOuComprador = isComprador;
+
 
           return (
             <div key={p.id} className="glass rounded-3xl overflow-hidden">
