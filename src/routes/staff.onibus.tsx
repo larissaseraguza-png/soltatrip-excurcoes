@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { StaffShell, Pill } from "@/components/staff/Shell";
+import { FestaSelectorBanner, NoFestaSelected } from "@/components/staff/FestaSelector";
 import { supabase } from "@/integrations/supabase/client";
 import { useStaffExcursao } from "@/hooks/use-staff-excursao";
 import { useRealtimeSync } from "@/hooks/use-realtime-sync";
@@ -74,13 +75,12 @@ function OnibusStaff() {
   const livres = Math.max(0, total - ocupadas);
 
   return (
-    <StaffShell title="Mapa de Poltronas" subtitle={excursao?.titulo ?? "Sem excursão vinculada"}>
+    <StaffShell title="Mapa de Poltronas" subtitle={excursao?.titulo ?? "Selecione uma festa"}>
+      <FestaSelectorBanner />
       {loading ? (
         <div className="flex justify-center py-16"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
       ) : !excursao ? (
-        <div className="glass rounded-2xl p-8 text-center text-sm text-muted-foreground">
-          Nenhuma excursão ativa vinculada.
-        </div>
+        <NoFestaSelected />
       ) : (
         <>
           <div className="glass rounded-2xl p-4 mb-5 flex items-center gap-3">

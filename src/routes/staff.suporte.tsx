@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { StaffShell } from "@/components/staff/Shell";
+import { FestaSelectorBanner, NoFestaSelected } from "@/components/staff/FestaSelector";
 import { useStaffExcursao } from "@/hooks/use-staff-excursao";
 import { supabase } from "@/integrations/supabase/client";
 import { MessageCircle, ExternalLink, Loader2 } from "lucide-react";
@@ -27,12 +28,11 @@ function Suporte() {
 
   return (
     <StaffShell title="Suporte" subtitle="Comunicação via WhatsApp" back="/staff">
+      <FestaSelectorBanner />
       {loading ? (
         <div className="flex justify-center py-16"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
       ) : !excursao ? (
-        <div className="glass rounded-2xl p-8 text-center text-sm text-muted-foreground">
-          Nenhuma excursão ativa vinculada.
-        </div>
+        <NoFestaSelected />
       ) : (
         <div className="space-y-3">
           <div className="glass rounded-2xl p-6 text-center">
