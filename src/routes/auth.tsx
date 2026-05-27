@@ -387,22 +387,31 @@ function AuthPage() {
           .map((r) => r.role as AppRole)
           .filter((r): r is AppRole => r === "excursionista" || r === "staff" || r === "passageiro");
 
-        // Se o usuário ainda não tem o papel escolhido, adicionamos sem
-        // invalidar os papéis existentes (não há "troca de conta": é a
-        // mesma conta ganhando mais um contexto).
+        // Se o usuário ainda não tem o papel escolhido:
+        //  - passageiro: auto-concede (papel de menor privilégio, pode ser
+        //    obtido por qualquer um que compra/recebe convite)
+        //  - staff/excursionista: exige convite ou cadastro prévio
         if (!userRoles.includes(selectedRole)) {
-          const { error: profileError } = await completeSignupProfile({
-            p_full_name: "",
-            p_phone: null,
-            p_role: selectedRole,
-          });
-          if (profileError) throw profileError;
-          // complete_signup_profile só insere o papel se nenhum existir.
-          // Quando já existem outros papéis, inserimos o novo diretamente.
-          if (userRoles.length > 0) {
-            await supabase.from("user_roles").insert({ user_id: data.user.id, role: selectedRole });
+          if (userRoles.length === 0) {
+            const { error: profileError } = await completeSignupProfile({
+              p_full_name: "",
+              p_phone: null,
+              p_role: selectedRole,
+            });
+            if (profileError) throw profileError;
+            userRoles.push(selectedRole);
+          } else if (selectedRole === "passageiro") {
+            const { error: addErr } = await supabase.rpc("add_self_passageiro_role" as never);
+            if (addErr) throw addErr;
+            userRoles.push("passageiro");
+          } else {
+            await signOutAndClean();
+            throw new Error(
+              selectedRole === "staff"
+                ? "Sua conta ainda não está vinculada como Staff. Use o link de convite enviado pelo organizador."
+                : "Sua conta ainda não está cadastrada como Excursionista. Crie uma conta nova nesta área.",
+            );
           }
-          userRoles.push(selectedRole);
         }
 
         // Marca o papel escolhido como ativo (o RoleHeader permite alternar
