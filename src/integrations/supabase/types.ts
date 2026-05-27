@@ -905,6 +905,7 @@ export type Database = {
         Returns: string
       }
       accept_staff_invitation: { Args: { p_token: string }; Returns: string }
+      add_self_passageiro_role: { Args: never; Returns: undefined }
       claim_passageiro_invite: { Args: { p_token: string }; Returns: string }
       complete_signup_profile: {
         Args: {

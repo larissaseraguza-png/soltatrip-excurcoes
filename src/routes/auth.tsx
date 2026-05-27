@@ -375,33 +375,57 @@ function AuthPage() {
         if (error) throw new Error(getAuthErrorMessage(error, "Não foi possível entrar."));
         if (!data.user) throw new Error("Falha ao entrar.");
 
-        // Valida função
-        const { data: rRow, error: roleErr } = await supabase
+        // Multi-papel: uma mesma conta pode ser passageiro, staff e excursionista
+        // simultaneamente. Buscamos TODOS os papéis do usuário.
+        const { data: rRows, error: roleErr } = await supabase
           .from("user_roles")
           .select("role")
-          .eq("user_id", data.user.id)
-          .maybeSingle();
+          .eq("user_id", data.user.id);
         if (roleErr) throw roleErr;
 
-        let userRole = rRow?.role as AppRole | undefined;
-        if (!userRole) {
-          const { error: profileError } = await completeSignupProfile({
-            p_full_name: "",
-            p_phone: null,
-            p_role: selectedRole,
-          });
-          if (profileError) throw profileError;
-          userRole = selectedRole;
+        const userRoles = (rRows ?? [])
+          .map((r) => r.role as AppRole)
+          .filter((r): r is AppRole => r === "excursionista" || r === "staff" || r === "passageiro");
+
+        // Se o usuário ainda não tem o papel escolhido:
+        //  - passageiro: auto-concede (papel de menor privilégio, pode ser
+        //    obtido por qualquer um que compra/recebe convite)
+        //  - staff/excursionista: exige convite ou cadastro prévio
+        if (!userRoles.includes(selectedRole)) {
+          if (userRoles.length === 0) {
+            const { error: profileError } = await completeSignupProfile({
+              p_full_name: "",
+              p_phone: null,
+              p_role: selectedRole,
+            });
+            if (profileError) throw profileError;
+            userRoles.push(selectedRole);
+          } else if (selectedRole === "passageiro") {
+            const { error: addErr } = await supabase.rpc("add_self_passageiro_role" as never);
+            if (addErr) throw addErr;
+            userRoles.push("passageiro");
+          } else {
+            await signOutAndClean();
+            throw new Error(
+              selectedRole === "staff"
+                ? "Sua conta ainda não está vinculada como Staff. Use o link de convite enviado pelo organizador."
+                : "Sua conta ainda não está cadastrada como Excursionista. Crie uma conta nova nesta área.",
+            );
+          }
         }
 
-        if (userRole !== selectedRole) {
-          await signOutAndClean();
-          throw new Error("Você não tem acesso a este tipo de perfil");
+        // Marca o papel escolhido como ativo (o RoleHeader permite alternar
+        // entre todos os papéis disponíveis na mesma sessão).
+        try {
+          localStorage.setItem("soltatrip:perfil", selectedRole);
+        } catch {
+          /* ignore */
         }
+
         const pendingStaff = localStorage.getItem("pending_staff_invite");
         const pendingPax = localStorage.getItem("pending_pax_invite");
         const pendingExc = getPendingExcursionistaInvite();
-        if (userRole === "passageiro" && pendingExc) {
+        if (selectedRole === "passageiro" && pendingExc) {
           await consumePendingExcursionistaInvite();
         }
         if (pendingStaff) {
@@ -409,7 +433,7 @@ function AuthPage() {
         } else if (pendingPax) {
           window.location.replace(`/invite/passageiro/${pendingPax}`);
         } else {
-          navigate({ to: roleHome[userRole], replace: true });
+          navigate({ to: roleHome[selectedRole], replace: true });
         }
       }
     } catch (err: unknown) {
