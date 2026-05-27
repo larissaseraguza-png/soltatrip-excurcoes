@@ -210,7 +210,22 @@ function ReservaDetalhes() {
     );
   }
 
-  if (!reserva) {
+  // ISOLAMENTO: a RLS libera staff/organizer da excursão a verem reservas
+  // alheias — bloqueamos aqui para que a área /passageiro só mostre a reserva
+  // se o usuário for o comprador OU passageiro vinculado (user_id).
+  const isComprador = !!reserva && reserva.comprador_id === user?.id;
+  const isLinkedPax =
+    !!reserva &&
+    (passageiros as any[]).some((p) => p.user_id && p.user_id === user?.id);
+  const ownershipReady = !!reserva && (passageiros as any[]).length >= 0; // pax query rodou
+  if (reserva && ownershipReady && !isComprador && !isLinkedPax) {
+    console.error(
+      "[CRITICAL DATA MIX DETECTED] /passageiro/reserva: tentativa de abrir reserva alheia bloqueada.",
+      { reservaId: id, userId: user?.id },
+    );
+  }
+
+  if (!reserva || (ownershipReady && !isComprador && !isLinkedPax)) {
     return (
       <Shell back="/passageiro" title="Reserva">
         <div className="glass rounded-3xl p-10 text-center">
