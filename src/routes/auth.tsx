@@ -352,6 +352,7 @@ function AuthPage() {
         if (selectedRole === "passageiro" && pendingExc) {
           await consumePendingExcursionistaInvite();
         }
+        submittedRef.current = true;
         if (pendingStaff) {
           window.location.replace(`/invite/staff/${pendingStaff}`);
         } else if (pendingPax) {
