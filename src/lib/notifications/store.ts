@@ -133,6 +133,16 @@ export function clearAll(role: NotifRole) {
 export type AddInput = Omit<Notification, "id" | "createdAt" | "read">;
 
 export function addNotification(input: AddInput) {
+  // Skip self-notifications: o papel ativo do usuário que executou a ação
+  // não deve receber notificação da própria ação.
+  if (isBrowser()) {
+    try {
+      const active = localStorage.getItem("soltatrip:perfil");
+      if (active === input.role) return;
+    } catch {
+      /* ignore */
+    }
+  }
   const list = load(input.role);
   // Dedupe: skip if same role+title+message added in last 3s.
   const now = Date.now();
