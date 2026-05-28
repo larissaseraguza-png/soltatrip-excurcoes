@@ -56,12 +56,16 @@ export const notify = {
   excursionista: {
     novaReserva: (nome: string, opts: Opts = {}) =>
       add("excursionista", { icon: "ticket", tone: "purple", title: "Nova reserva", message: `${nome} reservou uma vaga.`, link: opts.link ?? "/app/pendentes", category: "reservas", excursao: opts.excursao }),
-    pagamentoConfirmado: (nome: string, opts: Opts = {}) =>
-      add("excursionista", { icon: "credit-card", tone: "green", title: "Pagamento confirmado", message: `${nome} teve o pagamento confirmado.`, link: opts.link ?? "/app/pendentes", category: "pagamentos", excursao: opts.excursao }),
+    pagamentoConfirmado: (nome: string, opts: Opts = {}) => {
+      resolvePending("excursionista", { titleIncludes: "pendente", nomeNaMensagem: nome });
+      add("excursionista", { icon: "credit-card", tone: "green", title: "Pagamento confirmado", message: `${nome} teve o pagamento confirmado.`, link: opts.link ?? "/app/pendentes", category: "pagamentos", excursao: opts.excursao });
+    },
     pagamentoPendente: (nome: string, opts: Opts = {}) =>
       add("excursionista", { icon: "clock", tone: "amber", title: "Pagamento pendente", message: `${nome} enviou um pagamento para conferência.`, link: opts.link ?? "/app/pendentes", category: "pagamentos", excursao: opts.excursao }),
-    checkinFeito: (nome: string, opts: Opts = {}) =>
-      add("excursionista", { icon: "check-circle", tone: "green", title: "Check-in realizado", message: `${nome} embarcou.`, link: opts.link ?? "/app", category: "checkin", excursao: opts.excursao }),
+    checkinFeito: (nome: string, opts: Opts = {}) => {
+      resolvePending("excursionista", { titleIncludes: "pendente", nomeNaMensagem: nome });
+      add("excursionista", { icon: "check-circle", tone: "green", title: "Check-in realizado", message: `${nome} embarcou.`, link: opts.link ?? "/app", category: "checkin", excursao: opts.excursao });
+    },
     alteracaoStaff: (msg = "Um membro da staff fez alterações.", opts: Opts = {}) =>
       add("excursionista", { icon: "edit", tone: "blue", title: "Alteração da staff", message: msg, link: opts.link ?? "/app/historico", category: "alteracoes", excursao: opts.excursao }),
     alteracaoSocio: (msg = "Um sócio fez alterações.", opts: Opts = {}) =>
