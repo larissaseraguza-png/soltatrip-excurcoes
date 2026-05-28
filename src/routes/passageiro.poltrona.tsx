@@ -188,12 +188,14 @@ function Poltrona() {
 
           <button
             disabled={!currentPontoId}
-            onClick={() =>
+            onClick={async () => {
+              // Garante que a tela da reserva não exiba cache antigo
+              await qc.invalidateQueries({ queryKey: ["reserva-passageiros"] });
               navigate({
                 to: "/passageiro/reserva/$id",
                 params: { id: (reserva as any).reserva_id ?? reserva.id },
-              })
-            }
+              });
+            }}
             className="mt-5 w-full h-12 rounded-2xl font-bold bg-primary text-primary-foreground glow-primary disabled:opacity-40 disabled:cursor-not-allowed"
           >
             Continuar para a reserva
