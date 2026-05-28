@@ -67,7 +67,7 @@ export function NotificationPanel({
   const handleClick = (link?: string) => {
     if (!link) return;
     setOpen(false);
-    navigate({ to: link }).catch(() => {});
+    navigate({ to: link as never }).catch(() => {});
   };
 
   return (
