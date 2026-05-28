@@ -11,6 +11,7 @@ import {
   CreditCard, ExternalLink, ThumbsUp, AlertTriangle, CircleDot,
 } from "lucide-react";
 import { Shell } from "@/components/passageiro/Shell";
+import { notify } from "@/lib/notifications/emit";
 
 export const Route = createFileRoute("/passageiro/itens/$id")({
   component: ItensPassageiro,
@@ -240,6 +241,11 @@ function ItemCard({ item, excursaoId, userId }: { item: any; excursaoId: string;
       if (ehCombo) {
         const reservaId = novaReservaId ?? pax?.reserva_id;
         toast.success("Combo reservado! Escolha ônibus, poltrona e embarque.");
+        if (novaReservaId) {
+          notify.passageiro.reservaCriada();
+          notify.passageiro.qrLiberado();
+          notify.excursionista.novaReserva("Novo passageiro");
+        }
         if (reservaId) {
           navigate({ to: "/passageiro/reserva/$id", params: { id: reservaId } });
         } else if (pax?.id) {

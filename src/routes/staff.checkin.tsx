@@ -9,6 +9,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useStaffExcursao } from "@/hooks/use-staff-excursao";
 import { useRealtimeSync } from "@/hooks/use-realtime-sync";
 import { CheckCircle2, XCircle, UserCheck, Loader2, Search, Camera, X, AlertTriangle, Bus, RotateCcw } from "lucide-react";
+import { notify } from "@/lib/notifications/emit";
 
 export const Route = createFileRoute("/staff/checkin")({
   component: CheckinStaff,
@@ -130,6 +131,8 @@ function CheckinStaff() {
     }
     showFeedback(true, `${pax.nome} embarcou! ${viaQr ? "(QR)" : ""}`);
     toast.success(`Check-in: ${pax.nome}`);
+    notify.staff.checkinFeito(pax.nome);
+    notify.excursionista.checkinFeito(pax.nome);
     qc.invalidateQueries({ queryKey: ["staff-checkin-pax", excursao.id, onibusId] });
     qc.invalidateQueries({ queryKey: ["staff-checkins", excursao.id, onibusId] });
   }
@@ -151,6 +154,7 @@ function CheckinStaff() {
     }
     showFeedback(true, `Embarque de ${pax.nome} removido.`);
     toast.success(`${pax.nome} foi desembarcado.`);
+    notify.staff.desembarqueFeito(pax.nome);
     qc.invalidateQueries({ queryKey: ["staff-checkin-pax", excursao.id, onibusId] });
     qc.invalidateQueries({ queryKey: ["staff-checkins", excursao.id, onibusId] });
   }
