@@ -1,5 +1,6 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { LayoutDashboard, Users, QrCode, Bus, MessageCircle, ArrowLeft, UserCircle, Shield, Bell } from "lucide-react";
+import { NotificationPanel } from "@/components/NotificationPanel";
 import type { ReactNode } from "react";
 
 type ShellProps = {
