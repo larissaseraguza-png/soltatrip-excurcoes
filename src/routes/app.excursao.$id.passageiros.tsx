@@ -7,6 +7,7 @@ import { SeatMap } from "@/components/SeatMap";
 import { OnibusFilterBadge } from "@/components/OnibusFilterBadge";
 import { useRealtimeSync } from "@/hooks/use-realtime-sync";
 import { toast } from "sonner";
+import { notify } from "@/lib/notifications/emit";
 
 export const Route = createFileRoute("/app/excursao/$id/passageiros")({
   validateSearch: (search: Record<string, unknown>) => ({
@@ -581,6 +582,8 @@ function NewPassageiroModal({
       return;
     }
     toast.success("Passageiro manual adicionado");
+    notify.excursionista.novaReserva(form.nome.trim());
+    notify.staff.novoPassageiro(form.nome.trim());
     qc.invalidateQueries({ queryKey: ["passageiros", excursaoId, onibusId ?? null] });
     qc.invalidateQueries({ queryKey: ["seats", excursaoId, onibusId ?? null] });
     qc.invalidateQueries({ queryKey: ["pontos-counts", excursaoId] });
@@ -831,6 +834,8 @@ function FinanceiroPaxModal({
       return;
     }
     toast.success(`+ R$ ${v.toFixed(2)} registrado`);
+    notify.excursionista.pagamentoConfirmado(passageiro.nome);
+    notify.passageiro.pagamentoAprovado(`R$ ${v.toFixed(2)} confirmado pelo organizador.`);
     setValor("");
     setObservacao("");
     qc.invalidateQueries({ queryKey: ["pagamentos-pax", passageiro.id] });

@@ -8,6 +8,7 @@ import { useSlowLoad } from "@/hooks/use-slow-load";
 import { isFlowLocked } from "@/config/flow-mode";
 import { Bus, Loader2, CheckCircle2, AlertCircle, ShieldCheck } from "lucide-react";
 import { SlowFallback } from "@/components/SlowFallback";
+import { notify } from "@/lib/notifications/emit";
 
 export const Route = createFileRoute("/invite/staff/$token")({
   beforeLoad: () => {
@@ -83,6 +84,9 @@ function InviteStaffPage() {
       invalidateRoles(user?.id);
       const destino = destinoPorPapel(invite?.papel);
       setActiveRole(destino === "/app" ? "excursionista" : "staff");
+      const nomeAceitante = (user?.user_metadata?.full_name as string) || (user?.email?.split("@")[0] ?? "Novo membro");
+      if (invite?.papel === "socio_raiz") notify.excursionista.novoSocio(nomeAceitante);
+      else notify.excursionista.novoStaff(nomeAceitante);
       setDone(true);
       setTimeout(() => {
         if (typeof window !== "undefined") window.location.replace(destino);

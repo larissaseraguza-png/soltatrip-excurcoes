@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useRealtimeSync } from "@/hooks/use-realtime-sync";
 import { Copy, Loader2, CheckCircle2, Armchair, QrCode, ExternalLink, CreditCard } from "lucide-react";
+import { notify } from "@/lib/notifications/emit";
 
 type Search = { reserva?: string };
 
@@ -196,6 +197,8 @@ function Pagamentos() {
         qc.invalidateQueries({ queryKey: ["pagto-passageiros"] }),
       ]);
       toast.success("Pagamento enviado! Aguardando confirmação manual do organizador.");
+      notify.passageiro.pagamentoPendente(`Aguardando confirmação de ${brl(v)}.`);
+      notify.excursionista.pagamentoPendente("Um passageiro");
       // Fluxo automático: avançar para poltrona/embarque mesmo aguardando confirmação
       if (faltamPoltronas || faltamEmbarques) {
         navigate({
