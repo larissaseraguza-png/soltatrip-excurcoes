@@ -69,6 +69,11 @@ function ReservaDetalhes() {
   const { data: passageiros = [], refetch: refetchPax } = useQuery({
     queryKey: ["reserva-passageiros", id],
     enabled: !!reserva,
+    // Sempre revalidar ao montar/voltar para esta tela — evita exibir cache
+    // antigo após o usuário escolher poltrona/embarque em outra rota e
+    // retornar via "Continuar para a reserva".
+    staleTime: 0,
+    refetchOnMount: "always",
     queryFn: async () => {
       const { data, error } = await supabase
         .from("passageiros")
