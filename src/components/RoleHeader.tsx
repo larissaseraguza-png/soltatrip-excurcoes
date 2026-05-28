@@ -3,6 +3,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Bus, LogOut, Repeat, UserCircle2 } from "lucide-react";
 import { signOutAndClean } from "@/lib/auth-cleanup";
 import { roleHome, useRole, setActiveRole, type AppRole } from "@/hooks/use-role";
+import { NotificationBell } from "@/components/NotificationBell";
 
 const ROLE_LABEL: Record<AppRole, string> = {
   excursionista: "Excursionista",
