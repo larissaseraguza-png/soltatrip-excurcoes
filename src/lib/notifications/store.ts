@@ -17,6 +17,15 @@ export type NotifIconKey =
   | "shield"
   | "users";
 
+export type NotifCategory =
+  | "pagamentos"
+  | "reservas"
+  | "checkin"
+  | "embarque"
+  | "alteracoes"
+  | "staff"
+  | "socio";
+
 export type Notification = {
   id: string;
   role: NotifRole;
@@ -28,6 +37,8 @@ export type Notification = {
   read: boolean;
   /** Rota interna para abrir ao clicar na notificação. */
   link?: string;
+  /** Categoria para filtros do painel. */
+  category?: NotifCategory;
 };
 
 const MAX_PER_ROLE = 50;
