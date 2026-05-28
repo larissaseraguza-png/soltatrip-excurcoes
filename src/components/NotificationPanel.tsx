@@ -69,6 +69,7 @@ type Notif = {
   message: string;
   createdAt: number;
   link?: string;
+  excursao?: string;
 };
 
 type Group = Notif & { count: number };
