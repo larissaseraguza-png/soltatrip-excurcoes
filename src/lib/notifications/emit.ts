@@ -1,7 +1,23 @@
-import { addNotification, type AddInput, type NotifRole } from "./store";
+import { addNotification, resolveNotifications, type AddInput, type NotifRole } from "./store";
 
 function add(role: NotifRole, n: Omit<AddInput, "role">) {
   addNotification({ ...n, role });
+}
+
+/**
+ * Resolve (remove) notificações pendentes de uma categoria no role indicado,
+ * opcionalmente filtrando pelo nome contido na mensagem. Usado para sincronizar
+ * o contador quando a ação relacionada é concluída.
+ */
+export function resolvePending(
+  role: NotifRole,
+  opts: { titleIncludes?: string; nomeNaMensagem?: string },
+) {
+  resolveNotifications(role, (n) => {
+    if (opts.titleIncludes && !n.title.toLowerCase().includes(opts.titleIncludes.toLowerCase())) return false;
+    if (opts.nomeNaMensagem && !n.message.toLowerCase().includes(opts.nomeNaMensagem.toLowerCase())) return false;
+    return true;
+  });
 }
 
 type Opts = { link?: string; excursao?: string };
