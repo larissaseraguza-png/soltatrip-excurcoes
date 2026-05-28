@@ -65,6 +65,7 @@ function InvitePassageiroPage() {
     } catch (err: any) {
       const msg = err.message ?? "";
       if (msg.includes("invalid_or_used_token")) setError("Convite inválido ou já utilizado.");
+      else if (msg.includes("passageiro_duplicado")) setError("Você já possui uma reserva nesta excursão.");
       else if (msg.includes("not_authenticated")) setError("Faça login primeiro.");
       else setError(msg || "Erro ao aceitar convite.");
     } finally {
