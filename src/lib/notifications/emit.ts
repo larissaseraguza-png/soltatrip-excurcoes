@@ -43,9 +43,9 @@ export const notify = {
     checkinFeito: (nome: string, opts: Opts = {}) =>
       add("excursionista", { icon: "check-circle", tone: "green", title: "Check-in realizado", message: `${nome} embarcou.`, link: opts.link ?? "/app", category: "checkin" }),
     alteracaoStaff: (msg = "Um membro da staff fez alterações.", opts: Opts = {}) =>
-      add("excursionista", { icon: "edit", tone: "blue", title: "Alteração da staff", message: msg, link: opts.link ?? "/app", category: "alteracoes" }),
+      add("excursionista", { icon: "edit", tone: "blue", title: "Alteração da staff", message: msg, link: opts.link ?? "/app/historico", category: "alteracoes" }),
     alteracaoSocio: (msg = "Um sócio fez alterações.", opts: Opts = {}) =>
-      add("excursionista", { icon: "edit", tone: "blue", title: "Alteração do sócio", message: msg, link: opts.link ?? "/app", category: "socio" }),
+      add("excursionista", { icon: "edit", tone: "blue", title: "Alteração do sócio", message: msg, link: opts.link ?? "/app/historico", category: "socio" }),
     novoStaff: (nome: string, opts: Opts = {}) =>
       add("excursionista", { icon: "shield", tone: "purple", title: "Novo staff", message: `${nome} entrou na equipe.`, link: opts.link ?? "/app/perfil", category: "staff" }),
     novoSocio: (nome: string, opts: Opts = {}) =>

@@ -582,8 +582,8 @@ function NewPassageiroModal({
       return;
     }
     toast.success("Passageiro manual adicionado");
-    notify.excursionista.novaReserva(form.nome.trim());
-    notify.staff.novoPassageiro(form.nome.trim());
+    notify.excursionista.novaReserva(form.nome.trim(), { link: `/app/excursao/${excursaoId}/passageiros` });
+    notify.staff.novoPassageiro(form.nome.trim(), { link: `/staff/passageiros` });
     qc.invalidateQueries({ queryKey: ["passageiros", excursaoId, onibusId ?? null] });
     qc.invalidateQueries({ queryKey: ["seats", excursaoId, onibusId ?? null] });
     qc.invalidateQueries({ queryKey: ["pontos-counts", excursaoId] });
@@ -834,8 +834,9 @@ function FinanceiroPaxModal({
       return;
     }
     toast.success(`+ R$ ${v.toFixed(2)} registrado`);
-    notify.excursionista.pagamentoConfirmado(passageiro.nome);
-    notify.passageiro.pagamentoAprovado(`R$ ${v.toFixed(2)} confirmado pelo organizador.`);
+    notify.excursionista.pagamentoConfirmado(passageiro.nome, { link: `/app/excursao/${excursaoId}/financeiro` });
+    const _reservaId = (passageiro as any).reserva_id as string | undefined;
+    notify.passageiro.pagamentoAprovado(`R$ ${v.toFixed(2)} confirmado pelo organizador.`, { link: _reservaId ? `/passageiro/reserva/${_reservaId}` : "/passageiro/pagamentos" });
     setValor("");
     setObservacao("");
     qc.invalidateQueries({ queryKey: ["pagamentos-pax", passageiro.id] });

@@ -242,9 +242,10 @@ function ItemCard({ item, excursaoId, userId }: { item: any; excursaoId: string;
         const reservaId = novaReservaId ?? pax?.reserva_id;
         toast.success("Combo reservado! Escolha ônibus, poltrona e embarque.");
         if (novaReservaId) {
-          notify.passageiro.reservaCriada();
-          notify.passageiro.qrLiberado();
-          notify.excursionista.novaReserva("Novo passageiro");
+          const reservaLink = reservaId ? `/passageiro/reserva/${reservaId}` : "/passageiro";
+          notify.passageiro.reservaCriada(undefined, { link: reservaLink });
+          notify.passageiro.qrLiberado(undefined, { link: reservaLink });
+          notify.excursionista.novaReserva("Novo passageiro", { link: `/app/excursao/${excursaoId}/passageiros` });
         }
         if (reservaId) {
           navigate({ to: "/passageiro/reserva/$id", params: { id: reservaId } });
