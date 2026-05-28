@@ -41,9 +41,11 @@ export function StaffShell({ title, subtitle, back, right, children, hideNav }: 
           </div>
           {right ?? (
             <div className="flex items-center gap-2">
-              <button type="button" className="size-10 grid place-items-center rounded-full glass">
-                <Bell className="size-5 text-muted-foreground" />
-              </button>
+              <NotificationPanel>
+                <button type="button" className="size-10 grid place-items-center rounded-full glass">
+                  <Bell className="size-5 text-muted-foreground" />
+                </button>
+              </NotificationPanel>
               <Link to="/staff/perfil" className="size-10 grid place-items-center rounded-full glass">
                 <UserCircle className="size-5" />
               </Link>
