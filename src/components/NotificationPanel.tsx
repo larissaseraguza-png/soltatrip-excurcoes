@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "@tanstack/react-router";
 import {
   Bell,
   CheckCircle,
@@ -14,6 +15,7 @@ import {
   Shield,
   Users,
   Trash2,
+  ChevronRight,
 } from "lucide-react";
 import {
   Sheet,
@@ -57,9 +59,16 @@ export function NotificationPanel({
 }) {
   const { items, markAllRead, clearAll } = useNotifications(role);
   const [open, setOpen] = useState(false);
+  const navigate = useNavigate();
   // Renderização do tempo é congelada no momento da abertura para evitar
   // loops de re-render. Sem auto-marcar como lida; sem intervalos.
   const now = Date.now();
+
+  const handleClick = (link?: string) => {
+    if (!link) return;
+    setOpen(false);
+    navigate({ to: link as never }).catch(() => {});
+  };
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -103,27 +112,36 @@ export function NotificationPanel({
           ) : (
             items.map((n) => {
               const Icon = iconMap[n.icon] ?? Bell;
-              return (
-                <div
-                  key={n.id}
-                  className="flex items-start gap-3 px-5 py-4 border-b border-border/40 hover:bg-muted/30 transition"
-                >
-                  <div
-                    className={`size-9 grid place-items-center rounded-full shrink-0 ${toneMap[n.tone]}`}
+                const clickable = Boolean(n.link);
+                return (
+                  <button
+                    key={n.id}
+                    type="button"
+                    onClick={() => handleClick(n.link)}
+                    disabled={!clickable}
+                    className={`w-full text-left flex items-start gap-3 px-5 py-4 border-b border-border/40 transition ${
+                      clickable ? "hover:bg-muted/40 active:bg-muted/60 cursor-pointer" : "cursor-default"
+                    }`}
                   >
-                    <Icon className="size-4" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-semibold leading-snug">{n.title}</p>
-                    <p className="text-xs text-muted-foreground leading-snug mt-0.5">
-                      {n.message}
-                    </p>
-                    <p className="text-[10px] text-muted-foreground mt-1.5">
-                      {formatRelative(n.createdAt, now)}
-                    </p>
-                  </div>
-                </div>
-              );
+                    <div
+                      className={`size-9 grid place-items-center rounded-full shrink-0 ${toneMap[n.tone]}`}
+                    >
+                      <Icon className="size-4" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-semibold leading-snug">{n.title}</p>
+                      <p className="text-xs text-muted-foreground leading-snug mt-0.5">
+                        {n.message}
+                      </p>
+                      <p className="text-[10px] text-muted-foreground mt-1.5">
+                        {formatRelative(n.createdAt, now)}
+                      </p>
+                    </div>
+                    {clickable && (
+                      <ChevronRight className="size-4 text-muted-foreground/60 mt-2 shrink-0" />
+                    )}
+                  </button>
+                );
             })
           )}
         </div>
