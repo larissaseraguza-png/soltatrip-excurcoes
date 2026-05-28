@@ -341,45 +341,6 @@ export type Database = {
         }
         Relationships: []
       }
-      notificacoes: {
-        Row: {
-          created_at: string
-          excursao_id: string | null
-          id: string
-          lida: boolean
-          lida_em: string | null
-          link: string | null
-          mensagem: string | null
-          tipo: string
-          titulo: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          excursao_id?: string | null
-          id?: string
-          lida?: boolean
-          lida_em?: string | null
-          link?: string | null
-          mensagem?: string | null
-          tipo?: string
-          titulo: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          excursao_id?: string | null
-          id?: string
-          lida?: boolean
-          lida_em?: string | null
-          link?: string | null
-          mensagem?: string | null
-          tipo?: string
-          titulo?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
       onibus: {
         Row: {
           ativo: boolean

@@ -3,7 +3,6 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Bus, LogOut, Repeat, UserCircle2 } from "lucide-react";
 import { signOutAndClean } from "@/lib/auth-cleanup";
 import { roleHome, useRole, setActiveRole, type AppRole } from "@/hooks/use-role";
-import { NotificationBell } from "@/components/NotificationBell";
 
 const ROLE_LABEL: Record<AppRole, string> = {
   excursionista: "Excursionista",
@@ -43,7 +42,6 @@ export function RoleHeader({ role, label }: { role: AppRole; label: string }) {
           </span>
         </Link>
         <div className="flex items-center gap-2 shrink-0">
-          <NotificationBell />
           {outros.length > 0 && (
             <div className="relative group">
               <button
