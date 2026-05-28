@@ -43,6 +43,7 @@ export function RoleHeader({ role, label }: { role: AppRole; label: string }) {
           </span>
         </Link>
         <div className="flex items-center gap-2 shrink-0">
+          <NotificationBell />
           {outros.length > 0 && (
             <div className="relative group">
               <button
