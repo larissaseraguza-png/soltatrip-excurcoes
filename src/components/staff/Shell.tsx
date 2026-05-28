@@ -40,9 +40,12 @@ export function StaffShell({ title, subtitle, back, right, children, hideNav }: 
             {subtitle && <p className="text-xs text-muted-foreground truncate">{subtitle}</p>}
           </div>
           {right ?? (
-            <Link to="/staff/perfil" className="size-10 grid place-items-center rounded-full glass">
-              <UserCircle className="size-5" />
-            </Link>
+            <div className="flex items-center gap-1">
+              <NotificationBell variant="glass" />
+              <Link to="/staff/perfil" className="size-10 grid place-items-center rounded-full glass">
+                <UserCircle className="size-5" />
+              </Link>
+            </div>
           )}
         </div>
       </header>
