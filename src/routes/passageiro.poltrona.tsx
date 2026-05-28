@@ -256,18 +256,17 @@ function Poltrona() {
         .update({ ponto_embarque_id: pontoId })
         .eq("id", reserva.id);
       if (error) throw error;
+      // Atualiza UI local imediatamente para mostrar o estado "Embarque confirmado"
+      // e mantém o usuário nesta tela. A finalização do fluxo é feita pelo botão
+      // "Continuar para a reserva", evitando navegação automática que dava a
+      // impressão de voltar para a etapa anterior.
       setSelectedPontoId(pontoId);
-      await Promise.all([
-        qc.invalidateQueries({ queryKey: ["pax-poltrona"] }),
-        qc.invalidateQueries({ queryKey: ["reserva-passageiros"] }),
-        qc.invalidateQueries({ queryKey: ["pagto-passageiros"] }),
-        qc.invalidateQueries({ queryKey: ["reserva-grupo"] }),
-      ]);
-      // Fluxo automático: poltrona + embarque concluídos → voltar para a reserva
-      navigate({
-        to: "/passageiro/reserva/$id",
-        params: { id: (reserva as any).reserva_id ?? reserva.id },
-      });
+      // Invalidações em background — não aguardamos para evitar re-render que
+      // pudesse descartar o estado de confirmação visual.
+      qc.invalidateQueries({ queryKey: ["pax-poltrona"] });
+      qc.invalidateQueries({ queryKey: ["reserva-passageiros"] });
+      qc.invalidateQueries({ queryKey: ["pagto-passageiros"] });
+      qc.invalidateQueries({ queryKey: ["reserva-grupo"] });
     } catch (err: any) {
       toast.error(err.message ?? "Erro ao escolher embarque");
     } finally {
