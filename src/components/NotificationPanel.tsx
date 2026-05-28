@@ -50,6 +50,65 @@ const toneMap: Record<NotifTone, string> = {
   amber: "bg-amber-500/15 text-amber-400",
 };
 
+type Notif = {
+  id: string;
+  icon: NotifIconKey;
+  tone: NotifTone;
+  title: string;
+  message: string;
+  createdAt: number;
+  link?: string;
+};
+
+type Group = Notif & { count: number };
+
+function groupNotifications(items: Notif[]): Group[] {
+  const map = new Map<string, Group>();
+  const order: string[] = [];
+  for (const n of items) {
+    const key = `${n.title}|${n.link ?? ""}`;
+    const existing = map.get(key);
+    if (existing) {
+      existing.count += 1;
+      if (n.createdAt > existing.createdAt) {
+        existing.createdAt = n.createdAt;
+        existing.message = n.message;
+        existing.id = n.id;
+      }
+    } else {
+      map.set(key, { ...n, count: 1 });
+      order.push(key);
+    }
+  }
+  return order
+    .map((k) => map.get(k)!)
+    .sort((a, b) => b.createdAt - a.createdAt);
+}
+
+const pluralRules: Array<[RegExp, (n: number) => string]> = [
+  [/^Pagamento aprovado$/, (n) => `${n} pagamentos aprovados`],
+  [/^Pagamento pendente$/, (n) => `${n} pagamentos pendentes`],
+  [/^Pagamento confirmado$/, (n) => `${n} pagamentos confirmados`],
+  [/^Reserva criada$/, (n) => `${n} reservas criadas`],
+  [/^Nova reserva$/, (n) => `${n} novas reservas`],
+  [/^QR Code liberado$/, (n) => `${n} QR Codes liberados`],
+  [/^Alteração de embarque$/, (n) => `${n} alterações de embarque`],
+  [/^Excursão atualizada$/, (n) => `${n} excursões atualizadas`],
+  [/^Novo passageiro$/, (n) => `${n} novos passageiros`],
+  [/^Check-in realizado$/, (n) => `${n} check-ins realizados`],
+  [/^Desembarque realizado$/, (n) => `${n} desembarques realizados`],
+  [/^Alteração do organizador$/, (n) => `${n} alterações do organizador`],
+  [/^Alteração da staff$/, (n) => `${n} alterações da staff`],
+  [/^Alteração do sócio$/, (n) => `${n} alterações do sócio`],
+  [/^Novo staff$/, (n) => `${n} novos membros de staff`],
+  [/^Novo sócio$/, (n) => `${n} novos sócios`],
+];
+
+function pluralTitle(title: string, count: number): string {
+  for (const [re, fn] of pluralRules) if (re.test(title)) return fn(count);
+  return `${count}× ${title}`;
+}
+
 export function NotificationPanel({
   children,
   role = "passageiro",
@@ -110,38 +169,42 @@ export function NotificationPanel({
               </p>
             </div>
           ) : (
-            items.map((n) => {
-              const Icon = iconMap[n.icon] ?? Bell;
-                const clickable = Boolean(n.link);
-                return (
-                  <button
-                    key={n.id}
-                    type="button"
-                    onClick={() => handleClick(n.link)}
-                    disabled={!clickable}
-                    className={`w-full text-left flex items-start gap-3 px-5 py-4 border-b border-border/40 transition ${
-                      clickable ? "hover:bg-muted/40 active:bg-muted/60 cursor-pointer" : "cursor-default"
-                    }`}
-                  >
-                    <div
-                      className={`size-9 grid place-items-center rounded-full shrink-0 ${toneMap[n.tone]}`}
-                    >
-                      <Icon className="size-4" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-semibold leading-snug">{n.title}</p>
-                      <p className="text-xs text-muted-foreground leading-snug mt-0.5">
-                        {n.message}
-                      </p>
-                      <p className="text-[10px] text-muted-foreground mt-1.5">
-                        {formatRelative(n.createdAt, now)}
-                      </p>
-                    </div>
-                    {clickable && (
-                      <ChevronRight className="size-4 text-muted-foreground/60 mt-2 shrink-0" />
+            groupNotifications(items).map((g) => {
+              const Icon = iconMap[g.icon] ?? Bell;
+              const clickable = Boolean(g.link);
+              const displayTitle = g.count > 1 ? pluralTitle(g.title, g.count) : g.title;
+              return (
+                <button
+                  key={g.id}
+                  type="button"
+                  onClick={() => handleClick(g.link)}
+                  disabled={!clickable}
+                  className={`w-full text-left flex items-start gap-3 px-5 py-4 border-b border-border/40 transition ${
+                    clickable ? "hover:bg-muted/40 active:bg-muted/60 cursor-pointer" : "cursor-default"
+                  }`}
+                >
+                  <div className={`relative size-9 grid place-items-center rounded-full shrink-0 ${toneMap[g.tone]}`}>
+                    <Icon className="size-4" />
+                    {g.count > 1 && (
+                      <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 grid place-items-center text-[10px] font-bold rounded-full bg-neon-pink text-white border-2 border-background">
+                        {g.count > 99 ? "99+" : g.count}
+                      </span>
                     )}
-                  </button>
-                );
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-semibold leading-snug">{displayTitle}</p>
+                    <p className="text-xs text-muted-foreground leading-snug mt-0.5 truncate">
+                      {g.count > 1 ? `Última: ${g.message}` : g.message}
+                    </p>
+                    <p className="text-[10px] text-muted-foreground mt-1.5">
+                      {formatRelative(g.createdAt, now)}
+                    </p>
+                  </div>
+                  {clickable && (
+                    <ChevronRight className="size-4 text-muted-foreground/60 mt-2 shrink-0" />
+                  )}
+                </button>
+              );
             })
           )}
         </div>
