@@ -130,6 +130,19 @@ function pluralTitle(title: string, count: number): string {
   return `${count}× ${title}`;
 }
 
+// Rótulo do botão "resolver agora" para o painel do excursionista.
+// Retorna null para evitar excesso de botões quando a ação não é operacional.
+function quickActionLabel(title: string): string | null {
+  const t = title.toLowerCase();
+  if (t.includes("pagamento pendente")) return "Confirmar pagamento";
+  if (t.includes("pagamento")) return "Ver pagamento";
+  if (t.includes("nova reserva") || t.includes("reserva criada")) return "Ver reserva";
+  if (t.includes("alteração de embarque") || t.includes("alteracao de embarque")) return "Abrir alteração";
+  if (t.includes("novo staff") || t.includes("novo sócio") || t.includes("novo socio")) return "Visualizar";
+  if (t.includes("check-in")) return "Ver check-in";
+  return null;
+}
+
 export function NotificationPanel({
   children,
   role = "passageiro",
