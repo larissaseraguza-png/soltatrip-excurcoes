@@ -25,7 +25,7 @@ function Ticket() {
               className="absolute inset-0 rounded-3xl"
               style={{
                 background:
-                  "linear-gradient(45deg, oklch(0.55 0.18 145) 0%, oklch(0.75 0.28 145) 50%, oklch(0.85 0.25 145) 100%)",
+                  "linear-gradient(45deg, oklch(0.42 0.09 145) 0%, oklch(0.58 0.14 145) 50%, oklch(0.72 0.16 145) 100%)",
                 padding: "3px",
                 WebkitMask:
                   "linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0)",
