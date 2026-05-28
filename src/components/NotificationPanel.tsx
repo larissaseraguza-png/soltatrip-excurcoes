@@ -72,14 +72,23 @@ export function NotificationPanel({
               Notificações
             </span>
             {items.length > 0 && (
-              <button
-                type="button"
-                onClick={clearAll}
-                className="text-xs font-normal text-muted-foreground hover:text-foreground transition flex items-center gap-1"
-              >
-                <Trash2 className="size-3.5" />
-                Limpar
-              </button>
+              <span className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={markAllRead}
+                  className="text-xs font-normal text-muted-foreground hover:text-foreground transition"
+                >
+                  Marcar como lidas
+                </button>
+                <button
+                  type="button"
+                  onClick={clearAll}
+                  className="text-xs font-normal text-muted-foreground hover:text-foreground transition flex items-center gap-1"
+                >
+                  <Trash2 className="size-3.5" />
+                  Limpar
+                </button>
+              </span>
             )}
           </SheetTitle>
         </SheetHeader>
