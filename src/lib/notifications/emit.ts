@@ -4,7 +4,7 @@ function add(role: NotifRole, n: Omit<AddInput, "role">) {
   addNotification({ ...n, role });
 }
 
-type Opts = { link?: string };
+type Opts = { link?: string; excursao?: string };
 
 export const notify = {
   passageiro: {
