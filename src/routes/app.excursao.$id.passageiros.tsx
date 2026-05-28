@@ -834,8 +834,8 @@ function FinanceiroPaxModal({
       return;
     }
     toast.success(`+ R$ ${v.toFixed(2)} registrado`);
-    notify.excursionista.pagamentoConfirmado(passageiro.nome);
-    notify.passageiro.pagamentoAprovado(`R$ ${v.toFixed(2)} confirmado pelo organizador.`);
+    notify.excursionista.pagamentoConfirmado(passageiro.nome, { link: `/app/excursao/${excursaoId}/financeiro` });
+    notify.passageiro.pagamentoAprovado(`R$ ${v.toFixed(2)} confirmado pelo organizador.`, { link: passageiro.reserva_id ? `/passageiro/reserva/${passageiro.reserva_id}` : "/passageiro/pagamentos" });
     setValor("");
     setObservacao("");
     qc.invalidateQueries({ queryKey: ["pagamentos-pax", passageiro.id] });
