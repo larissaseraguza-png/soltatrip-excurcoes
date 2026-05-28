@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { LayoutDashboard, Users, QrCode, Bus, MessageCircle, ArrowLeft, UserCircle, Shield } from "lucide-react";
+import { LayoutDashboard, Users, QrCode, Bus, MessageCircle, ArrowLeft, UserCircle, Shield, Bell } from "lucide-react";
 import type { ReactNode } from "react";
 
 type ShellProps = {
@@ -39,9 +39,14 @@ export function StaffShell({ title, subtitle, back, right, children, hideNav }: 
             {subtitle && <p className="text-xs text-muted-foreground truncate">{subtitle}</p>}
           </div>
           {right ?? (
-            <Link to="/staff/perfil" className="size-10 grid place-items-center rounded-full glass">
-              <UserCircle className="size-5" />
-            </Link>
+            <div className="flex items-center gap-2">
+              <button type="button" className="size-10 grid place-items-center rounded-full glass">
+                <Bell className="size-5 text-muted-foreground" />
+              </button>
+              <Link to="/staff/perfil" className="size-10 grid place-items-center rounded-full glass">
+                <UserCircle className="size-5" />
+              </Link>
+            </div>
           )}
         </div>
       </header>
