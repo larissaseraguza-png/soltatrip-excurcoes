@@ -69,6 +69,7 @@ type Notif = {
   message: string;
   createdAt: number;
   link?: string;
+  excursao?: string;
 };
 
 type Group = Notif & { count: number };
@@ -238,13 +239,21 @@ export function NotificationPanel({
                     )}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm font-semibold leading-snug">{displayTitle}</p>
-                    <p className="text-xs text-muted-foreground leading-snug mt-0.5 truncate">
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="text-sm font-semibold leading-snug truncate">{displayTitle}</p>
+                      <span className="text-[10px] text-muted-foreground shrink-0 mt-0.5">
+                        {formatRelative(g.createdAt, now)}
+                      </span>
+                    </div>
+                    <p className="text-xs text-muted-foreground leading-snug mt-0.5 line-clamp-2">
                       {g.count > 1 ? `Última: ${g.message}` : g.message}
                     </p>
-                    <p className="text-[10px] text-muted-foreground mt-1.5">
-                      {formatRelative(g.createdAt, now)}
-                    </p>
+                    {g.excursao && (
+                      <span className="inline-flex items-center gap-1 mt-1.5 text-[10px] font-medium px-2 py-0.5 rounded-full bg-primary/10 text-primary max-w-full truncate">
+                        <Calendar className="size-3 shrink-0" />
+                        <span className="truncate">{g.excursao}</span>
+                      </span>
+                    )}
                   </div>
                   {clickable && (
                     <ChevronRight className="size-4 text-muted-foreground/60 mt-2 shrink-0" />

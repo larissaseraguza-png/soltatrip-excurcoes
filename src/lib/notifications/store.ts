@@ -39,6 +39,8 @@ export type Notification = {
   link?: string;
   /** Categoria para filtros do painel. */
   category?: NotifCategory;
+  /** Nome curto da excursão relacionada (exibido como contexto no painel). */
+  excursao?: string;
 };
 
 const MAX_PER_ROLE = 50;
