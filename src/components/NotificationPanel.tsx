@@ -130,6 +130,19 @@ function pluralTitle(title: string, count: number): string {
   return `${count}× ${title}`;
 }
 
+// Rótulo do botão "resolver agora" para o painel do excursionista.
+// Retorna null para evitar excesso de botões quando a ação não é operacional.
+function quickActionLabel(title: string): string | null {
+  const t = title.toLowerCase();
+  if (t.includes("pagamento pendente")) return "Confirmar pagamento";
+  if (t.includes("pagamento")) return "Ver pagamento";
+  if (t.includes("nova reserva") || t.includes("reserva criada")) return "Ver reserva";
+  if (t.includes("alteração de embarque") || t.includes("alteracao de embarque")) return "Abrir alteração";
+  if (t.includes("novo staff") || t.includes("novo sócio") || t.includes("novo socio")) return "Visualizar";
+  if (t.includes("check-in")) return "Ver check-in";
+  return null;
+}
+
 export function NotificationPanel({
   children,
   role = "passageiro",
@@ -232,45 +245,60 @@ export function NotificationPanel({
               const Icon = iconMap[g.icon] ?? Bell;
               const clickable = Boolean(g.link);
               const displayTitle = g.count > 1 ? pluralTitle(g.title, g.count) : g.title;
+              const quickAction =
+                role === "excursionista" && g.link ? quickActionLabel(g.title) : null;
               return (
-                <button
-                  key={g.id}
-                  type="button"
-                  onClick={() => handleClick(g.link)}
-                  disabled={!clickable}
-                  className={`w-full text-left flex items-start gap-3 px-5 py-4 border-b border-border/40 transition ${
-                    clickable ? "hover:bg-muted/40 active:bg-muted/60 cursor-pointer" : "cursor-default"
-                  }`}
-                >
-                  <div className={`relative size-9 grid place-items-center rounded-full shrink-0 ${toneMap[g.tone]}`}>
-                    <Icon className="size-4" />
-                    {g.count > 1 && (
-                      <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 grid place-items-center text-[10px] font-bold rounded-full bg-neon-pink text-white border-2 border-background">
-                        {g.count > 99 ? "99+" : g.count}
-                      </span>
-                    )}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-start justify-between gap-2">
-                      <p className="text-sm font-semibold leading-snug truncate">{displayTitle}</p>
-                      <span className="text-[10px] text-muted-foreground shrink-0 mt-0.5">
-                        {formatRelative(g.createdAt, now)}
-                      </span>
+                <div key={g.id} className="border-b border-border/40">
+                  <button
+                    type="button"
+                    onClick={() => handleClick(g.link)}
+                    disabled={!clickable}
+                    className={`w-full text-left flex items-start gap-3 px-5 pt-4 ${quickAction ? "pb-2" : "pb-4"} transition ${
+                      clickable ? "hover:bg-muted/40 active:bg-muted/60 cursor-pointer" : "cursor-default"
+                    }`}
+                  >
+                    <div className={`relative size-9 grid place-items-center rounded-full shrink-0 ${toneMap[g.tone]}`}>
+                      <Icon className="size-4" />
+                      {g.count > 1 && (
+                        <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 grid place-items-center text-[10px] font-bold rounded-full bg-neon-pink text-white border-2 border-background">
+                          {g.count > 99 ? "99+" : g.count}
+                        </span>
+                      )}
                     </div>
-                    <p className="text-xs text-muted-foreground leading-snug mt-0.5 line-clamp-2">
-                      {g.count > 1 ? `Última: ${g.message}` : g.message}
-                    </p>
-                    {g.excursao && (
-                      <span className="inline-flex items-center gap-1 mt-1.5 text-[10px] font-medium px-2 py-0.5 rounded-full bg-primary/10 text-primary max-w-full truncate">
-                        <Calendar className="size-3 shrink-0" />
-                        <span className="truncate">{g.excursao}</span>
-                      </span>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-start justify-between gap-2">
+                        <p className="text-sm font-semibold leading-snug truncate">{displayTitle}</p>
+                        <span className="text-[10px] text-muted-foreground shrink-0 mt-0.5">
+                          {formatRelative(g.createdAt, now)}
+                        </span>
+                      </div>
+                      <p className="text-xs text-muted-foreground leading-snug mt-0.5 line-clamp-2">
+                        {g.count > 1 ? `Última: ${g.message}` : g.message}
+                      </p>
+                      {g.excursao && (
+                        <span className="inline-flex items-center gap-1 mt-1.5 text-[10px] font-medium px-2 py-0.5 rounded-full bg-primary/10 text-primary max-w-full truncate">
+                          <Calendar className="size-3 shrink-0" />
+                          <span className="truncate">{g.excursao}</span>
+                        </span>
+                      )}
+                    </div>
+                    {clickable && !quickAction && (
+                      <ChevronRight className="size-4 text-muted-foreground/60 mt-2 shrink-0" />
                     )}
-                  </div>
-                  {clickable && (
-                    <ChevronRight className="size-4 text-muted-foreground/60 mt-2 shrink-0" />
+                  </button>
+                  {quickAction && (
+                    <div className="px-5 pb-3 pl-[68px]">
+                      <button
+                        type="button"
+                        onClick={() => handleClick(g.link)}
+                        className="text-xs font-semibold px-3 py-1.5 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 active:bg-primary/80 transition inline-flex items-center gap-1"
+                      >
+                        {quickAction}
+                        <ChevronRight className="size-3" />
+                      </button>
+                    </div>
                   )}
-                </button>
+                </div>
               );
             })
           )}
