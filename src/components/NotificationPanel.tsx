@@ -27,16 +27,25 @@ import {
 import { useNotifications } from "@/hooks/useNotifications";
 import { formatRelative, type NotifIconKey, type NotifRole, type NotifTone, type NotifCategory } from "@/lib/notifications/store";
 
-const FILTERS: { key: NotifCategory | "todas"; label: string }[] = [
-  { key: "todas", label: "Todas" },
-  { key: "pagamentos", label: "Pagamentos" },
-  { key: "reservas", label: "Reservas" },
-  { key: "checkin", label: "Check-in" },
-  { key: "embarque", label: "Embarque" },
-  { key: "alteracoes", label: "Alterações" },
-  { key: "staff", label: "Staff" },
-  { key: "socio", label: "Sócio" },
-];
+const FILTERS_BY_ROLE: Record<NotifRole, { key: NotifCategory | "todas"; label: string }[]> = {
+  excursionista: [
+    { key: "todas", label: "Todas" },
+    { key: "pagamentos", label: "Pagamentos" },
+    { key: "reservas", label: "Reservas" },
+    { key: "checkin", label: "Check-in" },
+    { key: "embarque", label: "Embarque" },
+    { key: "alteracoes", label: "Alterações" },
+    { key: "staff", label: "Staff" },
+    { key: "socio", label: "Sócio" },
+  ],
+  staff: [
+    { key: "todas", label: "Todas" },
+    { key: "checkin", label: "Check-in" },
+    { key: "embarque", label: "Embarque" },
+  ],
+  // Passageiro: sem filtros — experiência limpa e direta.
+  passageiro: [],
+};
 
 const iconMap: Record<NotifIconKey, React.ComponentType<{ className?: string }>> = {
   "credit-card": CreditCard,
@@ -131,6 +140,8 @@ export function NotificationPanel({
   const { items, markAllRead, clearAll } = useNotifications(role);
   const [open, setOpen] = useState(false);
   const [filter, setFilter] = useState<NotifCategory | "todas">("todas");
+  const roleFilters = FILTERS_BY_ROLE[role] ?? [];
+  const isPassageiro = role === "passageiro";
   const navigate = useNavigate();
   // Renderização do tempo é congelada no momento da abertura para evitar
   // loops de re-render. Sem auto-marcar como lida; sem intervalos.
@@ -179,10 +190,10 @@ export function NotificationPanel({
           </SheetTitle>
         </SheetHeader>
         <div className="flex flex-col overflow-y-auto flex-1">
-          {items.length > 0 && (
+          {items.length > 0 && roleFilters.length > 0 && (
             <div className="px-5 pt-3 pb-2">
               <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
-                {FILTERS.map((f) => {
+                {roleFilters.map((f) => {
                   const active = filter === f.key;
                   const count =
                     f.key === "todas"
@@ -204,6 +215,7 @@ export function NotificationPanel({
                   );
                 })}
               </div>
+
             </div>
           )}
           {filteredItems.length === 0 ? (
