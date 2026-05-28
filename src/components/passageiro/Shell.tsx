@@ -1,6 +1,7 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { Ticket, Wallet, MessageCircle, User, LifeBuoy, ArrowLeft, Bell, Sparkles } from "lucide-react";
 import type { ReactNode } from "react";
+import { NotificationBell } from "@/components/NotificationBell";
 
 type ShellProps = {
   title?: string;
@@ -38,7 +39,7 @@ export function Shell({ title, subtitle, back, right, children, hideNav }: Shell
             {title && <h1 className="text-lg font-display font-bold truncate">{title}</h1>}
             {subtitle && <p className="text-xs text-muted-foreground truncate">{subtitle}</p>}
           </div>
-          {right ?? <div className="size-10" />}
+          {right ?? <NotificationBell variant="glass" />}
         </div>
       </header>
 
