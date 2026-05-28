@@ -582,8 +582,8 @@ function NewPassageiroModal({
       return;
     }
     toast.success("Passageiro manual adicionado");
-    notify.excursionista.novaReserva(form.nome.trim());
-    notify.staff.novoPassageiro(form.nome.trim());
+    notify.excursionista.novaReserva(form.nome.trim(), { link: `/app/excursao/${excursaoId}/passageiros` });
+    notify.staff.novoPassageiro(form.nome.trim(), { link: `/staff/passageiros` });
     qc.invalidateQueries({ queryKey: ["passageiros", excursaoId, onibusId ?? null] });
     qc.invalidateQueries({ queryKey: ["seats", excursaoId, onibusId ?? null] });
     qc.invalidateQueries({ queryKey: ["pontos-counts", excursaoId] });
