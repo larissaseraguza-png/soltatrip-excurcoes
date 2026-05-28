@@ -69,8 +69,6 @@ function ReservaDetalhes() {
   const { data: passageiros = [], refetch: refetchPax } = useQuery({
     queryKey: ["reserva-passageiros", id],
     enabled: !!reserva,
-    staleTime: 0,
-    refetchOnMount: "always",
     queryFn: async () => {
       const { data, error } = await supabase
         .from("passageiros")
