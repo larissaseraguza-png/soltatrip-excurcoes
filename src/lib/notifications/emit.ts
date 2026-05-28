@@ -42,8 +42,10 @@ export const notify = {
   staff: {
     novoPassageiro: (nome: string, opts: Opts = {}) =>
       add("staff", { icon: "user-plus", tone: "purple", title: "Novo passageiro", message: `${nome} entrou na lista.`, link: opts.link ?? "/staff/passageiros", category: "staff", excursao: opts.excursao }),
-    checkinFeito: (nome: string, opts: Opts = {}) =>
-      add("staff", { icon: "check-circle", tone: "green", title: "Check-in realizado", message: `${nome} embarcou.`, link: opts.link ?? "/staff/checkin", category: "checkin", excursao: opts.excursao }),
+    checkinFeito: (nome: string, opts: Opts = {}) => {
+      resolvePending("staff", { titleIncludes: "pendente", nomeNaMensagem: nome });
+      add("staff", { icon: "check-circle", tone: "green", title: "Check-in realizado", message: `${nome} embarcou.`, link: opts.link ?? "/staff/checkin", category: "checkin", excursao: opts.excursao });
+    },
     desembarqueFeito: (nome: string, opts: Opts = {}) =>
       add("staff", { icon: "log-out", tone: "pink", title: "Desembarque realizado", message: `${nome} desembarcou.`, link: opts.link ?? "/staff/checkin", category: "checkin", excursao: opts.excursao }),
     alteracaoEmbarque: (msg = "Um ponto de embarque foi atualizado.", opts: Opts = {}) =>
