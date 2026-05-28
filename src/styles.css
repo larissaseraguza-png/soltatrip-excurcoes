@@ -42,7 +42,7 @@
 :root {
   --radius: 1rem;
 
-  /* SoltaTrip dark GREEN neon palette */
+  /* SoltaTrip dark MOSS GREEN palette — verde musgo profundo */
   --background: oklch(0.13 0.03 145);
   --foreground: oklch(0.97 0.01 145);
 
@@ -52,8 +52,8 @@
   --popover: oklch(0.15 0.04 145);
   --popover-foreground: oklch(0.97 0.01 145);
 
-  --primary: oklch(0.75 0.28 145);          /* neon green */
-  --primary-foreground: oklch(0.1 0.02 145);
+  --primary: oklch(0.58 0.14 145);          /* moss green */
+  --primary-foreground: oklch(0.97 0.01 145);
 
   --secondary: oklch(0.22 0.06 145);
   --secondary-foreground: oklch(0.97 0.01 145);
@@ -61,7 +61,7 @@
   --muted: oklch(0.2 0.04 145);
   --muted-foreground: oklch(0.68 0.04 145);
 
-  --accent: oklch(0.6 0.22 145);            /* emerald */
+  --accent: oklch(0.50 0.11 145);            /* deep moss */
   --accent-foreground: oklch(0.97 0.01 145);
 
   --destructive: oklch(0.62 0.24 25);
@@ -69,17 +69,17 @@
 
   --border: oklch(0.3 0.05 145 / 0.5);
   --input: oklch(0.25 0.05 145 / 0.6);
-  --ring: oklch(0.75 0.28 145);
+  --ring: oklch(0.58 0.14 145);
 
-  --neon-purple: oklch(0.55 0.18 145);      /* deep forest green */
-  --neon-pink: oklch(0.75 0.28 145);        /* bright neon green */
-  --neon-green: oklch(0.85 0.25 145);       /* lime green */
+  --neon-purple: oklch(0.42 0.09 145);      /* deep forest */
+  --neon-pink: oklch(0.62 0.13 145);        /* moss medium */
+  --neon-green: oklch(0.72 0.16 145);       /* soft green */
 
-  --gradient-hero: linear-gradient(135deg, oklch(0.55 0.18 145) 0%, oklch(0.75 0.28 145) 50%, oklch(0.85 0.25 145) 100%);
+  --gradient-hero: linear-gradient(135deg, oklch(0.42 0.09 145) 0%, oklch(0.58 0.14 145) 50%, oklch(0.72 0.16 145) 100%);
   --gradient-card: linear-gradient(160deg, oklch(0.2 0.06 145 / 0.7), oklch(0.15 0.04 145 / 0.4));
-  --gradient-glow: radial-gradient(circle at 50% 0%, oklch(0.75 0.28 145 / 0.35), transparent 70%);
+  --gradient-glow: radial-gradient(circle at 50% 0%, oklch(0.58 0.14 145 / 0.25), transparent 70%);
 
-  --shadow-neon: 0 0 40px oklch(0.75 0.28 145 / 0.35), 0 0 80px oklch(0.6 0.22 145 / 0.2);
+  --shadow-neon: 0 0 30px oklch(0.58 0.14 145 / 0.20), 0 0 60px oklch(0.50 0.11 145 / 0.12);
   --shadow-card: 0 8px 32px oklch(0.1 0.03 145 / 0.5);
 }
 
