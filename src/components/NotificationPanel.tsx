@@ -110,38 +110,42 @@ export function NotificationPanel({
               </p>
             </div>
           ) : (
-            items.map((n) => {
-              const Icon = iconMap[n.icon] ?? Bell;
-                const clickable = Boolean(n.link);
-                return (
-                  <button
-                    key={n.id}
-                    type="button"
-                    onClick={() => handleClick(n.link)}
-                    disabled={!clickable}
-                    className={`w-full text-left flex items-start gap-3 px-5 py-4 border-b border-border/40 transition ${
-                      clickable ? "hover:bg-muted/40 active:bg-muted/60 cursor-pointer" : "cursor-default"
-                    }`}
-                  >
-                    <div
-                      className={`size-9 grid place-items-center rounded-full shrink-0 ${toneMap[n.tone]}`}
-                    >
-                      <Icon className="size-4" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-semibold leading-snug">{n.title}</p>
-                      <p className="text-xs text-muted-foreground leading-snug mt-0.5">
-                        {n.message}
-                      </p>
-                      <p className="text-[10px] text-muted-foreground mt-1.5">
-                        {formatRelative(n.createdAt, now)}
-                      </p>
-                    </div>
-                    {clickable && (
-                      <ChevronRight className="size-4 text-muted-foreground/60 mt-2 shrink-0" />
+            groupNotifications(items).map((g) => {
+              const Icon = iconMap[g.icon] ?? Bell;
+              const clickable = Boolean(g.link);
+              const displayTitle = g.count > 1 ? pluralTitle(g.title, g.count) : g.title;
+              return (
+                <button
+                  key={g.id}
+                  type="button"
+                  onClick={() => handleClick(g.link)}
+                  disabled={!clickable}
+                  className={`w-full text-left flex items-start gap-3 px-5 py-4 border-b border-border/40 transition ${
+                    clickable ? "hover:bg-muted/40 active:bg-muted/60 cursor-pointer" : "cursor-default"
+                  }`}
+                >
+                  <div className={`relative size-9 grid place-items-center rounded-full shrink-0 ${toneMap[g.tone]}`}>
+                    <Icon className="size-4" />
+                    {g.count > 1 && (
+                      <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 grid place-items-center text-[10px] font-bold rounded-full bg-neon-pink text-white border-2 border-background">
+                        {g.count > 99 ? "99+" : g.count}
+                      </span>
                     )}
-                  </button>
-                );
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-semibold leading-snug">{displayTitle}</p>
+                    <p className="text-xs text-muted-foreground leading-snug mt-0.5 truncate">
+                      {g.count > 1 ? `Última: ${g.message}` : g.message}
+                    </p>
+                    <p className="text-[10px] text-muted-foreground mt-1.5">
+                      {formatRelative(g.createdAt, now)}
+                    </p>
+                  </div>
+                  {clickable && (
+                    <ChevronRight className="size-4 text-muted-foreground/60 mt-2 shrink-0" />
+                  )}
+                </button>
+              );
             })
           )}
         </div>
