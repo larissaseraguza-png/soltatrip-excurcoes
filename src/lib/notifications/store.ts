@@ -26,6 +26,8 @@ export type Notification = {
   message: string;
   createdAt: number;
   read: boolean;
+  /** Rota interna para abrir ao clicar na notificação. */
+  link?: string;
 };
 
 const MAX_PER_ROLE = 50;
