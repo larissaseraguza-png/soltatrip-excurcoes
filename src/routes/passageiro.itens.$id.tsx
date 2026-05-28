@@ -249,7 +249,12 @@ function ItemCard({ item, excursaoId, userId }: { item: any; excursaoId: string;
         toast.success("Pedido enviado! O organizador irá confirmar o pagamento e emitir.");
       }
     } catch (err: any) {
-      toast.error(err.message ?? "Erro ao pedir.");
+      const msg = String(err?.message ?? "");
+      if (msg.includes("passageiro_duplicado")) {
+        toast.error("Você já possui uma reserva nesta excursão.");
+      } else {
+        toast.error(err.message ?? "Erro ao pedir.");
+      }
     } finally {
       setBusy(false);
     }
