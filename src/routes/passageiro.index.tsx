@@ -239,7 +239,17 @@ function MinhasViagens() {
       setModalEx(null);
       navigate({ to: "/passageiro/pagamentos", search: { reserva: reservaId } as any });
     } catch (err: any) {
-      toast.error(err.message ?? "Erro ao reservar");
+      const msg = String(err?.message ?? "");
+      if (msg.includes("passageiro_duplicado")) {
+        const email = msg.split("passageiro_duplicado:")[1]?.trim();
+        toast.error(
+          email
+            ? `Esse passageiro (${email}) já possui uma reserva nesta excursão.`
+            : "Esse passageiro já possui uma reserva nesta excursão.",
+        );
+      } else {
+        toast.error(err.message ?? "Erro ao reservar");
+      }
     } finally {
       setReservando(false);
     }
