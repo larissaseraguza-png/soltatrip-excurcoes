@@ -131,8 +131,8 @@ function CheckinStaff() {
     }
     showFeedback(true, `${pax.nome} embarcou! ${viaQr ? "(QR)" : ""}`);
     toast.success(`Check-in: ${pax.nome}`);
-    notify.staff.checkinFeito(pax.nome);
-    notify.excursionista.checkinFeito(pax.nome);
+    notify.staff.checkinFeito(pax.nome, { link: "/staff/checkin" });
+    notify.excursionista.checkinFeito(pax.nome, { link: `/app/excursao/${excursao.id}/checkin` });
     qc.invalidateQueries({ queryKey: ["staff-checkin-pax", excursao.id, onibusId] });
     qc.invalidateQueries({ queryKey: ["staff-checkins", excursao.id, onibusId] });
   }
