@@ -111,9 +111,9 @@
 
   body {
     background-image:
-      radial-gradient(ellipse 80% 50% at 50% -20%, oklch(0.75 0.28 145 / 0.18), transparent 60%),
-      radial-gradient(ellipse 60% 50% at 100% 30%, oklch(0.6 0.22 145 / 0.15), transparent 60%),
-      radial-gradient(ellipse 60% 50% at 0% 70%, oklch(0.85 0.25 145 / 0.08), transparent 60%);
+      radial-gradient(ellipse 80% 50% at 50% -20%, oklch(0.58 0.14 145 / 0.12), transparent 60%),
+      radial-gradient(ellipse 60% 50% at 100% 30%, oklch(0.50 0.11 145 / 0.10), transparent 60%),
+      radial-gradient(ellipse 60% 50% at 0% 70%, oklch(0.72 0.16 145 / 0.06), transparent 60%);
     background-attachment: fixed;
   }
 
@@ -150,7 +150,7 @@
     color: transparent;
   }
   .glow-primary { box-shadow: var(--shadow-neon); }
-  .glow-text { text-shadow: 0 0 24px oklch(0.75 0.28 145 / 0.6); }
+  .glow-text { text-shadow: 0 0 24px oklch(0.58 0.14 145 / 0.5); }
   /*
    * .glass: sem backdrop-filter no mobile para evitar colapso de GPU em
    * Android (faixas, duplicação, sobreposição) quando muitos cards .glass
@@ -168,8 +168,8 @@
   }
   .grid-bg {
     background-image:
-      linear-gradient(oklch(0.75 0.28 145 / 0.07) 1px, transparent 1px),
-      linear-gradient(90deg, oklch(0.75 0.28 145 / 0.07) 1px, transparent 1px);
+      linear-gradient(oklch(0.58 0.14 145 / 0.05) 1px, transparent 1px),
+      linear-gradient(90deg, oklch(0.58 0.14 145 / 0.05) 1px, transparent 1px);
     background-size: 48px 48px;
   }
   @keyframes pulse-glow {
