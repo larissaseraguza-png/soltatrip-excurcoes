@@ -1,5 +1,6 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { Home, Users, Wallet, QrCode, MessageCircle, ArrowLeft, Bell } from "lucide-react";
+import { NotificationPanel } from "@/components/NotificationPanel";
 import type { ReactNode } from "react";
 
 type ShellProps = {
@@ -34,9 +35,11 @@ export function Shell({ title, subtitle, back, right, children, hideNav }: Shell
             {subtitle && <p className="text-xs text-muted-foreground truncate">{subtitle}</p>}
           </div>
           {right ?? (
-            <button type="button" className="size-10 grid place-items-center rounded-full glass">
-              <Bell className="size-5 text-muted-foreground" />
-            </button>
+            <NotificationPanel>
+              <button type="button" className="size-10 grid place-items-center rounded-full glass">
+                <Bell className="size-5 text-muted-foreground" />
+              </button>
+            </NotificationPanel>
           )}
         </div>
       </header>
