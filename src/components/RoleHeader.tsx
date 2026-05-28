@@ -1,8 +1,9 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
-import { Bus, LogOut, Repeat, UserCircle2 } from "lucide-react";
+import { Bus, LogOut, Repeat, UserCircle2, Bell } from "lucide-react";
 import { signOutAndClean } from "@/lib/auth-cleanup";
 import { roleHome, useRole, setActiveRole, type AppRole } from "@/hooks/use-role";
+import { NotificationPanel } from "@/components/NotificationPanel";
 
 const ROLE_LABEL: Record<AppRole, string> = {
   excursionista: "Excursionista",
