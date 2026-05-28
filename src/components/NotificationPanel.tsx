@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   Bell,
   CheckCircle,
@@ -57,18 +57,9 @@ export function NotificationPanel({
 }) {
   const { items, markAllRead, clearAll } = useNotifications(role);
   const [open, setOpen] = useState(false);
-  const [now, setNow] = useState(() => Date.now());
-
-  useEffect(() => {
-    if (!open) return;
-    setNow(Date.now());
-    const t = setTimeout(() => markAllRead(), 400);
-    const i = setInterval(() => setNow(Date.now()), 30_000);
-    return () => {
-      clearTimeout(t);
-      clearInterval(i);
-    };
-  }, [open, markAllRead]);
+  // Renderização do tempo é congelada no momento da abertura para evitar
+  // loops de re-render. Sem auto-marcar como lida; sem intervalos.
+  const now = Date.now();
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
