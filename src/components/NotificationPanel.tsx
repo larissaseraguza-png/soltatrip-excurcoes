@@ -25,7 +25,18 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { useNotifications } from "@/hooks/useNotifications";
-import { formatRelative, type NotifIconKey, type NotifRole, type NotifTone } from "@/lib/notifications/store";
+import { formatRelative, type NotifIconKey, type NotifRole, type NotifTone, type NotifCategory } from "@/lib/notifications/store";
+
+const FILTERS: { key: NotifCategory | "todas"; label: string }[] = [
+  { key: "todas", label: "Todas" },
+  { key: "pagamentos", label: "Pagamentos" },
+  { key: "reservas", label: "Reservas" },
+  { key: "checkin", label: "Check-in" },
+  { key: "embarque", label: "Embarque" },
+  { key: "alteracoes", label: "Alterações" },
+  { key: "staff", label: "Staff" },
+  { key: "socio", label: "Sócio" },
+];
 
 const iconMap: Record<NotifIconKey, React.ComponentType<{ className?: string }>> = {
   "credit-card": CreditCard,
@@ -118,10 +129,16 @@ export function NotificationPanel({
 }) {
   const { items, markAllRead, clearAll } = useNotifications(role);
   const [open, setOpen] = useState(false);
+  const [filter, setFilter] = useState<NotifCategory | "todas">("todas");
   const navigate = useNavigate();
   // Renderização do tempo é congelada no momento da abertura para evitar
   // loops de re-render. Sem auto-marcar como lida; sem intervalos.
   const now = Date.now();
+
+  const filteredItems =
+    filter === "todas"
+      ? items
+      : items.filter((n) => (n as any).category === filter);
 
   const handleClick = (link?: string) => {
     if (!link) return;
@@ -161,15 +178,44 @@ export function NotificationPanel({
           </SheetTitle>
         </SheetHeader>
         <div className="flex flex-col overflow-y-auto flex-1">
-          {items.length === 0 ? (
+          {items.length > 0 && (
+            <div className="px-5 pt-3 pb-2">
+              <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
+                {FILTERS.map((f) => {
+                  const active = filter === f.key;
+                  const count =
+                    f.key === "todas"
+                      ? items.length
+                      : items.filter((n) => (n as any).category === f.key).length;
+                  return (
+                    <button
+                      key={f.key}
+                      type="button"
+                      onClick={() => setFilter(f.key)}
+                      className={`shrink-0 text-xs font-medium rounded-full px-3 py-1.5 transition border ${
+                        active
+                          ? "bg-primary text-primary-foreground border-primary"
+                          : "bg-muted/60 text-muted-foreground border-border/60 hover:bg-muted hover:text-foreground"
+                      }`}
+                    >
+                      {f.label} {count > 0 && `(${count})`}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+          {filteredItems.length === 0 ? (
             <div className="px-5 py-12 text-center">
               <Bell className="size-10 text-muted-foreground/40 mx-auto mb-3" />
               <p className="text-sm text-muted-foreground">
-                Nenhuma notificação ainda.
+                {items.length === 0
+                  ? "Nenhuma notificação ainda."
+                  : "Nenhuma notificação nesta categoria."}
               </p>
             </div>
           ) : (
-            groupNotifications(items).map((g) => {
+            groupNotifications(filteredItems).map((g) => {
               const Icon = iconMap[g.icon] ?? Bell;
               const clickable = Boolean(g.link);
               const displayTitle = g.count > 1 ? pluralTitle(g.title, g.count) : g.title;
