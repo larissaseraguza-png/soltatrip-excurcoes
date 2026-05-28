@@ -140,6 +140,8 @@ export function NotificationPanel({
   const { items, markAllRead, clearAll } = useNotifications(role);
   const [open, setOpen] = useState(false);
   const [filter, setFilter] = useState<NotifCategory | "todas">("todas");
+  const roleFilters = FILTERS_BY_ROLE[role] ?? [];
+  const isPassageiro = role === "passageiro";
   const navigate = useNavigate();
   // Renderização do tempo é congelada no momento da abertura para evitar
   // loops de re-render. Sem auto-marcar como lida; sem intervalos.
