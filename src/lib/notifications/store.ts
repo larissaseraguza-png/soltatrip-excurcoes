@@ -132,6 +132,22 @@ export function clearAll(role: NotifRole) {
   save(role, []);
 }
 
+/**
+ * Remove notificações que casam com o predicate. Use ao concluir a ação real
+ * relacionada (ex.: confirmar pagamento remove a notif "pagamento pendente"
+ * correspondente). NÃO chame ao apenas abrir/visualizar a notificação.
+ */
+export function resolveNotifications(
+  role: NotifRole,
+  predicate: (n: Notification) => boolean,
+): number {
+  const list = load(role);
+  const next = list.filter((n) => !predicate(n));
+  if (next.length === list.length) return 0;
+  save(role, next);
+  return list.length - next.length;
+}
+
 export type AddInput = Omit<Notification, "id" | "createdAt" | "read">;
 
 export function addNotification(input: AddInput) {
