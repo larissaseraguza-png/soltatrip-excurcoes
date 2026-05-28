@@ -34,12 +34,7 @@ export function Shell({ title, subtitle, back, right, children, hideNav }: Shell
             {title && <h1 className="text-lg font-display font-bold truncate">{title}</h1>}
             {subtitle && <p className="text-xs text-muted-foreground truncate">{subtitle}</p>}
           </div>
-          {right ?? (
-            <button className="size-10 grid place-items-center rounded-full glass relative">
-              <Bell className="size-5" />
-              <span className="absolute top-2 right-2 size-2 rounded-full bg-neon-green animate-pulse-glow" />
-            </button>
-          )}
+          {right ?? <NotificationBell variant="glass" />}
         </div>
       </header>
 
