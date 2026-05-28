@@ -919,19 +919,14 @@ export type Database = {
         Args: { p_excursao_id: string; p_item_id: string; p_qtd: number }
         Returns: string
       }
-      criar_reserva_grupo:
-        | {
-            Args: { p_excursao_id: string; p_passageiros: Json }
-            Returns: string
-          }
-        | {
-            Args: {
-              p_excursao_id: string
-              p_onibus_id?: string
-              p_passageiros: Json
-            }
-            Returns: string
-          }
+      criar_reserva_grupo: {
+        Args: {
+          p_excursao_id: string
+          p_onibus_id?: string
+          p_passageiros: Json
+        }
+        Returns: string
+      }
       get_email_by_phone: { Args: { p_phone: string }; Returns: string }
       get_excursao_payment_info: {
         Args: { p_excursao_id: string }
