@@ -27,16 +27,25 @@ import {
 import { useNotifications } from "@/hooks/useNotifications";
 import { formatRelative, type NotifIconKey, type NotifRole, type NotifTone, type NotifCategory } from "@/lib/notifications/store";
 
-const FILTERS: { key: NotifCategory | "todas"; label: string }[] = [
-  { key: "todas", label: "Todas" },
-  { key: "pagamentos", label: "Pagamentos" },
-  { key: "reservas", label: "Reservas" },
-  { key: "checkin", label: "Check-in" },
-  { key: "embarque", label: "Embarque" },
-  { key: "alteracoes", label: "Alterações" },
-  { key: "staff", label: "Staff" },
-  { key: "socio", label: "Sócio" },
-];
+const FILTERS_BY_ROLE: Record<NotifRole, { key: NotifCategory | "todas"; label: string }[]> = {
+  excursionista: [
+    { key: "todas", label: "Todas" },
+    { key: "pagamentos", label: "Pagamentos" },
+    { key: "reservas", label: "Reservas" },
+    { key: "checkin", label: "Check-in" },
+    { key: "embarque", label: "Embarque" },
+    { key: "alteracoes", label: "Alterações" },
+    { key: "staff", label: "Staff" },
+    { key: "socio", label: "Sócio" },
+  ],
+  staff: [
+    { key: "todas", label: "Todas" },
+    { key: "checkin", label: "Check-in" },
+    { key: "embarque", label: "Embarque" },
+  ],
+  // Passageiro: sem filtros — experiência limpa e direta.
+  passageiro: [],
+};
 
 const iconMap: Record<NotifIconKey, React.ComponentType<{ className?: string }>> = {
   "credit-card": CreditCard,
