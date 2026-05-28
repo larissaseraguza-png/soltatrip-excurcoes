@@ -188,10 +188,10 @@ export function NotificationPanel({
           </SheetTitle>
         </SheetHeader>
         <div className="flex flex-col overflow-y-auto flex-1">
-          {items.length > 0 && (
+          {items.length > 0 && roleFilters.length > 0 && (
             <div className="px-5 pt-3 pb-2">
               <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
-                {FILTERS.map((f) => {
+                {roleFilters.map((f) => {
                   const active = filter === f.key;
                   const count =
                     f.key === "todas"
@@ -213,6 +213,7 @@ export function NotificationPanel({
                   );
                 })}
               </div>
+
             </div>
           )}
           {filteredItems.length === 0 ? (
