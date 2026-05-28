@@ -1,6 +1,7 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { LayoutDashboard, Users, QrCode, Bus, MessageCircle, ArrowLeft, UserCircle, Shield } from "lucide-react";
 import type { ReactNode } from "react";
+import { NotificationBell } from "@/components/NotificationBell";
 
 type ShellProps = {
   title?: string;
