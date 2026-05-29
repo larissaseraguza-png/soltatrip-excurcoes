@@ -181,6 +181,7 @@ function Perfil() {
       if (error) throw error;
       toast.success("Perfil salvo");
       qc.invalidateQueries({ queryKey: ["profile", user.id] });
+      emitSync("dados");
     } catch (e: any) {
       const msg = e?.message ?? "";
       if (msg.includes("slug_invalid_length")) toast.error("Slug precisa ter entre 3 e 40 caracteres");
