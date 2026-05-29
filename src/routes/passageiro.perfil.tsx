@@ -6,6 +6,7 @@ import { useProfile, formatPhone, formatCPF, validateCPF } from "@/hooks/use-pro
 import { useAuth } from "@/hooks/use-auth";
 import { signOutAndClean } from "@/lib/auth-cleanup";
 import { toast } from "sonner";
+import { emitSync } from "@/lib/sync/bus";
 
 export const Route = createFileRoute("/passageiro/perfil")({
   component: Perfil,
