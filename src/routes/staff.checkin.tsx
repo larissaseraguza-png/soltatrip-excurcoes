@@ -10,6 +10,7 @@ import { useStaffExcursao } from "@/hooks/use-staff-excursao";
 import { useRealtimeSync } from "@/hooks/use-realtime-sync";
 import { CheckCircle2, XCircle, UserCheck, Loader2, Search, Camera, X, AlertTriangle, Bus, RotateCcw } from "lucide-react";
 import { notify } from "@/lib/notifications/emit";
+import { emitSync } from "@/lib/sync/bus";
 
 export const Route = createFileRoute("/staff/checkin")({
   component: CheckinStaff,
