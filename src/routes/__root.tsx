@@ -13,6 +13,7 @@ import appCss from "../styles.css?url";
 import { supabase } from "@/integrations/supabase/client";
 import { Toaster } from "@/components/ui/sonner";
 import { SafeBoundary } from "@/components/SafeBoundary";
+import { subscribeSync } from "@/lib/sync/bus";
 import { installChunkReloadHandler } from "@/lib/chunk-reload";
 
 if (typeof window !== "undefined") {
@@ -149,6 +150,14 @@ function RootComponent() {
     });
 
     return () => subscription.unsubscribe();
+  }, [queryClient]);
+
+  // Sync leve cross-área: ao receber um topic, marca queries ativas como
+  // stale e refetcha apenas o que está montado na tela.
+  useEffect(() => {
+    return subscribeSync(() => {
+      queryClient.invalidateQueries();
+    });
   }, [queryClient]);
 
   return (

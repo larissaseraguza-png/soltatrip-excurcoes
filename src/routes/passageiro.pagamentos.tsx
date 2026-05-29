@@ -8,6 +8,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useRealtimeSync } from "@/hooks/use-realtime-sync";
 import { Copy, Loader2, CheckCircle2, Armchair, QrCode, ExternalLink, CreditCard } from "lucide-react";
 import { notify } from "@/lib/notifications/emit";
+import { emitSync } from "@/lib/sync/bus";
 
 type Search = { reserva?: string };
 
@@ -197,6 +198,7 @@ function Pagamentos() {
         qc.invalidateQueries({ queryKey: ["pagto-passageiros"] }),
       ]);
       toast.success("Pagamento enviado! Aguardando confirmação manual do organizador.");
+      emitSync("pagamento");
       notify.passageiro.pagamentoPendente(`Aguardando confirmação de ${brl(v)}.`, { link: `/passageiro/reserva/${reservaAtiva.id}` });
       notify.excursionista.pagamentoPendente("Um passageiro", { link: `/app/excursao/${reservaAtiva.excursao.id}/financeiro` });
       // Fluxo automático: avançar para poltrona/embarque mesmo aguardando confirmação

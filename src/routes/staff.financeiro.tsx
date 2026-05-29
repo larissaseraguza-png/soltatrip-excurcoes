@@ -6,7 +6,6 @@ import { FestaSelectorBanner, NoFestaSelected } from "@/components/staff/FestaSe
 import { supabase } from "@/integrations/supabase/client";
 import { useStaffExcursao } from "@/hooks/use-staff-excursao";
 import { useRealtimeSync } from "@/hooks/use-realtime-sync";
-import { useFreshnessSync } from "@/hooks/use-freshness-sync";
 import { Wallet, Loader2, Lock, Bus } from "lucide-react";
 
 export const Route = createFileRoute("/staff/financeiro")({
@@ -86,16 +85,6 @@ function FinanceiroStaff() {
           { table: "passageiros", filter: `excursao_id=eq.${excursao.id}` },
         ]
       : [],
-    [
-      ["staff-fin-reservas", excursao?.id, onibusId],
-      ["staff-fin-pagamentos", excursao?.id, onibusId],
-      ["staff-fin-pax", excursao?.id, onibusId],
-    ],
-  );
-
-  useFreshnessSync(
-    excursao?.id ? `excursao:${excursao.id}` : null,
-    [{ table: "reservas" }, { table: "pagamentos" }, { table: "passageiros" }, { table: "checkins" }],
     [
       ["staff-fin-reservas", excursao?.id, onibusId],
       ["staff-fin-pagamentos", excursao?.id, onibusId],

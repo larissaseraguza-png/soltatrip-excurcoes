@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useRealtimeSync } from "@/hooks/use-realtime-sync";
 import { Calendar, MapPin, Loader2, Sparkles, Ticket, Compass, X, Plus, Minus, Users, Bus, Clock, Package, Tent, Crown, HeartHandshake, KeyRound, Flame, ChevronRight } from "lucide-react";
+import { emitSync } from "@/lib/sync/bus";
 
 export const Route = createFileRoute("/passageiro/")({
   component: MinhasViagens,
@@ -236,6 +237,7 @@ function MinhasViagens() {
       }
 
       qc.invalidateQueries({ queryKey: ["minhas-reservas"] });
+      emitSync("reserva");
       setModalEx(null);
       navigate({ to: "/passageiro/pagamentos", search: { reserva: reservaId } as any });
     } catch (err: any) {

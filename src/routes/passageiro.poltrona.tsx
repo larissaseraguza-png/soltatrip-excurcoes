@@ -6,6 +6,7 @@ import { Shell } from "@/components/passageiro/Shell";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Loader2, Armchair, Check, MapPinned } from "lucide-react";
+import { emitSync } from "@/lib/sync/bus";
 
 type Search = { pax?: string; reserva?: string };
 
@@ -242,6 +243,7 @@ function Poltrona() {
         qc.invalidateQueries({ queryKey: ["pagto-passageiros"] }),
         qc.invalidateQueries({ queryKey: ["reservas-pagto"] }),
       ]);
+      emitSync("embarque");
     } catch (err: any) {
       toast.error(err.message ?? "Erro ao escolher poltrona");
     } finally {
@@ -269,6 +271,7 @@ function Poltrona() {
       qc.invalidateQueries({ queryKey: ["reserva-passageiros"] });
       qc.invalidateQueries({ queryKey: ["pagto-passageiros"] });
       qc.invalidateQueries({ queryKey: ["reserva-grupo"] });
+      emitSync("embarque");
     } catch (err: any) {
       toast.error(err.message ?? "Erro ao escolher embarque");
     } finally {

@@ -6,7 +6,6 @@ import { FestaSelectorBanner, NoFestaSelected } from "@/components/staff/FestaSe
 import { supabase } from "@/integrations/supabase/client";
 import { useStaffExcursao } from "@/hooks/use-staff-excursao";
 import { useRealtimeSync } from "@/hooks/use-realtime-sync";
-import { useFreshnessSync } from "@/hooks/use-freshness-sync";
 import { SeatMap } from "@/components/SeatMap";
 import { Bus, Loader2 } from "lucide-react";
 
@@ -55,15 +54,6 @@ function OnibusStaff() {
           { table: "seats", filter: `excursao_id=eq.${excursao.id}` },
         ]
       : [],
-    [
-      ["staff-onibus-pax", excursao?.id, onibusId],
-      ["staff-onibus-seats", excursao?.id, onibusId],
-    ],
-  );
-
-  useFreshnessSync(
-    excursao?.id ? `excursao:${excursao.id}` : null,
-    [{ table: "passageiros" }, { table: "seats" }, { table: "checkins" }],
     [
       ["staff-onibus-pax", excursao?.id, onibusId],
       ["staff-onibus-seats", excursao?.id, onibusId],

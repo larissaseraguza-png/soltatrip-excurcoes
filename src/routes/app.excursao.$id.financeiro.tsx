@@ -9,6 +9,7 @@ import {
 import { useState, useEffect, useMemo } from "react";
 import { useRealtimeSync } from "@/hooks/use-realtime-sync";
 import { OnibusFilterBadge } from "@/components/OnibusFilterBadge";
+import { emitSync } from "@/lib/sync/bus";
 
 export const Route = createFileRoute("/app/excursao/$id/financeiro")({
   validateSearch: (search: Record<string, unknown>) => ({
@@ -224,6 +225,7 @@ function FinanceiroPage() {
       toast.success("Pagamento confirmado.");
       qc.invalidateQueries({ queryKey: ["pagamentos", id, onibusId ?? "all"] });
       qc.invalidateQueries({ queryKey: ["fin-passageiros", id, onibusId ?? "all"] });
+      emitSync("pagamento");
     },
     onError: (e: any) => toast.error(e?.message ?? "Não foi possível confirmar."),
   });
