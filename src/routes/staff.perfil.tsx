@@ -7,6 +7,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useStaffExcursao } from "@/hooks/use-staff-excursao";
 import { signOutAndClean } from "@/lib/auth-cleanup";
 import { toast } from "sonner";
+import { emitSync } from "@/lib/sync/bus";
 
 export const Route = createFileRoute("/staff/perfil")({
   component: StaffPerfil,
