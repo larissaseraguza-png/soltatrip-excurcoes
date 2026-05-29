@@ -93,6 +93,16 @@ function FinanceiroStaff() {
     ],
   );
 
+  useFreshnessSync(
+    excursao?.id ? `excursao:${excursao.id}` : null,
+    [{ table: "reservas" }, { table: "pagamentos" }, { table: "passageiros" }, { table: "checkins" }],
+    [
+      ["staff-fin-reservas", excursao?.id, onibusId],
+      ["staff-fin-pagamentos", excursao?.id, onibusId],
+      ["staff-fin-pax", excursao?.id, onibusId],
+    ],
+  );
+
   const totals = useMemo(() => {
     if (onibusId) {
       // Bus-scoped: aggregate from passageiros
