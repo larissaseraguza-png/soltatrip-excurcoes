@@ -63,6 +63,7 @@ function CheckinPage() {
       .eq("id", pid);
     setFeedback({ ok: true, msg: `${nome} embarcou!` });
     qc.invalidateQueries({ queryKey: ["passageiros-checkin", id, onibusId ?? "all"] });
+    emitSync("checkin");
     setTimeout(() => setFeedback(null), 2500);
   }
 
