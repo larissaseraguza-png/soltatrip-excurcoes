@@ -159,6 +159,7 @@ function CheckinStaff() {
     notify.staff.desembarqueFeito(pax.nome, { link: "/staff/checkin" });
     qc.invalidateQueries({ queryKey: ["staff-checkin-pax", excursao.id, onibusId] });
     qc.invalidateQueries({ queryKey: ["staff-checkins", excursao.id, onibusId] });
+    emitSync("checkin");
   }
 
 
