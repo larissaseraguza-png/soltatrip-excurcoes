@@ -243,6 +243,7 @@ function Poltrona() {
         qc.invalidateQueries({ queryKey: ["pagto-passageiros"] }),
         qc.invalidateQueries({ queryKey: ["reservas-pagto"] }),
       ]);
+      emitSync("embarque");
     } catch (err: any) {
       toast.error(err.message ?? "Erro ao escolher poltrona");
     } finally {
