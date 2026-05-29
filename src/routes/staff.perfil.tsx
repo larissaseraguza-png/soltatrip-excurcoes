@@ -53,7 +53,10 @@ function StaffPerfil() {
     });
     setSaving(false);
     if (error) toast.error("Erro ao salvar.");
-    else toast.success("Perfil atualizado!");
+    else {
+      toast.success("Perfil atualizado!");
+      emitSync("dados");
+    }
   }
 
   async function logout() {
