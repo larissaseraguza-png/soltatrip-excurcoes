@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft, QrCode, Camera, CheckCircle2, X, Loader2, Search } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { OnibusFilterBadge } from "@/components/OnibusFilterBadge";
+import { emitSync } from "@/lib/sync/bus";
 
 export const Route = createFileRoute("/app/excursao/$id/checkin")({
   validateSearch: (search: Record<string, unknown>) => ({
