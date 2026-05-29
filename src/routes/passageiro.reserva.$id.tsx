@@ -203,6 +203,21 @@ function ReservaDetalhes() {
     notifyTripChange,
   );
 
+  // Sincronização leve por updated_at: ao focar/abrir a tela, verifica se houve
+  // alteração recente nas entidades da excursão e refaz queries se mudou.
+  useFreshnessSync(
+    reserva?.excursao?.id ? `excursao:${reserva.excursao.id}` : null,
+    [{ table: "reservas" }, { table: "pagamentos" }, { table: "passageiros" }, { table: "checkins" }],
+    [
+      ["reserva-grupo", id, user?.id],
+      ["reserva-passageiros", id],
+      ["reserva-pagamentos", id],
+      ["reserva-seats", reserva?.excursao?.id],
+    ],
+  );
+
+
+
 
   if (authLoading || isLoading) {
     return (
