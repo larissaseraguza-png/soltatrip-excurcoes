@@ -9,6 +9,7 @@ import {
 import { useState, useEffect, useMemo } from "react";
 import { useRealtimeSync } from "@/hooks/use-realtime-sync";
 import { OnibusFilterBadge } from "@/components/OnibusFilterBadge";
+import { emitSync } from "@/lib/sync/bus";
 
 export const Route = createFileRoute("/app/excursao/$id/financeiro")({
   validateSearch: (search: Record<string, unknown>) => ({
