@@ -6,6 +6,7 @@ import { FestaSelectorBanner, NoFestaSelected } from "@/components/staff/FestaSe
 import { supabase } from "@/integrations/supabase/client";
 import { useStaffExcursao } from "@/hooks/use-staff-excursao";
 import { useRealtimeSync } from "@/hooks/use-realtime-sync";
+import { useFreshnessSync } from "@/hooks/use-freshness-sync";
 import { SeatMap } from "@/components/SeatMap";
 import { Bus, Loader2 } from "lucide-react";
 
