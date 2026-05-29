@@ -8,6 +8,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useRealtimeSync } from "@/hooks/use-realtime-sync";
 import { Copy, Loader2, CheckCircle2, Armchair, QrCode, ExternalLink, CreditCard } from "lucide-react";
 import { notify } from "@/lib/notifications/emit";
+import { emitSync } from "@/lib/sync/bus";
 
 type Search = { reserva?: string };
 
