@@ -5,7 +5,6 @@ import { useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useRealtimeSync } from "@/hooks/use-realtime-sync";
-import { useFreshnessSync } from "@/hooks/use-freshness-sync";
 import { ArrowLeft, Calendar, MapPin, Clock, Users, DollarSign, Loader2, Trash2, ChevronRight, Wallet, QrCode, MapPinned, UserCog, Ban, ImagePlus, Bus, MessageCircle, Save, Ticket } from "lucide-react";
 import { SafeBoundary } from "@/components/SafeBoundary";
 import { BannerCropper } from "@/components/BannerCropper";
@@ -41,13 +40,6 @@ function ExcursaoDetalhe() {
     `excursao-detail-${id}`,
     [{ table: "excursoes", filter: `id=eq.${id}` }],
     [["excursao", id], ["excursoes"], ["excursoes-publicadas"], ["minhas-reservas"]],
-  );
-
-  // Revalidação leve por updated_at ao focar/abrir tela
-  useFreshnessSync(
-    `excursao:${id}`,
-    [{ table: "reservas" }, { table: "pagamentos" }, { table: "passageiros" }, { table: "checkins" }],
-    [["excursao", id], ["pontos", id], ["pontos-counts", id]],
   );
 
   async function handleCancel() {
