@@ -6,6 +6,7 @@ import { Shell } from "@/components/passageiro/Shell";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Loader2, Armchair, Check, MapPinned } from "lucide-react";
+import { emitSync } from "@/lib/sync/bus";
 
 type Search = { pax?: string; reserva?: string };
 
