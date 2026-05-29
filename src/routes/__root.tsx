@@ -152,6 +152,14 @@ function RootComponent() {
     return () => subscription.unsubscribe();
   }, [queryClient]);
 
+  // Sync leve cross-área: ao receber um topic, marca queries ativas como
+  // stale e refetcha apenas o que está montado na tela.
+  useEffect(() => {
+    return subscribeSync(() => {
+      queryClient.invalidateQueries();
+    });
+  }, [queryClient]);
+
   return (
     <QueryClientProvider client={queryClient}>
       <SafeBoundary label="App root">
