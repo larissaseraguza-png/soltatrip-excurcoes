@@ -136,6 +136,7 @@ function CheckinStaff() {
     notify.excursionista.checkinFeito(pax.nome, { link: `/app/excursao/${excursao.id}/checkin` });
     qc.invalidateQueries({ queryKey: ["staff-checkin-pax", excursao.id, onibusId] });
     qc.invalidateQueries({ queryKey: ["staff-checkins", excursao.id, onibusId] });
+    emitSync("checkin");
   }
 
   async function desembarcar(passageiroId: string) {
