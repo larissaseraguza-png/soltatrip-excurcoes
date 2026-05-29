@@ -61,6 +61,15 @@ function OnibusStaff() {
     ],
   );
 
+  useFreshnessSync(
+    excursao?.id ? `excursao:${excursao.id}` : null,
+    [{ table: "passageiros" }, { table: "seats" }, { table: "checkins" }],
+    [
+      ["staff-onibus-pax", excursao?.id, onibusId],
+      ["staff-onibus-seats", excursao?.id, onibusId],
+    ],
+  );
+
   const taken = useMemo(() => {
     const map: Record<string, { pago: boolean; nome: string }> = {};
     const paxBySeatId = new Map((passageiros as any[]).map((p) => [p.seat_id, p]));
