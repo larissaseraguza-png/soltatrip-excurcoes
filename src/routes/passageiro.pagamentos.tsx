@@ -198,6 +198,7 @@ function Pagamentos() {
         qc.invalidateQueries({ queryKey: ["pagto-passageiros"] }),
       ]);
       toast.success("Pagamento enviado! Aguardando confirmação manual do organizador.");
+      emitSync("pagamento");
       notify.passageiro.pagamentoPendente(`Aguardando confirmação de ${brl(v)}.`, { link: `/passageiro/reserva/${reservaAtiva.id}` });
       notify.excursionista.pagamentoPendente("Um passageiro", { link: `/app/excursao/${reservaAtiva.excursao.id}/financeiro` });
       // Fluxo automático: avançar para poltrona/embarque mesmo aguardando confirmação
