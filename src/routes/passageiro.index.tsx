@@ -237,6 +237,7 @@ function MinhasViagens() {
       }
 
       qc.invalidateQueries({ queryKey: ["minhas-reservas"] });
+      emitSync("reserva");
       setModalEx(null);
       navigate({ to: "/passageiro/pagamentos", search: { reserva: reservaId } as any });
     } catch (err: any) {
