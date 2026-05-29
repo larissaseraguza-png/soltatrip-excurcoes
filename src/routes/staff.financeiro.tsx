@@ -6,6 +6,7 @@ import { FestaSelectorBanner, NoFestaSelected } from "@/components/staff/FestaSe
 import { supabase } from "@/integrations/supabase/client";
 import { useStaffExcursao } from "@/hooks/use-staff-excursao";
 import { useRealtimeSync } from "@/hooks/use-realtime-sync";
+import { useFreshnessSync } from "@/hooks/use-freshness-sync";
 import { Wallet, Loader2, Lock, Bus } from "lucide-react";
 
 export const Route = createFileRoute("/staff/financeiro")({
