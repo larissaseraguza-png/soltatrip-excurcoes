@@ -52,7 +52,10 @@ function Perfil() {
     });
     setSaving(false);
     if (error) toast.error("Erro ao salvar perfil.");
-    else toast.success("Perfil atualizado!");
+    else {
+      toast.success("Perfil atualizado!");
+      emitSync("dados");
+    }
   }
 
   async function logout() {
