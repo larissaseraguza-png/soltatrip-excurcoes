@@ -43,6 +43,13 @@ function ExcursaoDetalhe() {
     [["excursao", id], ["excursoes"], ["excursoes-publicadas"], ["minhas-reservas"]],
   );
 
+  // Revalidação leve por updated_at ao focar/abrir tela
+  useFreshnessSync(
+    `excursao:${id}`,
+    [{ table: "reservas" }, { table: "pagamentos" }, { table: "passageiros" }, { table: "checkins" }],
+    [["excursao", id], ["pontos", id], ["pontos-counts", id]],
+  );
+
   async function handleCancel() {
     if (!confirm("Cancelar essa excursão? Ela ficará marcada como 'cancelada' para todos os passageiros e não receberá novas reservas.")) return;
     setBusy("cancel");
