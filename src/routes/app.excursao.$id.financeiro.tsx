@@ -225,6 +225,7 @@ function FinanceiroPage() {
       toast.success("Pagamento confirmado.");
       qc.invalidateQueries({ queryKey: ["pagamentos", id, onibusId ?? "all"] });
       qc.invalidateQueries({ queryKey: ["fin-passageiros", id, onibusId ?? "all"] });
+      emitSync("pagamento");
     },
     onError: (e: any) => toast.error(e?.message ?? "Não foi possível confirmar."),
   });
