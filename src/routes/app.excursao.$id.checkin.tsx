@@ -76,6 +76,7 @@ function CheckinPage() {
     if (error) { setFeedback({ ok: false, msg: error.message }); return; }
     setFeedback({ ok: true, msg: `Embarque de ${nome} removido.` });
     qc.invalidateQueries({ queryKey: ["passageiros-checkin", id, onibusId ?? "all"] });
+    emitSync("checkin");
     setTimeout(() => setFeedback(null), 2500);
   }
 
