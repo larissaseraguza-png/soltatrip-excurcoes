@@ -157,6 +157,7 @@ function CheckinStaff() {
     showFeedback(true, `Embarque de ${pax.nome} removido.`);
     toast.success(`${pax.nome} foi desembarcado.`);
     notify.staff.desembarqueFeito(pax.nome, { link: "/staff/checkin" });
+    notify.excursionista.alteracaoStaff(`${pax.nome} foi desembarcado.`, { link: `/app/excursao/${excursao.id}/checkin` });
     qc.invalidateQueries({ queryKey: ["staff-checkin-pax", excursao.id, onibusId] });
     qc.invalidateQueries({ queryKey: ["staff-checkins", excursao.id, onibusId] });
     emitSync("checkin");

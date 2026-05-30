@@ -5,6 +5,7 @@ import { ArrowLeft, QrCode, Camera, CheckCircle2, X, Loader2, Search } from "luc
 import { useEffect, useRef, useState } from "react";
 import { OnibusFilterBadge } from "@/components/OnibusFilterBadge";
 import { emitSync } from "@/lib/sync/bus";
+import { notify } from "@/lib/notifications/emit";
 
 export const Route = createFileRoute("/app/excursao/$id/checkin")({
   validateSearch: (search: Record<string, unknown>) => ({
@@ -63,6 +64,7 @@ function CheckinPage() {
       .eq("id", pid);
     setFeedback({ ok: true, msg: `${nome} embarcou!` });
     qc.invalidateQueries({ queryKey: ["passageiros-checkin", id, onibusId ?? "all"] });
+    notify.staff.checkinFeito(nome, { link: "/staff/checkin" });
     emitSync("checkin");
     setTimeout(() => setFeedback(null), 2500);
   }
