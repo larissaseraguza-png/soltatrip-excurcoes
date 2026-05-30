@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Loader2, Armchair, Check, MapPinned } from "lucide-react";
 import { emitSync } from "@/lib/sync/bus";
+import { notify } from "@/lib/notifications/emit";
 
 type Search = { pax?: string; reserva?: string };
 
@@ -271,6 +272,10 @@ function Poltrona() {
       qc.invalidateQueries({ queryKey: ["reserva-passageiros"] });
       qc.invalidateQueries({ queryKey: ["pagto-passageiros"] });
       qc.invalidateQueries({ queryKey: ["reserva-grupo"] });
+      const pontoNome = (pontos as any[]).find((p) => p.id === pontoId)?.nome;
+      const msg = pontoNome ? `Ponto atualizado: ${pontoNome}.` : "Ponto de embarque atualizado.";
+      notify.passageiro.alteracaoEmbarque(msg, { link: `/passageiro/reserva/${(reserva as any).reserva_id ?? reserva.id}` });
+      notify.staff.alteracaoEmbarque(`${pontoNome ? pontoNome + " — " : ""}atualizado por um passageiro.`, { link: "/staff/onibus" });
       emitSync("embarque");
     } catch (err: any) {
       toast.error(err.message ?? "Erro ao escolher embarque");
