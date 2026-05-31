@@ -315,6 +315,15 @@ function Pagamentos() {
 
   return (
     <Shell title="Pagamentos" subtitle={reservaAtiva.excursao.titulo}>
+      {(reservas?.length ?? 0) > 1 && (
+        <button
+          type="button"
+          onClick={() => navigate({ to: "/passageiro/pagamentos", search: {} as any })}
+          className="mb-4 inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground"
+        >
+          <ArrowLeft className="size-3.5" /> Trocar excursão
+        </button>
+      )}
       {/* Resumo */}
       <div className="glass rounded-3xl p-6 mb-5 relative overflow-hidden">
         <div className="absolute -right-10 -top-10 size-40 rounded-full bg-neon-green/20 blur-3xl" />
