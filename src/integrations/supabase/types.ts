@@ -1044,14 +1044,6 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      _fin_snapshot: {
-        Args: { _passageiro_id: string; _reserva_id: string }
-        Returns: {
-          valor_pago: number
-          valor_restante: number
-          valor_total: number
-        }[]
-      }
       _fmt_brl: { Args: { _v: number }; Returns: string }
       accept_socio_raiz_invitation: {
         Args: { p_token: string }
