@@ -50,7 +50,7 @@ function Pagamentos() {
       let q = supabase
         .from("reservas")
         .select(
-          "id, quantidade, total_price, amount_paid, payment_status, comprador_id, excursao:excursoes!reservas_excursao_id_fkey(id, titulo, destino, preco, data_evento)",
+          "id, quantidade, total_price, amount_paid, payment_status, comprador_id, excursao:excursoes!reservas_excursao_id_fkey(id, titulo, destino, preco, data_evento, banner_url, cor)",
         );
       if (linkedIds.length > 0) {
         q = q.or(`comprador_id.eq.${user!.id},id.in.(${linkedIds.join(",")})`);
