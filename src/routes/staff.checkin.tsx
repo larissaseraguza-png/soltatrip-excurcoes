@@ -11,6 +11,7 @@ import { useRealtimeSync } from "@/hooks/use-realtime-sync";
 import { CheckCircle2, XCircle, UserCheck, Loader2, Search, Camera, X, AlertTriangle, Bus, RotateCcw } from "lucide-react";
 import { emitBusinessEvent } from "@/lib/notifications/business";
 import { emitSync } from "@/lib/sync/bus";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 
 export const Route = createFileRoute("/staff/checkin")({
   component: CheckinStaff,
