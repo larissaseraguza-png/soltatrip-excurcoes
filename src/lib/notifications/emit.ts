@@ -59,7 +59,7 @@ export const notify = {
   },
   excursionista: {
     novaReserva: (nome: string, opts: Opts = {}) =>
-      add("excursionista", { icon: "ticket", tone: "purple", title: "Nova reserva", message: `${nome} reservou uma vaga.`, link: opts.link ?? "/app/pendentes", category: "reservas", excursao: opts.excursao }),
+      add("excursionista", { __key: "excursionista.novaReserva", icon: "ticket", tone: "purple", title: "Nova reserva", message: `${nome} reservou uma vaga.`, link: opts.link ?? "/app/pendentes", category: "reservas", excursao: opts.excursao }),
     pagamentoConfirmado: (nome: string, opts: Opts = {}) => {
       resolvePending("excursionista", { titleIncludes: "pendente", nomeNaMensagem: nome });
       add("excursionista", { icon: "credit-card", tone: "green", title: "Pagamento confirmado", message: `${nome} teve o pagamento confirmado.`, link: opts.link ?? "/app/pendentes", category: "pagamentos", excursao: opts.excursao });
