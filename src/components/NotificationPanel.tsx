@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/sheet";
 import { useNotifications } from "@/hooks/useNotifications";
 import { formatRelative, type NotifIconKey, type NotifRole, type NotifTone, type NotifCategory } from "@/lib/notifications/store";
+import { resolveNotificationRoute } from "@/lib/notifications/resolveRoute";
 
 const FILTERS_BY_ROLE: Record<NotifRole, { key: NotifCategory | "todas"; label: string }[]> = {
   excursionista: [
@@ -79,6 +80,10 @@ type Notif = {
   createdAt: number;
   link?: string;
   excursao?: string;
+  // Campos enriquecidos (V2) — usados pelo resolver dinâmico de rota.
+  __type?: string;
+  __data?: Record<string, unknown> | null;
+  __excursaoId?: string | null;
 };
 
 type Group = Notif & { count: number };
@@ -95,6 +100,9 @@ function groupNotifications(items: Notif[]): Group[] {
         existing.createdAt = n.createdAt;
         existing.message = n.message;
         existing.id = n.id;
+        existing.__type = n.__type;
+        existing.__data = n.__data;
+        existing.__excursaoId = n.__excursaoId;
       }
     } else {
       map.set(key, { ...n, count: 1 });
@@ -165,10 +173,16 @@ export function NotificationPanel({
       ? items
       : items.filter((n) => (n as any).category === filter);
 
-  const handleClick = (link?: string) => {
-    if (!link) return;
+  const handleClick = (g: Group) => {
+    const target = resolveNotificationRoute(
+      g.__type ?? "",
+      role,
+      g.__data ?? null,
+      g.__excursaoId ?? null,
+    );
+    if (!target) return;
     setOpen(false);
-    navigate({ to: link as never }).catch(() => {});
+    navigate({ to: target as never }).catch(() => {});
   };
 
   return (
@@ -243,15 +257,21 @@ export function NotificationPanel({
           ) : (
             groupNotifications(filteredItems).map((g) => {
               const Icon = iconMap[g.icon] ?? Bell;
-              const clickable = Boolean(g.link);
+              const target = resolveNotificationRoute(
+                g.__type ?? "",
+                role,
+                g.__data ?? null,
+                g.__excursaoId ?? null,
+              );
+              const clickable = Boolean(target);
               const displayTitle = g.count > 1 ? pluralTitle(g.title, g.count) : g.title;
               const quickAction =
-                role === "excursionista" && g.link ? quickActionLabel(g.title) : null;
+                role === "excursionista" && target ? quickActionLabel(g.title) : null;
               return (
                 <div key={g.id} className="border-b border-border/40">
                   <button
                     type="button"
-                    onClick={() => handleClick(g.link)}
+                    onClick={() => handleClick(g)}
                     disabled={!clickable}
                     className={`w-full text-left flex items-start gap-3 px-5 pt-4 ${quickAction ? "pb-2" : "pb-4"} transition ${
                       clickable ? "hover:bg-muted/40 active:bg-muted/60 cursor-pointer" : "cursor-default"
@@ -290,7 +310,7 @@ export function NotificationPanel({
                     <div className="px-5 pb-3 pl-[68px]">
                       <button
                         type="button"
-                        onClick={() => handleClick(g.link)}
+                        onClick={() => handleClick(g)}
                         className="text-xs font-semibold px-3 py-1.5 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 active:bg-primary/80 transition inline-flex items-center gap-1"
                       >
                         {quickAction}
