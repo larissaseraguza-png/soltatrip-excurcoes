@@ -52,10 +52,6 @@ export const notify = {
     },
     desembarqueFeito: (nome: string, opts: Opts = {}) =>
       add("staff", { __key: "staff.desembarqueFeito", icon: "log-out", tone: "pink", title: "Desembarque realizado", message: `${nome} desembarcou.`, link: opts.link ?? "/staff/checkin", category: "checkin", excursao: opts.excursao }),
-      add("staff", { icon: "check-circle", tone: "green", title: "Check-in realizado", message: `${nome} embarcou.`, link: opts.link ?? "/staff/checkin", category: "checkin", excursao: opts.excursao });
-    },
-    desembarqueFeito: (nome: string, opts: Opts = {}) =>
-      add("staff", { icon: "log-out", tone: "pink", title: "Desembarque realizado", message: `${nome} desembarcou.`, link: opts.link ?? "/staff/checkin", category: "checkin", excursao: opts.excursao }),
     alteracaoEmbarque: (msg = "Um ponto de embarque foi atualizado.", opts: Opts = {}) =>
       add("staff", { icon: "bus", tone: "blue", title: "Alteração de embarque", message: msg, link: opts.link ?? "/staff/onibus", category: "embarque", excursao: opts.excursao }),
     alteracaoExcursionista: (msg = "O excursionista fez alterações na excursão.", opts: Opts = {}) =>
