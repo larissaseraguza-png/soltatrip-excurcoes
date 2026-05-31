@@ -166,6 +166,69 @@ function Pagamentos() {
   }
 
   if (!reservaAtiva) {
+    if ((reservas?.length ?? 0) > 1) {
+      // Lista de excursões para o usuário escolher.
+      return (
+        <Shell title="Pagamentos" subtitle="Escolha uma excursão">
+          <ul className="space-y-4">
+            {reservas!.map((r: any) => {
+              const ex = r.excursao;
+              if (!ex) return null;
+              const totalR = Number(r.total_price) || 0;
+              const pagoR = Number(r.amount_paid) || 0;
+              const restanteR = Math.max(0, totalR - pagoR);
+              const pendValor = (pendentesPorReserva as Record<string, number>)[r.id] ?? 0;
+              let tone: any = "yellow";
+              let label = "Pendente";
+              if (r.payment_status === "paid") {
+                tone = "green"; label = "Quitado";
+              } else if (r.payment_status === "cancelled") {
+                tone = "muted"; label = "Cancelado";
+              } else if (pendValor > 0) {
+                tone = "yellow"; label = "Em análise";
+              } else if (pagoR > 0 && restanteR > 0) {
+                tone = "purple"; label = `Falta ${brl(restanteR)}`;
+              } else if (restanteR > 0) {
+                tone = "yellow"; label = `Falta ${brl(restanteR)}`;
+              }
+              return (
+                <li key={r.id}>
+                  <button
+                    type="button"
+                    onClick={() => navigate({ to: "/passageiro/pagamentos", search: { reserva: r.id } as any })}
+                    className="w-full text-left rounded-3xl overflow-hidden glass border border-transparent hover:border-neon-pink/40 transition"
+                  >
+                    <div
+                      className="h-28 relative"
+                      style={{
+                        background: ex.banner_url
+                          ? `url(${ex.banner_url}) center/cover`
+                          : `linear-gradient(135deg, ${ex.cor ?? "#a855f7"}, #ec4899)`,
+                      }}
+                    >
+                      <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/30 to-transparent" />
+                      <div className="absolute bottom-2 left-3 right-3 flex items-end justify-between gap-2">
+                        <h3 className="font-display font-black text-lg drop-shadow leading-tight truncate">{ex.titulo}</h3>
+                      </div>
+                    </div>
+                    <div className="p-4 flex items-center justify-between gap-3">
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                          <Calendar className="size-3" />
+                          {ex.data_evento ? new Date(ex.data_evento).toLocaleDateString("pt-BR") : "—"}
+                        </div>
+                        <div className="mt-1"><Pill tone={tone}>{label}</Pill></div>
+                      </div>
+                      <ChevronRight className="size-5 text-muted-foreground shrink-0" />
+                    </div>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </Shell>
+      );
+    }
     return (
       <Shell title="Pagamentos">
         <div className="glass rounded-3xl p-10 text-center">
