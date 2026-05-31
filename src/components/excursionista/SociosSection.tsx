@@ -95,7 +95,14 @@ export function SociosSection() {
   }
 
   async function removerSocio(mId: string) {
-    if (!confirm("Remover este sócio? Ele perderá acesso a todas as suas excursões.")) return;
+    const ok = await confirmAction({
+      title: "Remover sócio",
+      message: "Deseja remover este sócio?",
+      details: [{ label: "Efeito", value: "Perderá acesso a todas as suas excursões" }],
+      confirmLabel: "Remover sócio",
+      destructive: true,
+    });
+    if (!ok) return;
     await supabase.from("excursionista_socios").delete().eq("id", mId);
     qc.invalidateQueries({ queryKey: ["socios-raiz", user?.id] });
   }
