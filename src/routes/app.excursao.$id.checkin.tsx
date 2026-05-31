@@ -63,8 +63,8 @@ function CheckinPage() {
       .update({ status: "embarcado", embarcado_em: new Date().toISOString() })
       .eq("id", pid);
     setFeedback({ ok: true, msg: `${nome} embarcou!` });
-    qc.invalidateQueries({ queryKey: ["passageiros-checkin", id, onibusId ?? "all"] });
     notify.staff.checkinFeito(nome, { link: "/staff/checkin" });
+    // invalidação específica removida: o listener de sync escopa por tópico "checkin".
     emitSync("checkin");
     setTimeout(() => setFeedback(null), 2500);
   }
