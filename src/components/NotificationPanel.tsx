@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/sheet";
 import { useNotifications } from "@/hooks/useNotifications";
 import { formatRelative, type NotifIconKey, type NotifRole, type NotifTone, type NotifCategory } from "@/lib/notifications/store";
+import { resolveNotificationRoute } from "@/lib/notifications/resolveRoute";
 
 const FILTERS_BY_ROLE: Record<NotifRole, { key: NotifCategory | "todas"; label: string }[]> = {
   excursionista: [
