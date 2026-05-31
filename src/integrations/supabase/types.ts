@@ -1501,10 +1501,6 @@ export type Database = {
               isSetofReturn: false
             }
           }
-      recalc_passageiro_payments: {
-        Args: { _passageiro_id: string }
-        Returns: undefined
-      }
     }
     Enums: {
       app_role: "excursionista" | "staff" | "passageiro"
