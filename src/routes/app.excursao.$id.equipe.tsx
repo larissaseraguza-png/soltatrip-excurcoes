@@ -88,13 +88,26 @@ function EquipePage() {
   }
 
   async function revogar(invId: string) {
-    if (!confirm("Revogar este convite?")) return;
+    const ok = await confirmAction({
+      title: "Revogar convite",
+      message: "Deseja revogar este convite de staff?",
+      confirmLabel: "Revogar convite",
+      destructive: true,
+    });
+    if (!ok) return;
     await supabase.from("invitations").delete().eq("id", invId);
     qc.invalidateQueries({ queryKey: ["invites", id] });
   }
 
   async function removerMembro(mId: string) {
-    if (!confirm("Remover este staff da equipe?")) return;
+    const ok = await confirmAction({
+      title: "Remover membro da equipe",
+      message: "Deseja remover este staff da equipe?",
+      details: [{ label: "Ação", value: "Perda imediata de acesso à excursão" }],
+      confirmLabel: "Remover staff",
+      destructive: true,
+    });
+    if (!ok) return;
     await supabase.from("equipe_excursoes").delete().eq("id", mId);
     qc.invalidateQueries({ queryKey: ["equipe", id] });
   }
