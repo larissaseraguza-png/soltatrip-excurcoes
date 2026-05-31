@@ -565,7 +565,7 @@ function MinhasViagens() {
                     Voltar
                   </button>
                   <button
-                    onClick={confirmar}
+                    onClick={() => confirmar()}
                     disabled={reservando}
                     className="flex-1 h-12 rounded-2xl font-bold bg-primary text-primary-foreground glow-primary disabled:opacity-50 inline-flex items-center justify-center gap-2"
                   >
