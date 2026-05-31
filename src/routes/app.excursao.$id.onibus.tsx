@@ -273,6 +273,8 @@ function OnibusFormModal({
   const [embarques, setEmbarques] = useState<Embarque[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const confirmAction = useConfirm();
+
 
   // Carrega embarques do ônibus em edição
   useEffect(() => {
