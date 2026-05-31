@@ -321,7 +321,8 @@ function FinanceiroPage() {
           onibusId={onibusId ?? null}
           passageiros={passageiros.map((p) => ({ id: p.id, nome: p.nome, onibus_id: p.onibus_id }))}
           precoSugerido={Number(excursao?.preco ?? 0)}
-          onClose={() => setOpen(false)}
+          preselectedPaxId={preselectedPaxId}
+          onClose={() => { setOpen(false); setPreselectedPaxId(null); }}
         />
       )}
     </div>
