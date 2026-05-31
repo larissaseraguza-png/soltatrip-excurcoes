@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { OnibusFilterBadge } from "@/components/OnibusFilterBadge";
 import { emitSync } from "@/lib/sync/bus";
 import { emitBusinessEvent } from "@/lib/notifications/business";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 
 export const Route = createFileRoute("/app/excursao/$id/checkin")({
   validateSearch: (search: Record<string, unknown>) => ({
@@ -21,6 +22,7 @@ function CheckinPage() {
   const [scanning, setScanning] = useState(false);
   const [feedback, setFeedback] = useState<{ ok: boolean; msg: string } | null>(null);
   const [search, setSearch] = useState("");
+  const confirmAction = useConfirm();
 
   const { data: excursao } = useQuery({
     queryKey: ["excursao", id],
@@ -81,7 +83,17 @@ function CheckinPage() {
   }
 
   async function desembarcar(pid: string, nome: string) {
-    if (!confirm(`Remover embarque de ${nome}?`)) return;
+    const ok = await confirmAction({
+      title: "Confirmar ação",
+      message: `Deseja remover ${nome} do embarque?`,
+      details: [
+        { label: "Status atual", value: "Embarcado" },
+        { label: "Ação", value: "Remoção da lista de embarque" },
+      ],
+      confirmLabel: "Confirmar remoção",
+      destructive: true,
+    });
+    if (!ok) return;
     const { error } = await supabase
       .from("passageiros")
       .update({ status: "confirmado", embarcado_em: null })

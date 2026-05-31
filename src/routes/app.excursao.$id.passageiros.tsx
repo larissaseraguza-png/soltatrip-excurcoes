@@ -8,6 +8,7 @@ import { OnibusFilterBadge } from "@/components/OnibusFilterBadge";
 import { useRealtimeSync } from "@/hooks/use-realtime-sync";
 import { toast } from "sonner";
 import { emitBusinessEvent } from "@/lib/notifications/business";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 
 export const Route = createFileRoute("/app/excursao/$id/passageiros")({
   validateSearch: (search: Record<string, unknown>) => ({
@@ -40,6 +41,7 @@ function PassageirosPage() {
   const { onibus: onibusId } = useSearch({ from: "/app/excursao/$id/passageiros" });
   const qc = useQueryClient();
   const [search, setSearch] = useState("");
+  const confirmAction = useConfirm();
   const [pontoFilter, setPontoFilter] = useState<string>("todos");
   const [open, setOpen] = useState(false);
   const [showMap, setShowMap] = useState(false);
@@ -351,7 +353,19 @@ function PassageirosPage() {
                 </button>
                 <button
                   title="Remover"
-                  onClick={() => confirm(`Remover ${p.nome}?`) && removeMut.mutate(p.id)}
+                  onClick={async () => {
+                    const ok = await confirmAction({
+                      title: "Remover passageiro",
+                      message: `Deseja remover ${p.nome} da excursão?`,
+                      details: [
+                        { label: "Status atual", value: p.status },
+                        { label: "Ação", value: "Remoção da lista de passageiros" },
+                      ],
+                      confirmLabel: "Remover passageiro",
+                      destructive: true,
+                    });
+                    if (ok) removeMut.mutate(p.id);
+                  }}
                   className="h-8 w-8 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 flex items-center justify-center"
                 >
                   <Trash2 className="h-4 w-4" />
@@ -766,10 +780,12 @@ function FinanceiroPaxModal({
   onClose: () => void;
 }) {
   const qc = useQueryClient();
+  const confirmAction = useConfirm();
   const [valor, setValor] = useState("");
   const [metodo, setMetodo] = useState<"pix" | "dinheiro" | "cartao" | "transferencia" | "manual">("pix");
   const [observacao, setObservacao] = useState("");
   const [saving, setSaving] = useState(false);
+
 
   const { data: paxLive } = useQuery({
     queryKey: ["passageiro-fin", passageiro.id],
@@ -855,7 +871,14 @@ function FinanceiroPaxModal({
   }
 
   async function removePagamento(pid: string) {
-    if (!confirm("Remover este pagamento?")) return;
+    const ok = await confirmAction({
+      title: "Remover pagamento",
+      message: "Deseja remover este lançamento de pagamento?",
+      details: [{ label: "Ação", value: "Exclusão definitiva do registro" }],
+      confirmLabel: "Remover pagamento",
+      destructive: true,
+    });
+    if (!ok) return;
     const { error } = await supabase.from("pagamentos").delete().eq("id", pid);
     if (error) { toast.error(error.message); return; }
     toast.success("Pagamento removido");

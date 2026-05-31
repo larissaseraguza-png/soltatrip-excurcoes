@@ -11,6 +11,7 @@ import { useRealtimeSync } from "@/hooks/use-realtime-sync";
 import { CheckCircle2, XCircle, UserCheck, Loader2, Search, Camera, X, AlertTriangle, Bus, RotateCcw } from "lucide-react";
 import { emitBusinessEvent } from "@/lib/notifications/business";
 import { emitSync } from "@/lib/sync/bus";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 
 export const Route = createFileRoute("/staff/checkin")({
   component: CheckinStaff,
@@ -36,6 +37,7 @@ function CheckinStaff() {
   const [code, setCode] = useState("");
   const [scanning, setScanning] = useState(false);
   const [feedback, setFeedback] = useState<{ ok: boolean; msg: string } | null>(null);
+  const confirmAction = useConfirm();
   const lastScanRef = useRef<{ code: string; at: number }>({ code: "", at: 0 });
 
   const { data: passageiros = [] } = useQuery({
@@ -154,7 +156,17 @@ function CheckinStaff() {
     if (!excursao) return;
     const pax = paxById.get(passageiroId);
     if (!pax) return;
-    if (!confirm(`Remover embarque de ${pax.nome}? O passageiro poderá embarcar novamente.`)) return;
+    const ok = await confirmAction({
+      title: "Confirmar ação",
+      message: `Deseja remover ${pax.nome} do embarque?`,
+      details: [
+        { label: "Status atual", value: "Embarcado" },
+        { label: "Ação", value: "Remoção da lista de embarque" },
+      ],
+      confirmLabel: "Confirmar remoção",
+      destructive: true,
+    });
+    if (!ok) return;
     // Status volta para 'confirmado' (se houver pagamento) ou 'pendente'.
     const novoStatus = pax.payment_status === "paid" ? "confirmado" : "pendente";
     const { error } = await supabase

@@ -6,6 +6,7 @@ import { ArrowLeft, Plus, Loader2, Trash2, MapPin, Clock, Users } from "lucide-r
 import { useState } from "react";
 import { useRealtimeSync } from "@/hooks/use-realtime-sync";
 import { OnibusFilterBadge } from "@/components/OnibusFilterBadge";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 
 export const Route = createFileRoute("/app/excursao/$id/pontos")({
   validateSearch: (search: Record<string, unknown>) => ({
@@ -22,6 +23,8 @@ function PontosPage() {
   const qc = useQueryClient();
   const [form, setForm] = useState({ nome: "", endereco: "", referencia: "", horario: "" });
   const [saving, setSaving] = useState(false);
+  const confirmAction = useConfirm();
+
 
   const { data: pontos = [], isLoading } = useQuery({
     queryKey: ["pontos", id, onibusId ?? "all"],
@@ -183,7 +186,15 @@ function PontosPage() {
                 </div>
               </div>
               <button
-                onClick={() => confirm(`Remover ${p.nome}?`) && removeMut.mutate(p.id)}
+                onClick={async () => {
+                  const ok = await confirmAction({
+                    title: "Remover ponto de embarque",
+                    message: `Deseja remover o ponto "${p.nome}"?`,
+                    confirmLabel: "Remover",
+                    destructive: true,
+                  });
+                  if (ok) removeMut.mutate(p.id);
+                }}
                 className="h-8 w-8 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 flex items-center justify-center"
               >
                 <Trash2 className="h-4 w-4" />

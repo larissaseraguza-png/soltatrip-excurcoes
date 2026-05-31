@@ -9,6 +9,7 @@ import {
   ArrowLeft, Bus, ChevronRight, Loader2, Plus, Pencil, Trash2, Users,
   Clock, MapPin, DollarSign, X, BookMarked, Save,
 } from "lucide-react";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 
 export const Route = createFileRoute("/app/excursao/$id/onibus")({
   component: OnibusListPage,
@@ -43,6 +44,8 @@ function OnibusListPage() {
   const qc = useQueryClient();
   const [editing, setEditing] = useState<Onibus | null>(null);
   const [creating, setCreating] = useState(false);
+  const confirmAction = useConfirm();
+
 
   const { data: onibus = [], isLoading } = useQuery({
     queryKey: ["onibus", id],
@@ -119,7 +122,17 @@ function OnibusListPage() {
       toast.error(`Não é possível excluir: existem ${count} passageiros neste ônibus.`);
       return;
     }
-    if (!confirm(`Excluir o ônibus "${o.nome}"? Poltronas e embarques serão removidos.`)) return;
+    const ok = await confirmAction({
+      title: "Excluir ônibus",
+      message: `Deseja excluir o ônibus "${o.nome}"?`,
+      details: [
+        { label: "Status atual", value: "Sem passageiros vinculados" },
+        { label: "Ação", value: "Remove poltronas e pontos de embarque do ônibus" },
+      ],
+      confirmLabel: "Excluir ônibus",
+      destructive: true,
+    });
+    if (!ok) return;
     try {
       await supabase.from("pontos_embarque").delete().eq("onibus_id", o.id);
       await supabase.from("seats").delete().eq("onibus_id", o.id);
@@ -260,6 +273,8 @@ function OnibusFormModal({
   const [embarques, setEmbarques] = useState<Embarque[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const confirmAction = useConfirm();
+
 
   // Carrega embarques do ônibus em edição
   useEffect(() => {
@@ -366,7 +381,13 @@ function OnibusFormModal({
 
       if (isEdit && onibus) {
         if (cap < onibus.capacidade) {
-          if (!confirm("Reduzir a capacidade pode afetar poltronas já criadas. Continuar?")) {
+          const okCap = await confirmAction({
+            title: "Reduzir capacidade",
+            message: "Reduzir a capacidade pode afetar poltronas já criadas. Deseja continuar?",
+            confirmLabel: "Continuar",
+            destructive: true,
+          });
+          if (!okCap) {
             setBusy(false);
             return;
           }

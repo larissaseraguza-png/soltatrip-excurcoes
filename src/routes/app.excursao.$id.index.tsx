@@ -8,6 +8,7 @@ import { useRealtimeSync } from "@/hooks/use-realtime-sync";
 import { ArrowLeft, Calendar, MapPin, Clock, Users, DollarSign, Loader2, Trash2, ChevronRight, Wallet, QrCode, MapPinned, UserCog, Ban, ImagePlus, Bus, MessageCircle, Save, Ticket } from "lucide-react";
 import { SafeBoundary } from "@/components/SafeBoundary";
 import { BannerCropper } from "@/components/BannerCropper";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 
 
 export const Route = createFileRoute("/app/excursao/$id/")({
@@ -21,6 +22,7 @@ function ExcursaoDetalhe() {
   const qc = useQueryClient();
   const fileRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState<null | "cancel" | "delete" | "upload">(null);
+  const confirmAction = useConfirm();
   const [pendingFile, setPendingFile] = useState<File | null>(null);
 
   const { data, isLoading } = useQuery({
@@ -43,7 +45,17 @@ function ExcursaoDetalhe() {
   );
 
   async function handleCancel() {
-    if (!confirm("Cancelar essa excursão? Ela ficará marcada como 'cancelada' para todos os passageiros e não receberá novas reservas.")) return;
+    const ok = await confirmAction({
+      title: "Cancelar excursão",
+      message: "Deseja cancelar esta excursão?",
+      details: [
+        { label: "Ação", value: "Marca como 'cancelada' para todos os passageiros" },
+        { label: "Efeito", value: "Bloqueia novas reservas" },
+      ],
+      confirmLabel: "Cancelar excursão",
+      destructive: true,
+    });
+    if (!ok) return;
     setBusy("cancel");
     try {
       const { error } = await supabase
@@ -63,7 +75,17 @@ function ExcursaoDetalhe() {
   }
 
   async function handleDelete() {
-    if (!confirm("EXCLUIR definitivamente esta excursão? Todos os dados (passageiros, reservas, pagamentos) serão removidos. Esta ação não pode ser desfeita.")) return;
+    const ok = await confirmAction({
+      title: "Excluir excursão",
+      message: "Deseja excluir definitivamente esta excursão?",
+      details: [
+        { label: "Ação", value: "Remove passageiros, reservas e pagamentos" },
+        { label: "Aviso", value: "Esta ação não pode ser desfeita" },
+      ],
+      confirmLabel: "Excluir excursão",
+      destructive: true,
+    });
+    if (!ok) return;
     setBusy("delete");
     try {
       // Apaga dependentes (sem FK cascade)

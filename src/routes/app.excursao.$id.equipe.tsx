@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft, Loader2, Trash2, LinkIcon, Copy, Check, ShieldCheck, Users } from "lucide-react";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 
 export const Route = createFileRoute("/app/excursao/$id/equipe")({
   component: EquipePage,
@@ -36,6 +37,7 @@ function EquipePage() {
   const qc = useQueryClient();
   const [papel, setPapel] = useState("apoio");
   const [busy, setBusy] = useState(false);
+  const confirmAction = useConfirm();
   const [error, setError] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
@@ -86,13 +88,26 @@ function EquipePage() {
   }
 
   async function revogar(invId: string) {
-    if (!confirm("Revogar este convite?")) return;
+    const ok = await confirmAction({
+      title: "Revogar convite",
+      message: "Deseja revogar este convite de staff?",
+      confirmLabel: "Revogar convite",
+      destructive: true,
+    });
+    if (!ok) return;
     await supabase.from("invitations").delete().eq("id", invId);
     qc.invalidateQueries({ queryKey: ["invites", id] });
   }
 
   async function removerMembro(mId: string) {
-    if (!confirm("Remover este staff da equipe?")) return;
+    const ok = await confirmAction({
+      title: "Remover membro da equipe",
+      message: "Deseja remover este staff da equipe?",
+      details: [{ label: "Ação", value: "Perda imediata de acesso à excursão" }],
+      confirmLabel: "Remover staff",
+      destructive: true,
+    });
+    if (!ok) return;
     await supabase.from("equipe_excursoes").delete().eq("id", mId);
     qc.invalidateQueries({ queryKey: ["equipe", id] });
   }

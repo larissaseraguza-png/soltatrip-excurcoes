@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Loader2, Trash2, LinkIcon, Copy, Check, Crown, Handshake } from "lucide-react";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 
 type Invite = {
   id: string;
@@ -32,6 +33,7 @@ export function SociosSection() {
   const { user } = useAuth();
   const qc = useQueryClient();
   const [busy, setBusy] = useState(false);
+  const confirmAction = useConfirm();
   const [error, setError] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
@@ -81,13 +83,26 @@ export function SociosSection() {
   }
 
   async function revogar(invId: string) {
-    if (!confirm("Revogar este convite?")) return;
+    const ok = await confirmAction({
+      title: "Revogar convite",
+      message: "Deseja revogar este convite de sócio?",
+      confirmLabel: "Revogar convite",
+      destructive: true,
+    });
+    if (!ok) return;
     await supabase.from("invitations").delete().eq("id", invId);
     qc.invalidateQueries({ queryKey: ["invites-socios-raiz", user?.id] });
   }
 
   async function removerSocio(mId: string) {
-    if (!confirm("Remover este sócio? Ele perderá acesso a todas as suas excursões.")) return;
+    const ok = await confirmAction({
+      title: "Remover sócio",
+      message: "Deseja remover este sócio?",
+      details: [{ label: "Efeito", value: "Perderá acesso a todas as suas excursões" }],
+      confirmLabel: "Remover sócio",
+      destructive: true,
+    });
+    if (!ok) return;
     await supabase.from("excursionista_socios").delete().eq("id", mId);
     qc.invalidateQueries({ queryKey: ["socios-raiz", user?.id] });
   }
