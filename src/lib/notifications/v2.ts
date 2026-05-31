@@ -230,7 +230,7 @@ export function useNotificationsV2(role: NotifRole) {
     if (ids.length === 0) return;
     try {
       await Promise.allSettled(
-        ids.map((id) => supabase.rpc("notification_dismiss", { p_id: id })),
+        ids.map((id) => supabase.rpc("notification_dismiss", { _id: id })),
       );
     } catch (e) {
       console.warn("[notifications/v2] dismissAll failed:", e);
