@@ -83,7 +83,17 @@ function CheckinPage() {
   }
 
   async function desembarcar(pid: string, nome: string) {
-    if (!confirm(`Remover embarque de ${nome}?`)) return;
+    const ok = await confirmAction({
+      title: "Confirmar ação",
+      message: `Deseja remover ${nome} do embarque?`,
+      details: [
+        { label: "Status atual", value: "Embarcado" },
+        { label: "Ação", value: "Remoção da lista de embarque" },
+      ],
+      confirmLabel: "Confirmar remoção",
+      destructive: true,
+    });
+    if (!ok) return;
     const { error } = await supabase
       .from("passageiros")
       .update({ status: "confirmado", embarcado_em: null })
