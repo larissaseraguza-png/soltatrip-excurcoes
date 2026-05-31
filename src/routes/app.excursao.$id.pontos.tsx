@@ -6,6 +6,7 @@ import { ArrowLeft, Plus, Loader2, Trash2, MapPin, Clock, Users } from "lucide-r
 import { useState } from "react";
 import { useRealtimeSync } from "@/hooks/use-realtime-sync";
 import { OnibusFilterBadge } from "@/components/OnibusFilterBadge";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 
 export const Route = createFileRoute("/app/excursao/$id/pontos")({
   validateSearch: (search: Record<string, unknown>) => ({
