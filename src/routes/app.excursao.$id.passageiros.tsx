@@ -780,10 +780,12 @@ function FinanceiroPaxModal({
   onClose: () => void;
 }) {
   const qc = useQueryClient();
+  const confirmAction = useConfirm();
   const [valor, setValor] = useState("");
   const [metodo, setMetodo] = useState<"pix" | "dinheiro" | "cartao" | "transferencia" | "manual">("pix");
   const [observacao, setObservacao] = useState("");
   const [saving, setSaving] = useState(false);
+
 
   const { data: paxLive } = useQuery({
     queryKey: ["passageiro-fin", passageiro.id],
