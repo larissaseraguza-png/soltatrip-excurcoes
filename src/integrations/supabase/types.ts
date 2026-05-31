@@ -1071,6 +1071,23 @@ export type Database = {
         }
         Returns: string
       }
+      emit_business_event: {
+        Args: {
+          _data?: Json
+          _dedupe_key?: string
+          _excursao_id: string
+          _extra_recipients?: string[]
+          _link?: string
+          _message?: string
+          _pagamento_id?: string
+          _passageiro_id?: string
+          _recipient_roles?: string[]
+          _reserva_id?: string
+          _title?: string
+          _type: Database["public"]["Enums"]["notification_type"]
+        }
+        Returns: undefined
+      }
       get_email_by_phone: { Args: { p_phone: string }; Returns: string }
       get_excursao_payment_info: {
         Args: { p_excursao_id: string }
@@ -1247,26 +1264,46 @@ export type Database = {
         Args: { _excursao_id?: string }
         Returns: number
       }
-      notify_emit: {
-        Args: {
-          _actor_id?: string
-          _category: Database["public"]["Enums"]["notification_category"]
-          _data?: Json
-          _dedupe_key?: string
-          _excursao_id?: string
-          _link?: string
-          _message?: string
-          _pagamento_id?: string
-          _passageiro_id?: string
-          _priority?: number
-          _recipients: string[]
-          _reserva_id?: string
-          _tenant_id?: string
-          _title: string
-          _type: Database["public"]["Enums"]["notification_type"]
-        }
-        Returns: number
-      }
+      notify_emit:
+        | {
+            Args: {
+              _actor_id?: string
+              _category: Database["public"]["Enums"]["notification_category"]
+              _data?: Json
+              _dedupe_key?: string
+              _excursao_id?: string
+              _link?: string
+              _message?: string
+              _pagamento_id?: string
+              _passageiro_id?: string
+              _priority?: number
+              _recipients: string[]
+              _reserva_id?: string
+              _tenant_id?: string
+              _title: string
+              _type: Database["public"]["Enums"]["notification_type"]
+            }
+            Returns: number
+          }
+        | {
+            Args: {
+              _actor_id: string
+              _category: Database["public"]["Enums"]["notification_category"]
+              _data: Json
+              _dedupe_key: string
+              _excursao_id: string
+              _link: string
+              _message: string
+              _pagamento_id: string
+              _passageiro_id: string
+              _recipients: string[]
+              _reserva_id: string
+              _tenant_id: string
+              _title: string
+              _type: Database["public"]["Enums"]["notification_type"]
+            }
+            Returns: undefined
+          }
       notify_resolve_recipients: {
         Args: {
           _excursao_id: string
