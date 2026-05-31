@@ -33,7 +33,7 @@ export const Route = createFileRoute("/passageiro/reserva/$id")({
   component: ReservaDetalhes,
 });
 
-const PIX_KEY = "soltatrip@pix.com.br";
+
 
 function brl(v: number) {
   return v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -45,10 +45,6 @@ function ReservaDetalhes() {
   const navigate = useNavigate();
   const qc = useQueryClient();
 
-  const [metodo, setMetodo] = useState<"pix" | "pix_parcelado" | "debito" | "credito">("pix");
-  const [valor, setValor] = useState<string>("");
-  const [submitting, setSubmitting] = useState(false);
-  const [copied, setCopied] = useState(false);
 
   const { data: reserva, isLoading } = useQuery({
     queryKey: ["reserva-grupo", id, user?.id],
@@ -262,35 +258,6 @@ function ReservaDetalhes() {
   const faltamPoltronas = passageirosList.some((p) => !p.seat_id);
   const faltamEmbarques = passageirosList.some((p) => p.seat_id && !p.ponto_embarque_id);
 
-  async function pagar() {
-    const v = Number(valor.replace(",", "."));
-    if (!v || v <= 0) return toast.error("Informe um valor válido");
-    if (v > restante + 0.001) return toast.error(`Valor máximo: ${brl(restante)}`);
-    if (pago > 0 && v >= restante - 0.001 && (faltamPoltronas || faltamEmbarques)) {
-      return toast.error("Confirme as poltronas e os pontos de embarque antes de finalizar o pagamento.");
-    }
-    setSubmitting(true);
-    try {
-      const { error } = await supabase.from("pagamentos").insert({
-        reserva_id: reserva.id,
-        excursao_id: ex.id,
-        valor: v,
-        metodo,
-        parcelas: 1,
-        status: "confirmado",
-        pago_em: new Date().toISOString(),
-      } as any);
-      if (error) throw error;
-      setValor("");
-      qc.invalidateQueries({ queryKey: ["reserva-grupo", id] });
-      qc.invalidateQueries({ queryKey: ["reserva-pagamentos", id] });
-      qc.invalidateQueries({ queryKey: ["reserva-passageiros", id] });
-    } catch (err: any) {
-      toast.error(err.message ?? "Erro");
-    } finally {
-      setSubmitting(false);
-    }
-  }
 
   async function escolherPonto(paxId: string, pontoId: string) {
     const { error } = await supabase
@@ -404,127 +371,6 @@ function ReservaDetalhes() {
         </div>
       )}
 
-      {/* Pagamento consolidado */}
-      <div className="glass rounded-3xl p-5 mb-5">
-        <div className="flex items-center gap-2 mb-3">
-          <Wallet className="size-5 text-neon-green" />
-          <h3 className="font-display font-bold">Pagamento da reserva</h3>
-        </div>
-
-        <div className="flex items-end justify-between">
-          <div>
-            <p className="text-xs text-muted-foreground">
-              Total ({reserva.quantidade} × {brl(Number(ex?.preco) || 0)})
-            </p>
-            <p className="font-display font-black text-3xl bg-gradient-to-r from-neon-pink to-neon-green bg-clip-text text-transparent">
-              {brl(total)}
-            </p>
-          </div>
-          <Pill tone={s.tone}>{pct}%</Pill>
-        </div>
-        <div className="mt-3 h-2 rounded-full bg-muted overflow-hidden">
-          <div
-            className="h-full bg-gradient-to-r from-neon-purple to-neon-green transition-all"
-            style={{ width: `${pct}%` }}
-          />
-        </div>
-        <div className="grid grid-cols-2 gap-3 mt-4 text-sm">
-          <div className="bg-background/40 rounded-2xl p-3">
-            <p className="text-xs text-muted-foreground">Pago</p>
-            <p className="font-bold text-neon-green">{brl(pago)}</p>
-          </div>
-          <div className="bg-background/40 rounded-2xl p-3">
-            <p className="text-xs text-muted-foreground">Restante</p>
-            <p className="font-bold">{brl(restante)}</p>
-          </div>
-        </div>
-
-        {/* Form pagamento */}
-        {isComprador && restante > 0 && status !== "cancelled" && (
-          <div className="mt-5 pt-5 border-t border-border space-y-3">
-            <p className="text-xs text-muted-foreground">Método</p>
-            <div className="grid grid-cols-2 gap-2">
-              {[
-                { v: "pix", l: "PIX total" },
-                { v: "pix_parcelado", l: "PIX fracionado" },
-                { v: "debito", l: "Débito" },
-                { v: "credito", l: "Crédito" },
-              ].map((m) => (
-                <button
-                  key={m.v}
-                  onClick={() => {
-                    setMetodo(m.v as any);
-                    if (m.v === "pix") setValor(restante.toFixed(2));
-                  }}
-                  className={`py-2.5 rounded-xl text-xs font-bold transition ${
-                    metodo === m.v
-                      ? "bg-gradient-to-br from-neon-purple/30 to-neon-pink/20 text-neon-pink border border-neon-pink/40"
-                      : "bg-background/40 text-muted-foreground"
-                  }`}
-                >
-                  {m.l}
-                </button>
-              ))}
-            </div>
-
-            <input
-              inputMode="decimal"
-              value={valor}
-              onChange={(e) => setValor(e.target.value)}
-              placeholder={`Valor (máx ${restante.toFixed(2)})`}
-              className="w-full h-12 rounded-xl bg-background/40 px-4 text-sm"
-            />
-
-            {(metodo === "pix" || metodo === "pix_parcelado") && (
-              <div className="bg-background/50 rounded-2xl px-4 py-3 flex items-center justify-between">
-                <code className="text-sm font-mono truncate">{PIX_KEY}</code>
-                <button
-                  onClick={() => {
-                    navigator.clipboard.writeText(PIX_KEY);
-                    setCopied(true);
-                    setTimeout(() => setCopied(false), 1500);
-                  }}
-                  className="ml-2 size-9 grid place-items-center rounded-xl bg-gradient-to-br from-neon-purple to-neon-pink text-primary-foreground"
-                >
-                  <Copy className="size-4" />
-                </button>
-              </div>
-            )}
-            {copied && <p className="text-xs text-neon-green">Chave copiada!</p>}
-
-            <button
-              onClick={pagar}
-              disabled={submitting}
-              className="w-full h-12 rounded-2xl font-bold bg-primary text-primary-foreground glow-primary disabled:opacity-50 inline-flex items-center justify-center gap-2"
-            >
-              {submitting && <Loader2 className="size-4 animate-spin" />}
-              Confirmar pagamento
-            </button>
-          </div>
-        )}
-
-        {pagamentos.length > 0 && (
-          <details className="mt-4">
-            <summary className="text-xs text-muted-foreground cursor-pointer">
-              Histórico ({pagamentos.length})
-            </summary>
-            <div className="space-y-2 mt-2">
-              {pagamentos.map((p: any) => (
-                <div
-                  key={p.id}
-                  className="flex items-center justify-between text-xs bg-background/30 rounded-xl p-2"
-                >
-                  <span className="flex items-center gap-1.5">
-                    <CheckCircle2 className="size-3 text-neon-green" />{" "}
-                    {String(p.metodo).replace("_", " ")}
-                  </span>
-                  <span className="font-bold">{brl(Number(p.valor))}</span>
-                </div>
-              ))}
-            </div>
-          </details>
-        )}
-      </div>
 
       {/* Lista de passageiros */}
       <h2 className="font-display font-bold text-lg mb-3 flex items-center gap-2">
@@ -644,6 +490,73 @@ function ReservaDetalhes() {
             </div>
           );
         })}
+      </div>
+
+      {/* Histórico financeiro — bloco final (ações vivem em /passageiro/pagamentos) */}
+      <div className="glass rounded-3xl p-5 mt-6">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <Wallet className="size-5 text-neon-green" />
+            <h3 className="font-display font-bold">Histórico financeiro</h3>
+          </div>
+          <Pill tone={s.tone}>{s.label}</Pill>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3 text-sm mb-3">
+          <div className="bg-background/40 rounded-2xl p-3">
+            <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Total</p>
+            <p className="font-bold">{brl(total)}</p>
+          </div>
+          <div className="bg-background/40 rounded-2xl p-3">
+            <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Pago</p>
+            <p className="font-bold text-neon-green">{brl(pago)}</p>
+          </div>
+        </div>
+
+        {restante > 0 && status !== "cancelled" && (
+          <>
+            <div className="h-2 rounded-full bg-muted overflow-hidden mb-3">
+              <div
+                className="h-full bg-gradient-to-r from-neon-purple to-neon-green transition-all"
+                style={{ width: `${pct}%` }}
+              />
+            </div>
+            <p className="text-xs text-muted-foreground mb-3">
+              Falta pagar <span className="font-bold text-neon-pink">{brl(restante)}</span>
+            </p>
+            {isComprador && (
+              <Link
+                to="/passageiro/pagamentos"
+                search={{ reserva: reserva.id } as any}
+                className="w-full h-12 rounded-2xl font-bold bg-gradient-to-r from-neon-purple to-neon-pink text-primary-foreground glow-primary inline-flex items-center justify-center gap-2"
+              >
+                <Wallet className="size-4" /> Ir para pagamentos
+              </Link>
+            )}
+          </>
+        )}
+
+        {pagamentos.length > 0 && (
+          <details className="mt-3">
+            <summary className="text-xs text-muted-foreground cursor-pointer">
+              Histórico ({pagamentos.length})
+            </summary>
+            <div className="space-y-2 mt-2">
+              {pagamentos.map((p: any) => (
+                <div
+                  key={p.id}
+                  className="flex items-center justify-between text-xs bg-background/30 rounded-xl p-2"
+                >
+                  <span className="flex items-center gap-1.5">
+                    <CheckCircle2 className="size-3 text-neon-green" />{" "}
+                    {String(p.metodo).replace("_", " ")}
+                  </span>
+                  <span className="font-bold">{brl(Number(p.valor))}</span>
+                </div>
+              ))}
+            </div>
+          </details>
+        )}
       </div>
     </Shell>
   );
