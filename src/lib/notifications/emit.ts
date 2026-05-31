@@ -65,7 +65,7 @@ export const notify = {
       add("excursionista", { icon: "credit-card", tone: "green", title: "Pagamento confirmado", message: `${nome} teve o pagamento confirmado.`, link: opts.link ?? "/app/pendentes", category: "pagamentos", excursao: opts.excursao });
     },
     pagamentoPendente: (nome: string, opts: Opts = {}) =>
-      add("excursionista", { icon: "clock", tone: "amber", title: "Pagamento pendente", message: `${nome} enviou um pagamento para conferência.`, link: opts.link ?? "/app/pendentes", category: "pagamentos", excursao: opts.excursao }),
+      add("excursionista", { __key: "excursionista.pagamentoPendente", icon: "clock", tone: "amber", title: "Pagamento pendente", message: `${nome} enviou um pagamento para conferência.`, link: opts.link ?? "/app/pendentes", category: "pagamentos", excursao: opts.excursao }),
     checkinFeito: (nome: string, opts: Opts = {}) => {
       resolvePending("excursionista", { titleIncludes: "pendente", nomeNaMensagem: nome });
       add("excursionista", { icon: "check-circle", tone: "green", title: "Check-in realizado", message: `${nome} embarcou.`, link: opts.link ?? "/app", category: "checkin", excursao: opts.excursao });
