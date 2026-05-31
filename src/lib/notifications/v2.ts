@@ -267,8 +267,11 @@ export function useNotificationsV2(role: NotifRole) {
         );
       };
 
+      // Nome único por mount para evitar reuso do mesmo channel entre
+      // StrictMode/duplas montagens (erro "cannot add postgres_changes ... after subscribe()").
+      const channelName = `notifications:${uid}:${Math.random().toString(36).slice(2, 10)}`;
       channel = supabase
-        .channel(`notifications:${uid}`)
+        .channel(channelName)
         .on(
           "postgres_changes",
           { event: "INSERT", schema: "public", table: "notifications", filter: `recipient_id=eq.${uid}` },
