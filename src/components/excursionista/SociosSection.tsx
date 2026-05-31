@@ -83,7 +83,13 @@ export function SociosSection() {
   }
 
   async function revogar(invId: string) {
-    if (!confirm("Revogar este convite?")) return;
+    const ok = await confirmAction({
+      title: "Revogar convite",
+      message: "Deseja revogar este convite de sócio?",
+      confirmLabel: "Revogar convite",
+      destructive: true,
+    });
+    if (!ok) return;
     await supabase.from("invitations").delete().eq("id", invId);
     qc.invalidateQueries({ queryKey: ["invites-socios-raiz", user?.id] });
   }
