@@ -45,7 +45,17 @@ function ExcursaoDetalhe() {
   );
 
   async function handleCancel() {
-    if (!confirm("Cancelar essa excursão? Ela ficará marcada como 'cancelada' para todos os passageiros e não receberá novas reservas.")) return;
+    const ok = await confirmAction({
+      title: "Cancelar excursão",
+      message: "Deseja cancelar esta excursão?",
+      details: [
+        { label: "Ação", value: "Marca como 'cancelada' para todos os passageiros" },
+        { label: "Efeito", value: "Bloqueia novas reservas" },
+      ],
+      confirmLabel: "Cancelar excursão",
+      destructive: true,
+    });
+    if (!ok) return;
     setBusy("cancel");
     try {
       const { error } = await supabase
