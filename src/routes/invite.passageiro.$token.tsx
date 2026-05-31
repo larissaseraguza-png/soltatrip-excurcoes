@@ -8,7 +8,7 @@ import { isFlowLocked } from "@/config/flow-mode";
 import { Bus, Loader2, CheckCircle2, AlertCircle, Ticket } from "lucide-react";
 import { useSlowLoad } from "@/hooks/use-slow-load";
 import { SlowFallback } from "@/components/SlowFallback";
-import { notify } from "@/lib/notifications/emit";
+import { emitBusinessEvent } from "@/lib/notifications/business";
 
 export const Route = createFileRoute("/invite/passageiro/$token")({
   beforeLoad: () => {
@@ -62,9 +62,19 @@ function InvitePassageiroPage() {
       setActiveRole("passageiro");
       setDone(true);
       const reservaId = data as unknown as string;
-      notify.excursionista.novaReserva(invite?.nome ?? "Novo passageiro", {
-        link: invite?.excursao_id ? `/app/excursao/${invite.excursao_id}/passageiros` : "/app/pendentes",
-      });
+      if (invite?.excursao_id) {
+        void emitBusinessEvent({
+          type: "invitation.accepted",
+          excursaoId: invite.excursao_id,
+          reservaId: reservaId ?? null,
+          title: "Convite de passageiro aceito",
+          message: `${invite?.nome ?? "Novo passageiro"} aceitou o convite.`,
+          link: `/app/excursao/${invite.excursao_id}/passageiros`,
+          recipientRoles: ["organizer_root", "organizer_socios"],
+          dedupeKey: `invitation.accepted:passageiro:${token}`,
+          data: { nome: invite?.nome ?? null, reserva_id: reservaId ?? null },
+        });
+      }
       setTimeout(() => navigate({ to: "/passageiro/reserva/$id", params: { id: reservaId }, replace: true }), 1000);
     } catch (err: any) {
       const msg = err.message ?? "";

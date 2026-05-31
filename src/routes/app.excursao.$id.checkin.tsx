@@ -5,7 +5,6 @@ import { ArrowLeft, QrCode, Camera, CheckCircle2, X, Loader2, Search } from "luc
 import { useEffect, useRef, useState } from "react";
 import { OnibusFilterBadge } from "@/components/OnibusFilterBadge";
 import { emitSync } from "@/lib/sync/bus";
-import { notify } from "@/lib/notifications/emit";
 import { emitBusinessEvent } from "@/lib/notifications/business";
 
 export const Route = createFileRoute("/app/excursao/$id/checkin")({
@@ -64,7 +63,7 @@ function CheckinPage() {
       .update({ status: "embarcado", embarcado_em: new Date().toISOString() })
       .eq("id", pid);
     setFeedback({ ok: true, msg: `${nome} embarcou!` });
-    notify.staff.checkinFeito(nome, { link: "/staff/checkin" });
+    // Notificação de check-in centralizada via emit_business_event (cobre staff + organizadores + sócios)
     void emitBusinessEvent({
       type: "checkin.done",
       excursaoId: id,

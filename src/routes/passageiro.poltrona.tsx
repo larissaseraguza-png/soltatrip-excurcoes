@@ -7,7 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Loader2, Armchair, Check, MapPinned } from "lucide-react";
 import { emitSync } from "@/lib/sync/bus";
-import { notify } from "@/lib/notifications/emit";
+// notify removido — alteração de ponto pelo passageiro não emite notificação (passageiro é o próprio ator).
 
 type Search = { pax?: string; reserva?: string };
 
@@ -272,10 +272,10 @@ function Poltrona() {
       qc.invalidateQueries({ queryKey: ["reserva-passageiros"] });
       qc.invalidateQueries({ queryKey: ["pagto-passageiros"] });
       qc.invalidateQueries({ queryKey: ["reserva-grupo"] });
-      const pontoNome = (pontos as any[]).find((p) => p.id === pontoId)?.nome;
-      const msg = pontoNome ? `Ponto atualizado: ${pontoNome}.` : "Ponto de embarque atualizado.";
-      notify.passageiro.alteracaoEmbarque(msg, { link: `/passageiro/reserva/${(reserva as any).reserva_id ?? reserva.id}` });
-      notify.staff.alteracaoEmbarque(`${pontoNome ? pontoNome + " — " : ""}atualizado por um passageiro.`, { link: "/staff/onibus" });
+      // Atualização visual local apenas; notificação para staff/organizadores não
+      // é emitida nesta versão (evento boarding.point_changed não está modelado).
+      void pontos;
+
       // emitSync removido: escolherPoltrona já emite "embarque"; o listener
       // global cuida das invalidações. Evita refetch duplicado.
     } catch (err: any) {

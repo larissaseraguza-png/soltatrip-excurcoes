@@ -7,7 +7,7 @@ import { SeatMap } from "@/components/SeatMap";
 import { OnibusFilterBadge } from "@/components/OnibusFilterBadge";
 import { useRealtimeSync } from "@/hooks/use-realtime-sync";
 import { toast } from "sonner";
-import { notify } from "@/lib/notifications/emit";
+import { emitBusinessEvent } from "@/lib/notifications/business";
 
 export const Route = createFileRoute("/app/excursao/$id/passageiros")({
   validateSearch: (search: Record<string, unknown>) => ({
@@ -582,8 +582,16 @@ function NewPassageiroModal({
       return;
     }
     toast.success("Passageiro manual adicionado");
-    notify.excursionista.novaReserva(form.nome.trim(), { link: `/app/excursao/${excursaoId}/passageiros` });
-    notify.staff.novoPassageiro(form.nome.trim(), { link: `/staff/passageiros` });
+    void emitBusinessEvent({
+      type: "booking.created",
+      excursaoId,
+      title: "Novo passageiro",
+      message: `${form.nome.trim()} foi adicionado manualmente.`,
+      link: `/app/excursao/${excursaoId}/passageiros`,
+      recipientRoles: ["organizer_root", "organizer_socios", "staff_excursao"],
+      dedupeKey: `booking.manual:${excursaoId}:${form.nome.trim()}:${Date.now()}`,
+      data: { fonte: "manual", nome: form.nome.trim() },
+    });
     qc.invalidateQueries({ queryKey: ["passageiros", excursaoId, onibusId ?? null] });
     qc.invalidateQueries({ queryKey: ["seats", excursaoId, onibusId ?? null] });
     qc.invalidateQueries({ queryKey: ["pontos-counts", excursaoId] });
@@ -834,9 +842,8 @@ function FinanceiroPaxModal({
       return;
     }
     toast.success(`+ R$ ${v.toFixed(2)} registrado`);
-    notify.excursionista.pagamentoConfirmado(passageiro.nome, { link: `/app/excursao/${excursaoId}/financeiro` });
-    const _reservaId = (passageiro as any).reserva_id as string | undefined;
-    notify.passageiro.pagamentoAprovado(`R$ ${v.toFixed(2)} confirmado pelo organizador.`, { link: _reservaId ? `/passageiro/reserva/${_reservaId}` : "/passageiro/pagamentos" });
+    // Pagamento manual: trigger DB sobre `pagamentos` emite payment.approved ao passageiro.
+
     setValor("");
     setObservacao("");
     qc.invalidateQueries({ queryKey: ["pagamentos-pax", passageiro.id] });

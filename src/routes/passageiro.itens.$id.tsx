@@ -11,7 +11,6 @@ import {
   CreditCard, ExternalLink, ThumbsUp, AlertTriangle, CircleDot,
 } from "lucide-react";
 import { Shell } from "@/components/passageiro/Shell";
-import { notify } from "@/lib/notifications/emit";
 import { emitBusinessEvent } from "@/lib/notifications/business";
 
 export const Route = createFileRoute("/passageiro/itens/$id")({
@@ -244,9 +243,9 @@ function ItemCard({ item, excursaoId, userId }: { item: any; excursaoId: string;
         toast.success("Combo reservado! Escolha ônibus, poltrona e embarque.");
         if (novaReservaId) {
           const reservaLink = reservaId ? `/passageiro/reserva/${reservaId}` : "/passageiro";
-          notify.passageiro.reservaCriada(undefined, { link: reservaLink });
-          notify.passageiro.qrLiberado(undefined, { link: reservaLink });
-          notify.excursionista.novaReserva("Novo passageiro", { link: `/app/excursao/${excursaoId}/passageiros` });
+          // booking.created da nova reserva é emitido pela trigger DB em `reservas`;
+          // o item.ordered (abaixo) cobre a faceta de pedido para organizadores/sócios.
+
           void emitBusinessEvent({
             type: "item.ordered",
             excursaoId: excursaoId,

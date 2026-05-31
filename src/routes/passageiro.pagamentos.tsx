@@ -7,7 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useRealtimeSync } from "@/hooks/use-realtime-sync";
 import { Copy, Loader2, CheckCircle2, Armchair, QrCode, ExternalLink, CreditCard, ChevronRight, ArrowLeft, Calendar } from "lucide-react";
-import { notify } from "@/lib/notifications/emit";
+// notify removido — payment.submitted é emitido pela trigger DB ao inserir em `pagamentos`.
 import { emitSync } from "@/lib/sync/bus";
 
 type Search = { reserva?: string };
@@ -283,8 +283,9 @@ function Pagamentos() {
       ]);
       toast.success("Pagamento enviado! Aguardando confirmação manual do organizador.");
       emitSync("pagamento");
-      notify.passageiro.pagamentoPendente(`Aguardando confirmação de ${brl(v)}.`, { link: `/passageiro/reserva/${reservaAtiva.id}` });
-      notify.excursionista.pagamentoPendente("Um passageiro", { link: `/app/excursao/${reservaAtiva.excursao.id}/financeiro` });
+      // payment.submitted dispara via trigger DB para organizador raiz + sócios.
+      void brl(v);
+
       // Fluxo automático: avançar para poltrona/embarque mesmo aguardando confirmação
       if (faltamPoltronas || faltamEmbarques) {
         navigate({

@@ -241,21 +241,7 @@ export function useNotificationsV2(role: NotifRole) {
   return { items, markAllRead, dismissAllVisible };
 }
 
-/**
- * Tipos de evento já cobertos por triggers no banco (F0).
- * O `emit.ts` consulta esta lista para suprimir emissões locais equivalentes
- * e evitar notificações duplicadas (local + V2) durante a migração.
- */
-export const SUPPRESSED_LOCAL_EMITS = new Set<string>([
-  // === Triggers de pagamento (F0) ===
-  "excursionista.pagamentoPendente", // payment.submitted
-  "passageiro.pagamentoAprovado",    // payment.approved/rejected/manual_recorded
-  // === Triggers de reserva (F0) ===
-  "excursionista.novaReserva",       // booking.created
-  // === RPC emit_business_event (F2) ===
-  "staff.checkinFeito",              // checkin.done
-  "excursionista.checkinFeito",      // checkin.done
-  "staff.desembarqueFeito",          // checkin.undone
-  "excursionista.novoStaff",         // team.added
-  "excursionista.novoSocio",         // socio.accepted
-]);
+// SUPPRESSED_LOCAL_EMITS removido na consolidação F2: não há mais emissão
+// local concorrente para suprimir — todo evento de negócio passa por trigger
+// de banco ou pela RPC `emit_business_event`.
+
