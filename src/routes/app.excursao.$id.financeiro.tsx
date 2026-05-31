@@ -9,7 +9,7 @@ import {
 import { useState, useEffect, useMemo } from "react";
 import { useRealtimeSync } from "@/hooks/use-realtime-sync";
 import { OnibusFilterBadge } from "@/components/OnibusFilterBadge";
-import { emitSync } from "@/lib/sync/bus";
+// emitSync removido — não há mais auto-confirmação que precise sincronizar.
 // notify removido — pagamentos disparam notificações via trigger DB (payment.approved → passageiro).
 
 export const Route = createFileRoute("/app/excursao/$id/financeiro")({
@@ -56,6 +56,7 @@ function FinanceiroPage() {
   const { onibus: onibusId } = useSearch({ from: "/app/excursao/$id/financeiro" });
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
+  const [preselectedPaxId, setPreselectedPaxId] = useState<string | null>(null);
   const [filterAction, setFilterAction] = useState<"all" | "todo">("all");
 
   const { data: excursao } = useQuery({
@@ -211,30 +212,13 @@ function FinanceiroPage() {
   const todoCount = rows.filter((r) => needsAction(r)).length;
   const visibleRows = filterAction === "todo" ? rows.filter(needsAction) : rows;
 
-  const confirmarPagamento = useMutation({
-    mutationFn: async (pax: Passageiro) => {
-      const restante = Math.max(0, Number(pax.total_price) - Number(pax.amount_paid));
-      if (restante <= 0) throw new Error("Já está totalmente pago.");
-      const { error } = await supabase.from("pagamentos").insert({
-        excursao_id: id, onibus_id: pax.onibus_id, passageiro_id: pax.id,
-        valor: restante, metodo: "manual", status: "confirmado",
-        observacao: "Confirmado pelo organizador", pago_em: new Date().toISOString(),
-      });
-      if (error) throw error;
-    },
-    onSuccess: (_data, pax) => {
-      toast.success("Pagamento confirmado.");
-      qc.invalidateQueries({ queryKey: ["pagamentos", id, onibusId ?? "all"] });
-      qc.invalidateQueries({ queryKey: ["fin-passageiros", id, onibusId ?? "all"] });
-      // Pagamento confirmado: a trigger DB sobre `pagamentos` emite payment.approved
-      // ao passageiro automaticamente. Organizadores são o ator, então não recebem
-      // duplicidade (actor != recipient garantido pelo notify_emit).
-      void pax;
-
-      emitSync("pagamento");
-    },
-    onError: (e: any) => toast.error(e?.message ?? "Não foi possível confirmar."),
-  });
+  // Regra: não inferimos mais "quitado" automaticamente. O chip "Registrar pagamento"
+  // abre o modal de lançamento pré-selecionando o passageiro; o organizador informa
+  // o valor exato e decide o status (default: pendente até confirmação explícita).
+  const abrirLancamento = (paxId: string) => {
+    setPreselectedPaxId(paxId);
+    setOpen(true);
+  };
 
   const marcarEnviado = useMutation({
     mutationFn: async (pedido: PedidoItem) => {
@@ -319,9 +303,9 @@ function FinanceiroPage() {
               itemById={itemById}
               onibusById={onibusById}
               pontoById={pontoById}
-              onConfirmar={() => r.passageiro && confirmarPagamento.mutate(r.passageiro)}
+              onConfirmar={() => r.passageiro && abrirLancamento(r.passageiro.id)}
               onMarcarEnviado={(p) => marcarEnviado.mutate(p)}
-              confirmandoId={confirmarPagamento.isPending ? r.passageiro?.id : undefined}
+              confirmandoId={undefined}
             />
           ))}
         </ul>
@@ -337,7 +321,8 @@ function FinanceiroPage() {
           onibusId={onibusId ?? null}
           passageiros={passageiros.map((p) => ({ id: p.id, nome: p.nome, onibus_id: p.onibus_id }))}
           precoSugerido={Number(excursao?.preco ?? 0)}
-          onClose={() => setOpen(false)}
+          preselectedPaxId={preselectedPaxId}
+          onClose={() => { setOpen(false); setPreselectedPaxId(null); }}
         />
       )}
     </div>
@@ -601,23 +586,25 @@ function Stat({ icon: Icon, label, value, color }: { icon: any; label: string; v
 }
 
 function NewPagamentoModal({
-  excursaoId, onibusId, passageiros, precoSugerido, onClose,
+  excursaoId, onibusId, passageiros, precoSugerido, preselectedPaxId, onClose,
 }: {
   excursaoId: string;
   onibusId: string | null;
   passageiros: { id: string; nome: string; onibus_id: string | null }[];
   precoSugerido: number;
+  preselectedPaxId?: string | null;
   onClose: () => void;
 }) {
   const qc = useQueryClient();
   const [form, setForm] = useState({
-    passageiro_id: passageiros[0]?.id ?? "",
-    valor: String(precoSugerido),
+    passageiro_id: preselectedPaxId ?? passageiros[0]?.id ?? "",
+    valor: "",
     metodo: "pix",
     status: "pendente",
     observacao: "",
   });
   const [saving, setSaving] = useState(false);
+  void precoSugerido;
 
   async function save(e: React.FormEvent) {
     e.preventDefault();
