@@ -156,7 +156,17 @@ function CheckinStaff() {
     if (!excursao) return;
     const pax = paxById.get(passageiroId);
     if (!pax) return;
-    if (!confirm(`Remover embarque de ${pax.nome}? O passageiro poderá embarcar novamente.`)) return;
+    const ok = await confirmAction({
+      title: "Confirmar ação",
+      message: `Deseja remover ${pax.nome} do embarque?`,
+      details: [
+        { label: "Status atual", value: "Embarcado" },
+        { label: "Ação", value: "Remoção da lista de embarque" },
+      ],
+      confirmLabel: "Confirmar remoção",
+      destructive: true,
+    });
+    if (!ok) return;
     // Status volta para 'confirmado' (se houver pagamento) ou 'pendente'.
     const novoStatus = pax.payment_status === "paid" ? "confirmado" : "pendente";
     const { error } = await supabase
