@@ -310,7 +310,7 @@ export function NotificationPanel({
                     <div className="px-5 pb-3 pl-[68px]">
                       <button
                         type="button"
-                        onClick={() => handleClick(g.link)}
+                        onClick={() => handleClick(g)}
                         className="text-xs font-semibold px-3 py-1.5 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 active:bg-primary/80 transition inline-flex items-center gap-1"
                       >
                         {quickAction}
