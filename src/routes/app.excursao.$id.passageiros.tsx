@@ -565,11 +565,7 @@ function NewPassageiroModal({
   const paid = Number(form.amount_paid || 0);
   const restante = Math.max(0, total - paid);
 
-  function autoPaymentStatus(t: number, p: number): "paid" | "partial_payment" | "pending_payment" {
-    if (t > 0 && p >= t) return "paid";
-    if (p > 0) return "partial_payment";
-    return "pending_payment";
-  }
+  // Sem inferência automática de status. O organizador define explicitamente.
 
   async function save(e: React.FormEvent) {
     e.preventDefault();
@@ -677,19 +673,14 @@ function NewPassageiroModal({
               <Field
                 label="Valor total (R$)"
                 value={form.total_price}
-                onChange={(v) => {
-                  const t = Number(v || 0);
-                  setForm({ ...form, total_price: v, payment_status: autoPaymentStatus(t, paid) });
-                }}
+                onChange={(v) => setForm({ ...form, total_price: v })}
               />
               <Field
                 label="Valor pago (R$)"
                 value={form.amount_paid}
-                onChange={(v) => {
-                  const p = Number(v || 0);
-                  setForm({ ...form, amount_paid: v, payment_status: autoPaymentStatus(total, p) });
-                }}
+                onChange={(v) => setForm({ ...form, amount_paid: v })}
               />
+
             </div>
             <div className="flex items-center justify-between text-xs">
               <span className="text-muted-foreground">Restante</span>
