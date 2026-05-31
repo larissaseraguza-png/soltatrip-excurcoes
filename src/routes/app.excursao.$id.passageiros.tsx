@@ -827,21 +827,23 @@ function FinanceiroPaxModal({
       return;
     }
     setSaving(true);
+    // Regra: novos lançamentos entram como "pendente" com o valor exato informado.
+    // O status só muda para "pago" via confirmação explícita (toggleStatus abaixo).
     const { error } = await supabase.from("pagamentos").insert({
       excursao_id: excursaoId,
       passageiro_id: passageiro.id,
       valor: v,
       metodo,
-      status: "pago",
+      status: "pendente",
       observacao: observacao || null,
-      pago_em: new Date().toISOString(),
+      pago_em: null,
     });
     setSaving(false);
     if (error) {
       toast.error(error.message);
       return;
     }
-    toast.success(`+ R$ ${v.toFixed(2)} registrado`);
+    toast.success(`Lançamento de R$ ${v.toFixed(2)} registrado (pendente).`);
     // Pagamento manual: trigger DB sobre `pagamentos` emite payment.approved ao passageiro.
 
     setValor("");
