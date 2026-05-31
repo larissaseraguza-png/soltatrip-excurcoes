@@ -23,6 +23,8 @@ function PontosPage() {
   const qc = useQueryClient();
   const [form, setForm] = useState({ nome: "", endereco: "", referencia: "", horario: "" });
   const [saving, setSaving] = useState(false);
+  const confirmAction = useConfirm();
+
 
   const { data: pontos = [], isLoading } = useQuery({
     queryKey: ["pontos", id, onibusId ?? "all"],
