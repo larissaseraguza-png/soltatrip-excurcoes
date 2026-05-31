@@ -161,7 +161,7 @@ export function NotificationPanel({
   children: React.ReactNode;
   role?: NotifRole;
 }) {
-  const { items, markAllRead, clearAll } = useNotifications(role);
+  const { items, markAllRead, clearAll, markRead, dismiss } = useNotifications(role);
   const [open, setOpen] = useState(false);
   const [filter, setFilter] = useState<NotifCategory | "todas">("todas");
   const roleFilters = FILTERS_BY_ROLE[role] ?? [];
@@ -183,6 +183,16 @@ export function NotificationPanel({
       g.__data ?? null,
       g.__excursaoId ?? null,
     );
+    // Comportamento por papel:
+    // - passageiro/staff: não há ação pendente → marca como lida E dismiss
+    //   (some do sino imediatamente).
+    // - excursionista: apenas marca como lida (continua visível até resolução).
+    const ids = g.__dbIds.length > 0 ? g.__dbIds : g.__dbId ? [g.__dbId] : [];
+    if (role === "excursionista") {
+      ids.forEach((id) => void markRead(id));
+    } else {
+      ids.forEach((id) => void dismiss(id));
+    }
     if (!target) return;
     setOpen(false);
     navigate({ to: target as never }).catch(() => {});
