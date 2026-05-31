@@ -9,7 +9,7 @@ import {
 import { useState, useEffect, useMemo } from "react";
 import { useRealtimeSync } from "@/hooks/use-realtime-sync";
 import { OnibusFilterBadge } from "@/components/OnibusFilterBadge";
-import { emitSync } from "@/lib/sync/bus";
+// emitSync removido — não há mais auto-confirmação que precise sincronizar.
 // notify removido — pagamentos disparam notificações via trigger DB (payment.approved → passageiro).
 
 export const Route = createFileRoute("/app/excursao/$id/financeiro")({
