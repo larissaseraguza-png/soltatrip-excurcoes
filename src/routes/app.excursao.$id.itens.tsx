@@ -311,7 +311,14 @@ function ItemEditor({
 
   async function remove() {
     if (!item) return;
-    if (!confirm("Remover este item? Pedidos relacionados também serão excluídos.")) return;
+    const ok = await confirmAction({
+      title: "Remover item",
+      message: "Deseja remover este item da excursão?",
+      details: [{ label: "Ação", value: "Pedidos relacionados também serão excluídos" }],
+      confirmLabel: "Remover item",
+      destructive: true,
+    });
+    if (!ok) return;
     setBusy(true);
     try {
       const { error } = await supabase.from("excursao_itens").delete().eq("id", item.id);
