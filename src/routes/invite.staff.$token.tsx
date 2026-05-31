@@ -87,7 +87,21 @@ function InviteStaffPage() {
       setActiveRole(destino === "/app" ? "excursionista" : "staff");
       const nomeAceitante = (user?.user_metadata?.full_name as string) || (user?.email?.split("@")[0] ?? "Novo membro");
       if (invite?.papel === "socio_raiz") notify.excursionista.novoSocio(nomeAceitante);
-      else notify.excursionista.novoStaff(nomeAceitante);
+      else {
+        notify.excursionista.novoStaff(nomeAceitante);
+        if (invite?.excursao_id) {
+          void emitBusinessEvent({
+            type: "team.added",
+            excursaoId: invite.excursao_id,
+            title: "Novo staff",
+            message: `${nomeAceitante} entrou na equipe.`,
+            link: "/app/perfil",
+            recipientRoles: ["organizer_root", "organizer_socios"],
+            dedupeKey: `team.added:${invite.excursao_id}:${user?.id ?? "anon"}`,
+            data: { nome: nomeAceitante, papel: invite?.papel },
+          });
+        }
+      }
       setDone(true);
       setTimeout(() => {
         if (typeof window !== "undefined") window.location.replace(destino);
