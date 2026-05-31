@@ -214,50 +214,53 @@ export function NotificationPanel({
               </p>
             </div>
           ) : (
-            groupNotifications(filteredItems).map((g) => {
-              const Icon = iconMap[g.icon] ?? Bell;
+            (filteredItems as Notif[]).map((n) => {
+              const Icon = iconMap[n.icon] ?? Bell;
               const target = resolveNotificationRoute(
-                g.__type ?? "",
+                n.__type ?? "",
                 role,
-                g.__data ?? null,
-                g.__excursaoId ?? null,
+                n.__data ?? null,
+                n.__excursaoId ?? null,
               );
               const clickable = Boolean(target);
-              const displayTitle = g.count > 1 ? pluralTitle(g.title, g.count) : g.title;
               const quickAction =
-                role === "excursionista" && target ? quickActionLabel(g.title) : null;
+                role === "excursionista" && target ? quickActionLabel(n.title) : null;
+              const unread = !n.read;
               return (
-                <div key={g.id} className="border-b border-border/40">
+                <div
+                  key={n.id}
+                  className={`border-b border-border/40 ${unread ? "bg-primary/[0.04]" : ""}`}
+                >
                   <button
                     type="button"
-                    onClick={() => handleClick(g)}
+                    onClick={() => handleClick(n)}
                     disabled={!clickable}
                     className={`w-full text-left flex items-start gap-3 px-5 pt-4 ${quickAction ? "pb-2" : "pb-4"} transition ${
                       clickable ? "hover:bg-muted/40 active:bg-muted/60 cursor-pointer" : "cursor-default"
                     }`}
                   >
-                    <div className={`relative size-9 grid place-items-center rounded-full shrink-0 ${toneMap[g.tone]}`}>
+                    <div className={`relative size-9 grid place-items-center rounded-full shrink-0 ${toneMap[n.tone]}`}>
                       <Icon className="size-4" />
-                      {g.count > 1 && (
-                        <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 grid place-items-center text-[10px] font-bold rounded-full bg-neon-pink text-white border-2 border-background">
-                          {g.count > 99 ? "99+" : g.count}
-                        </span>
+                      {unread && (
+                        <span className="absolute -top-0.5 -right-0.5 size-2.5 rounded-full bg-neon-pink border-2 border-background" />
                       )}
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-start justify-between gap-2">
-                        <p className="text-sm font-semibold leading-snug truncate">{displayTitle}</p>
+                        <p className={`text-sm leading-snug truncate ${unread ? "font-semibold" : "font-medium text-muted-foreground"}`}>
+                          {n.title}
+                        </p>
                         <span className="text-[10px] text-muted-foreground shrink-0 mt-0.5">
-                          {formatRelative(g.createdAt, now)}
+                          {formatRelative(n.createdAt, now)}
                         </span>
                       </div>
                       <p className="text-xs text-muted-foreground leading-snug mt-0.5 line-clamp-2">
-                        {g.count > 1 ? `Última: ${g.message}` : g.message}
+                        {n.message}
                       </p>
-                      {g.excursao && (
+                      {n.excursao && (
                         <span className="inline-flex items-center gap-1 mt-1.5 text-[10px] font-medium px-2 py-0.5 rounded-full bg-primary/10 text-primary max-w-full truncate">
                           <Calendar className="size-3 shrink-0" />
-                          <span className="truncate">{g.excursao}</span>
+                          <span className="truncate">{n.excursao}</span>
                         </span>
                       )}
                     </div>
@@ -269,7 +272,7 @@ export function NotificationPanel({
                     <div className="px-5 pb-3 pl-[68px]">
                       <button
                         type="button"
-                        onClick={() => handleClick(g)}
+                        onClick={() => handleClick(n)}
                         className="text-xs font-semibold px-3 py-1.5 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 active:bg-primary/80 transition inline-flex items-center gap-1"
                       >
                         {quickAction}
