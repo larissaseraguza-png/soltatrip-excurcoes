@@ -17,7 +17,7 @@ export const Route = createFileRoute("/app/excursao/$id/checkin")({
 function CheckinPage() {
   const { id } = useParams({ from: "/app/excursao/$id/checkin" });
   const { onibus: onibusId } = useSearch({ from: "/app/excursao/$id/checkin" });
-  const qc = useQueryClient();
+  // qc removido: invalidações centralizadas via emitSync + listener global.
   const [scanning, setScanning] = useState(false);
   const [feedback, setFeedback] = useState<{ ok: boolean; msg: string } | null>(null);
   const [search, setSearch] = useState("");
