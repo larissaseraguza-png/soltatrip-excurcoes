@@ -379,7 +379,7 @@ export function useNotificationsV2(role: NotifRole) {
     }
   }, [items, queryClient]);
 
-  return { items, markAllRead, dismissAllVisible };
+  return { items, markAllRead, dismissAllVisible, markRead, dismiss };
 }
 
 
