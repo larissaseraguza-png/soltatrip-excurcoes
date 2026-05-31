@@ -8,6 +8,7 @@ import { OnibusFilterBadge } from "@/components/OnibusFilterBadge";
 import { useRealtimeSync } from "@/hooks/use-realtime-sync";
 import { toast } from "sonner";
 import { emitBusinessEvent } from "@/lib/notifications/business";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 
 export const Route = createFileRoute("/app/excursao/$id/passageiros")({
   validateSearch: (search: Record<string, unknown>) => ({
