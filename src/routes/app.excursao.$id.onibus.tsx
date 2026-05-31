@@ -44,6 +44,8 @@ function OnibusListPage() {
   const qc = useQueryClient();
   const [editing, setEditing] = useState<Onibus | null>(null);
   const [creating, setCreating] = useState(false);
+  const confirmAction = useConfirm();
+
 
   const { data: onibus = [], isLoading } = useQuery({
     queryKey: ["onibus", id],
