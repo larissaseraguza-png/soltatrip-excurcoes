@@ -247,12 +247,15 @@ export function useNotificationsV2(role: NotifRole) {
  * e evitar notificações duplicadas (local + V2) durante a migração.
  */
 export const SUPPRESSED_LOCAL_EMITS = new Set<string>([
-  // payment.submitted (notifica raiz + sócios)
-  "excursionista.pagamentoPendente",
-  // payment.approved / payment.rejected / payment.manual_recorded
-  "passageiro.pagamentoAprovado",
-  // booking.created (notifica raiz + sócios)
-  "excursionista.novaReserva",
-  // booking.paid (notifica comprador)
-  // -> não há equivalente local para o passageiro hoje; nada a suprimir
+  // === Triggers de pagamento (F0) ===
+  "excursionista.pagamentoPendente", // payment.submitted
+  "passageiro.pagamentoAprovado",    // payment.approved/rejected/manual_recorded
+  // === Triggers de reserva (F0) ===
+  "excursionista.novaReserva",       // booking.created
+  // === RPC emit_business_event (F2) ===
+  "staff.checkinFeito",              // checkin.done
+  "excursionista.checkinFeito",      // checkin.done
+  "staff.desembarqueFeito",          // checkin.undone
+  "excursionista.novoStaff",         // team.added
+  "excursionista.novoSocio",         // socio.accepted
 ]);
