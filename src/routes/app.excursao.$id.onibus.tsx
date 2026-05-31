@@ -122,7 +122,17 @@ function OnibusListPage() {
       toast.error(`Não é possível excluir: existem ${count} passageiros neste ônibus.`);
       return;
     }
-    if (!confirm(`Excluir o ônibus "${o.nome}"? Poltronas e embarques serão removidos.`)) return;
+    const ok = await confirmAction({
+      title: "Excluir ônibus",
+      message: `Deseja excluir o ônibus "${o.nome}"?`,
+      details: [
+        { label: "Status atual", value: "Sem passageiros vinculados" },
+        { label: "Ação", value: "Remove poltronas e pontos de embarque do ônibus" },
+      ],
+      confirmLabel: "Excluir ônibus",
+      destructive: true,
+    });
+    if (!ok) return;
     try {
       await supabase.from("pontos_embarque").delete().eq("onibus_id", o.id);
       await supabase.from("seats").delete().eq("onibus_id", o.id);
