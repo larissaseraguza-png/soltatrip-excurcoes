@@ -161,7 +161,7 @@ function RootComponent() {
       if (!prefixes || prefixes.length === 0) return;
       const allow = new Set<string>(prefixes);
       queryClient.invalidateQueries({
-        predicate: (q) => {
+        predicate: (q: { queryKey: readonly unknown[] }) => {
           const first = q.queryKey?.[0];
           return typeof first === "string" && allow.has(first);
         },
