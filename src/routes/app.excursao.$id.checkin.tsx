@@ -22,6 +22,7 @@ function CheckinPage() {
   const [scanning, setScanning] = useState(false);
   const [feedback, setFeedback] = useState<{ ok: boolean; msg: string } | null>(null);
   const [search, setSearch] = useState("");
+  const confirmAction = useConfirm();
 
   const { data: excursao } = useQuery({
     queryKey: ["excursao", id],
