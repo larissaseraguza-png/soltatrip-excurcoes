@@ -152,11 +152,20 @@ function RootComponent() {
     return () => subscription.unsubscribe();
   }, [queryClient]);
 
-  // Sync leve cross-área: ao receber um topic, marca queries ativas como
-  // stale e refetcha apenas o que está montado na tela.
+  // Sync leve cross-área: ao receber um topic, invalida APENAS as queries
+  // cuja primeira chave pertence ao escopo do tópico, evitando refetch global
+  // (que causava piscar/recarregar a tela inteira).
   useEffect(() => {
-    return subscribeSync(() => {
-      queryClient.invalidateQueries();
+    return subscribeSync((topic) => {
+      const prefixes = SYNC_TOPIC_KEYS[topic];
+      if (!prefixes || prefixes.length === 0) return;
+      const allow = new Set<string>(prefixes);
+      queryClient.invalidateQueries({
+        predicate: (q) => {
+          const first = q.queryKey?.[0];
+          return typeof first === "string" && allow.has(first);
+        },
+      });
     });
   }, [queryClient]);
 
