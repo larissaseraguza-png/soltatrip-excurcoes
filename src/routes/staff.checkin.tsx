@@ -37,6 +37,7 @@ function CheckinStaff() {
   const [code, setCode] = useState("");
   const [scanning, setScanning] = useState(false);
   const [feedback, setFeedback] = useState<{ ok: boolean; msg: string } | null>(null);
+  const confirmAction = useConfirm();
   const lastScanRef = useRef<{ code: string; at: number }>({ code: "", at: 0 });
 
   const { data: passageiros = [] } = useQuery({
