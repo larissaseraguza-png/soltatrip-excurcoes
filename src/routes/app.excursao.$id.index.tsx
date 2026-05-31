@@ -75,7 +75,17 @@ function ExcursaoDetalhe() {
   }
 
   async function handleDelete() {
-    if (!confirm("EXCLUIR definitivamente esta excursão? Todos os dados (passageiros, reservas, pagamentos) serão removidos. Esta ação não pode ser desfeita.")) return;
+    const ok = await confirmAction({
+      title: "Excluir excursão",
+      message: "Deseja excluir definitivamente esta excursão?",
+      details: [
+        { label: "Ação", value: "Remove passageiros, reservas e pagamentos" },
+        { label: "Aviso", value: "Esta ação não pode ser desfeita" },
+      ],
+      confirmLabel: "Excluir excursão",
+      destructive: true,
+    });
+    if (!ok) return;
     setBusy("delete");
     try {
       // Apaga dependentes (sem FK cascade)
