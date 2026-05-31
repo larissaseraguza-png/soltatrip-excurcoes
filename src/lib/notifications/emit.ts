@@ -1,7 +1,11 @@
 import { addNotification, resolveNotifications, type AddInput, type NotifRole } from "./store";
+import { SUPPRESSED_LOCAL_EMITS } from "./v2";
 
-function add(role: NotifRole, n: Omit<AddInput, "role">) {
-  addNotification({ ...n, role });
+function add(role: NotifRole, n: Omit<AddInput, "role"> & { __key?: string }) {
+  if (n.__key && SUPPRESSED_LOCAL_EMITS.has(n.__key)) return;
+  const { __key, ...payload } = n;
+  void __key;
+  addNotification({ ...payload, role });
 }
 
 /**
