@@ -14,7 +14,13 @@
 import { supabase } from "@/integrations/supabase/client";
 
 export type BusinessEventType =
-  // payment.* e booking.created/paid ficam por conta das triggers DB.
+  // payment.submitted/approved/rejected e booking.created/paid ficam por conta
+  // de triggers no banco. Os tipos abaixo são os emitidos a partir do cliente
+  // via RPC unificada — qualquer tipo do enum `notification_type` é aceito
+  // para casos especiais (ex.: booking.created manual feito pelo organizador).
+  | "payment.manual_recorded"
+  | "booking.created"
+  | "booking.cancelled"
   | "checkin.done"
   | "checkin.undone"
   | "boarding.done"
@@ -29,8 +35,11 @@ export type BusinessEventType =
   | "item.ordered"
   | "item.delivered"
   | "item.received_confirmed"
+  | "excursion.published"
   | "excursion.updated"
-  | "excursion.cancelled";
+  | "excursion.cancelled"
+  | "system.info"
+  | "system.warning";
 
 export type RecipientRole =
   | "organizer_root"
