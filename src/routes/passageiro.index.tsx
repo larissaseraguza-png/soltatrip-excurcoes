@@ -187,18 +187,25 @@ function MinhasViagens() {
       }
     }
     setPaxs(next);
+    // Reserva individual: o titular já tem nome e email da conta autenticada,
+    // não há motivo para abrir o passo de confirmação dos dados.
+    if (qtd === 1) {
+      confirmar(next);
+      return;
+    }
     setStep("pax");
   }
 
-  async function confirmar() {
+  async function confirmar(paxsOverride?: Pax[]) {
     if (!user || !modalEx) return;
+    const paxsToUse = paxsOverride ?? paxs;
     if (onibusDaExcursao.length > 0 && !onibusId) {
       toast.error("Escolha um ônibus para a reserva.");
       setStep("onibus");
       return;
     }
-    for (let i = 0; i < paxs.length; i++) {
-      const p = paxs[i];
+    for (let i = 0; i < paxsToUse.length; i++) {
+      const p = paxsToUse[i];
       if (!p.nome.trim() || !p.email.trim()) {
         toast.error(`Preencha nome e email do passageiro ${i + 1}.`);
         return;
@@ -208,7 +215,7 @@ function MinhasViagens() {
     try {
       const { data, error } = await supabase.rpc("criar_reserva_grupo", {
         p_excursao_id: modalEx.id,
-        p_passageiros: paxs.map((p) => ({
+        p_passageiros: paxsToUse.map((p) => ({
           nome: p.nome.trim(),
           email: p.email.trim(),
           titular: p.titular,
