@@ -169,7 +169,7 @@ export function NotificationPanel({
                   className="text-xs font-normal text-muted-foreground hover:text-foreground transition flex items-center gap-1"
                 >
                   <Trash2 className="size-3.5" />
-                  Limpar
+                  Limpar histórico
                 </button>
               </span>
             )}
