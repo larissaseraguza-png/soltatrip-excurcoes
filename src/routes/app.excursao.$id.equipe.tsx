@@ -37,6 +37,7 @@ function EquipePage() {
   const qc = useQueryClient();
   const [papel, setPapel] = useState("apoio");
   const [busy, setBusy] = useState(false);
+  const confirmAction = useConfirm();
   const [error, setError] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
