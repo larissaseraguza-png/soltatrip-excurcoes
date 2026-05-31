@@ -6,7 +6,7 @@
 // Sem Realtime ainda; apenas polling leve via React Query.
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useCallback, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type {
   Notification as LocalNotif,
