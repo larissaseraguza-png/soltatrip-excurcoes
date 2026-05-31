@@ -565,11 +565,7 @@ function NewPassageiroModal({
   const paid = Number(form.amount_paid || 0);
   const restante = Math.max(0, total - paid);
 
-  function autoPaymentStatus(t: number, p: number): "paid" | "partial_payment" | "pending_payment" {
-    if (t > 0 && p >= t) return "paid";
-    if (p > 0) return "partial_payment";
-    return "pending_payment";
-  }
+  // Sem inferência automática de status. O organizador define explicitamente.
 
   async function save(e: React.FormEvent) {
     e.preventDefault();
