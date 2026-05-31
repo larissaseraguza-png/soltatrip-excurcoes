@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { OnibusFilterBadge } from "@/components/OnibusFilterBadge";
 import { emitSync } from "@/lib/sync/bus";
 import { emitBusinessEvent } from "@/lib/notifications/business";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 
 export const Route = createFileRoute("/app/excursao/$id/checkin")({
   validateSearch: (search: Record<string, unknown>) => ({
