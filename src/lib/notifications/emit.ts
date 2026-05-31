@@ -48,10 +48,10 @@ export const notify = {
       add("staff", { icon: "user-plus", tone: "purple", title: "Novo passageiro", message: `${nome} entrou na lista.`, link: opts.link ?? "/staff/passageiros", category: "staff", excursao: opts.excursao }),
     checkinFeito: (nome: string, opts: Opts = {}) => {
       resolvePending("staff", { titleIncludes: "pendente", nomeNaMensagem: nome });
-      add("staff", { icon: "check-circle", tone: "green", title: "Check-in realizado", message: `${nome} embarcou.`, link: opts.link ?? "/staff/checkin", category: "checkin", excursao: opts.excursao });
+      add("staff", { __key: "staff.checkinFeito", icon: "check-circle", tone: "green", title: "Check-in realizado", message: `${nome} embarcou.`, link: opts.link ?? "/staff/checkin", category: "checkin", excursao: opts.excursao });
     },
     desembarqueFeito: (nome: string, opts: Opts = {}) =>
-      add("staff", { icon: "log-out", tone: "pink", title: "Desembarque realizado", message: `${nome} desembarcou.`, link: opts.link ?? "/staff/checkin", category: "checkin", excursao: opts.excursao }),
+      add("staff", { __key: "staff.desembarqueFeito", icon: "log-out", tone: "pink", title: "Desembarque realizado", message: `${nome} desembarcou.`, link: opts.link ?? "/staff/checkin", category: "checkin", excursao: opts.excursao }),
     alteracaoEmbarque: (msg = "Um ponto de embarque foi atualizado.", opts: Opts = {}) =>
       add("staff", { icon: "bus", tone: "blue", title: "Alteração de embarque", message: msg, link: opts.link ?? "/staff/onibus", category: "embarque", excursao: opts.excursao }),
     alteracaoExcursionista: (msg = "O excursionista fez alterações na excursão.", opts: Opts = {}) =>
@@ -68,15 +68,15 @@ export const notify = {
       add("excursionista", { __key: "excursionista.pagamentoPendente", icon: "clock", tone: "amber", title: "Pagamento pendente", message: `${nome} enviou um pagamento para conferência.`, link: opts.link ?? "/app/pendentes", category: "pagamentos", excursao: opts.excursao }),
     checkinFeito: (nome: string, opts: Opts = {}) => {
       resolvePending("excursionista", { titleIncludes: "pendente", nomeNaMensagem: nome });
-      add("excursionista", { icon: "check-circle", tone: "green", title: "Check-in realizado", message: `${nome} embarcou.`, link: opts.link ?? "/app", category: "checkin", excursao: opts.excursao });
+      add("excursionista", { __key: "excursionista.checkinFeito", icon: "check-circle", tone: "green", title: "Check-in realizado", message: `${nome} embarcou.`, link: opts.link ?? "/app", category: "checkin", excursao: opts.excursao });
     },
     alteracaoStaff: (msg = "Um membro da staff fez alterações.", opts: Opts = {}) =>
       add("excursionista", { icon: "edit", tone: "blue", title: "Alteração da staff", message: msg, link: opts.link ?? "/app/historico", category: "alteracoes", excursao: opts.excursao }),
     alteracaoSocio: (msg = "Um sócio fez alterações.", opts: Opts = {}) =>
       add("excursionista", { icon: "edit", tone: "blue", title: "Alteração do sócio", message: msg, link: opts.link ?? "/app/historico", category: "socio", excursao: opts.excursao }),
     novoStaff: (nome: string, opts: Opts = {}) =>
-      add("excursionista", { icon: "shield", tone: "purple", title: "Novo staff", message: `${nome} entrou na equipe.`, link: opts.link ?? "/app/perfil", category: "staff", excursao: opts.excursao }),
+      add("excursionista", { __key: "excursionista.novoStaff", icon: "shield", tone: "purple", title: "Novo staff", message: `${nome} entrou na equipe.`, link: opts.link ?? "/app/perfil", category: "staff", excursao: opts.excursao }),
     novoSocio: (nome: string, opts: Opts = {}) =>
-      add("excursionista", { icon: "users", tone: "purple", title: "Novo sócio", message: `${nome} é agora seu sócio.`, link: opts.link ?? "/app/perfil", category: "socio", excursao: opts.excursao }),
+      add("excursionista", { __key: "excursionista.novoSocio", icon: "users", tone: "purple", title: "Novo sócio", message: `${nome} é agora seu sócio.`, link: opts.link ?? "/app/perfil", category: "socio", excursao: opts.excursao }),
   },
 };

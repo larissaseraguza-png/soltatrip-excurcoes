@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { OnibusFilterBadge } from "@/components/OnibusFilterBadge";
 import { emitSync } from "@/lib/sync/bus";
 import { notify } from "@/lib/notifications/emit";
+import { emitBusinessEvent } from "@/lib/notifications/business";
 
 export const Route = createFileRoute("/app/excursao/$id/checkin")({
   validateSearch: (search: Record<string, unknown>) => ({
@@ -64,6 +65,17 @@ function CheckinPage() {
       .eq("id", pid);
     setFeedback({ ok: true, msg: `${nome} embarcou!` });
     notify.staff.checkinFeito(nome, { link: "/staff/checkin" });
+    void emitBusinessEvent({
+      type: "checkin.done",
+      excursaoId: id,
+      passageiroId: pid,
+      title: "Check-in realizado",
+      message: `${nome} embarcou.`,
+      link: `/app/excursao/${id}/checkin`,
+      recipientRoles: ["organizer_root", "organizer_socios", "staff_excursao"],
+      dedupeKey: `checkin.done:${pid}`,
+      data: { passageiro_nome: nome },
+    });
     // invalidação específica removida: o listener de sync escopa por tópico "checkin".
     emitSync("checkin");
     setTimeout(() => setFeedback(null), 2500);

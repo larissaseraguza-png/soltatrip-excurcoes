@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { Shell } from "@/components/passageiro/Shell";
 import { notify } from "@/lib/notifications/emit";
+import { emitBusinessEvent } from "@/lib/notifications/business";
 
 export const Route = createFileRoute("/passageiro/itens/$id")({
   component: ItensPassageiro,
@@ -246,6 +247,17 @@ function ItemCard({ item, excursaoId, userId }: { item: any; excursaoId: string;
           notify.passageiro.reservaCriada(undefined, { link: reservaLink });
           notify.passageiro.qrLiberado(undefined, { link: reservaLink });
           notify.excursionista.novaReserva("Novo passageiro", { link: `/app/excursao/${excursaoId}/passageiros` });
+          void emitBusinessEvent({
+            type: "item.ordered",
+            excursaoId: excursaoId,
+            reservaId: novaReservaId,
+            title: "Novo pedido de item",
+            message: `Pedido do combo "${item.nome}".`,
+            link: `/app/excursao/${excursaoId}/passageiros`,
+            recipientRoles: ["organizer_root", "organizer_socios"],
+            dedupeKey: `item.ordered:${novaReservaId}:${item.id}`,
+            data: { item_id: item.id, item_nome: item.nome, quantidade: qtd, combo: true },
+          });
         }
         if (reservaId) {
           navigate({ to: "/passageiro/reserva/$id", params: { id: reservaId } });
@@ -254,6 +266,17 @@ function ItemCard({ item, excursaoId, userId }: { item: any; excursaoId: string;
         }
       } else {
         toast.success("Pedido enviado! O organizador irá confirmar o pagamento e emitir.");
+        void emitBusinessEvent({
+          type: "item.ordered",
+          excursaoId: excursaoId,
+          passageiroId: pax?.id ?? null,
+          title: "Novo pedido de item",
+          message: `Pedido de ${qtd}x "${item.nome}".`,
+          link: `/app/excursao/${excursaoId}/itens`,
+          recipientRoles: ["organizer_root", "organizer_socios"],
+          dedupeKey: `item.ordered:${userId}:${item.id}:${Date.now()}`,
+          data: { item_id: item.id, item_nome: item.nome, quantidade: qtd, combo: false },
+        });
       }
     } catch (err: any) {
       const msg = String(err?.message ?? "");
