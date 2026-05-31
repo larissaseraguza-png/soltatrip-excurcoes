@@ -380,6 +380,111 @@ export type Database = {
         }
         Relationships: []
       }
+      notification_preferences: {
+        Row: {
+          created_at: string
+          email: boolean
+          id: string
+          in_app: boolean
+          type: Database["public"]["Enums"]["notification_type"]
+          updated_at: string
+          user_id: string
+          whatsapp: boolean
+        }
+        Insert: {
+          created_at?: string
+          email?: boolean
+          id?: string
+          in_app?: boolean
+          type: Database["public"]["Enums"]["notification_type"]
+          updated_at?: string
+          user_id: string
+          whatsapp?: boolean
+        }
+        Update: {
+          created_at?: string
+          email?: boolean
+          id?: string
+          in_app?: boolean
+          type?: Database["public"]["Enums"]["notification_type"]
+          updated_at?: string
+          user_id?: string
+          whatsapp?: boolean
+        }
+        Relationships: []
+      }
+      notifications: {
+        Row: {
+          actor_id: string | null
+          category: Database["public"]["Enums"]["notification_category"]
+          created_at: string
+          data: Json
+          dedupe_key: string | null
+          delivered_channels: string[]
+          dismissed_at: string | null
+          excursao_id: string | null
+          id: string
+          link: string | null
+          message: string | null
+          pagamento_id: string | null
+          passageiro_id: string | null
+          priority: number
+          read_at: string | null
+          recipient_id: string
+          reserva_id: string | null
+          tenant_id: string | null
+          title: string
+          type: Database["public"]["Enums"]["notification_type"]
+          updated_at: string
+        }
+        Insert: {
+          actor_id?: string | null
+          category: Database["public"]["Enums"]["notification_category"]
+          created_at?: string
+          data?: Json
+          dedupe_key?: string | null
+          delivered_channels?: string[]
+          dismissed_at?: string | null
+          excursao_id?: string | null
+          id?: string
+          link?: string | null
+          message?: string | null
+          pagamento_id?: string | null
+          passageiro_id?: string | null
+          priority?: number
+          read_at?: string | null
+          recipient_id: string
+          reserva_id?: string | null
+          tenant_id?: string | null
+          title: string
+          type: Database["public"]["Enums"]["notification_type"]
+          updated_at?: string
+        }
+        Update: {
+          actor_id?: string | null
+          category?: Database["public"]["Enums"]["notification_category"]
+          created_at?: string
+          data?: Json
+          dedupe_key?: string | null
+          delivered_channels?: string[]
+          dismissed_at?: string | null
+          excursao_id?: string | null
+          id?: string
+          link?: string | null
+          message?: string | null
+          pagamento_id?: string | null
+          passageiro_id?: string | null
+          priority?: number
+          read_at?: string | null
+          recipient_id?: string
+          reserva_id?: string | null
+          tenant_id?: string | null
+          title?: string
+          type?: Database["public"]["Enums"]["notification_type"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       onibus: {
         Row: {
           ativo: boolean
@@ -1132,6 +1237,45 @@ export type Database = {
           onibus_id: string
         }[]
       }
+      notification_dismiss: { Args: { _id: string }; Returns: undefined }
+      notification_mark_all_read: {
+        Args: { _excursao_id?: string }
+        Returns: number
+      }
+      notification_mark_read: { Args: { _id: string }; Returns: undefined }
+      notification_unread_count: {
+        Args: { _excursao_id?: string }
+        Returns: number
+      }
+      notify_emit: {
+        Args: {
+          _actor_id?: string
+          _category: Database["public"]["Enums"]["notification_category"]
+          _data?: Json
+          _dedupe_key?: string
+          _excursao_id?: string
+          _link?: string
+          _message?: string
+          _pagamento_id?: string
+          _passageiro_id?: string
+          _priority?: number
+          _recipients: string[]
+          _reserva_id?: string
+          _tenant_id?: string
+          _title: string
+          _type: Database["public"]["Enums"]["notification_type"]
+        }
+        Returns: number
+      }
+      notify_resolve_recipients: {
+        Args: {
+          _excursao_id: string
+          _passageiro_id?: string
+          _reserva_id?: string
+          _scope: string
+        }
+        Returns: string[]
+      }
       organizer_create_manual_passageiro:
         | {
             Args: {
@@ -1318,6 +1462,43 @@ export type Database = {
     }
     Enums: {
       app_role: "excursionista" | "staff" | "passageiro"
+      notification_category:
+        | "payment"
+        | "booking"
+        | "checkin"
+        | "boarding"
+        | "invitation"
+        | "team"
+        | "item"
+        | "excursion"
+        | "system"
+      notification_type:
+        | "payment.submitted"
+        | "payment.approved"
+        | "payment.rejected"
+        | "payment.manual_recorded"
+        | "booking.created"
+        | "booking.paid"
+        | "booking.cancelled"
+        | "checkin.done"
+        | "checkin.undone"
+        | "boarding.done"
+        | "boarding.undone"
+        | "invitation.created"
+        | "invitation.accepted"
+        | "invitation.expired"
+        | "team.added"
+        | "team.removed"
+        | "socio.invited"
+        | "socio.accepted"
+        | "item.ordered"
+        | "item.delivered"
+        | "item.received_confirmed"
+        | "excursion.published"
+        | "excursion.updated"
+        | "excursion.cancelled"
+        | "system.info"
+        | "system.warning"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1446,6 +1627,45 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["excursionista", "staff", "passageiro"],
+      notification_category: [
+        "payment",
+        "booking",
+        "checkin",
+        "boarding",
+        "invitation",
+        "team",
+        "item",
+        "excursion",
+        "system",
+      ],
+      notification_type: [
+        "payment.submitted",
+        "payment.approved",
+        "payment.rejected",
+        "payment.manual_recorded",
+        "booking.created",
+        "booking.paid",
+        "booking.cancelled",
+        "checkin.done",
+        "checkin.undone",
+        "boarding.done",
+        "boarding.undone",
+        "invitation.created",
+        "invitation.accepted",
+        "invitation.expired",
+        "team.added",
+        "team.removed",
+        "socio.invited",
+        "socio.accepted",
+        "item.ordered",
+        "item.delivered",
+        "item.received_confirmed",
+        "excursion.published",
+        "excursion.updated",
+        "excursion.cancelled",
+        "system.info",
+        "system.warning",
+      ],
     },
   },
 } as const
