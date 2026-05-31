@@ -8,7 +8,6 @@ import { useSlowLoad } from "@/hooks/use-slow-load";
 import { isFlowLocked } from "@/config/flow-mode";
 import { Bus, Loader2, CheckCircle2, AlertCircle, ShieldCheck } from "lucide-react";
 import { SlowFallback } from "@/components/SlowFallback";
-import { notify } from "@/lib/notifications/emit";
 import { emitBusinessEvent } from "@/lib/notifications/business";
 
 export const Route = createFileRoute("/invite/staff/$token")({
@@ -86,21 +85,31 @@ function InviteStaffPage() {
       const destino = destinoPorPapel(invite?.papel);
       setActiveRole(destino === "/app" ? "excursionista" : "staff");
       const nomeAceitante = (user?.user_metadata?.full_name as string) || (user?.email?.split("@")[0] ?? "Novo membro");
-      if (invite?.papel === "socio_raiz") notify.excursionista.novoSocio(nomeAceitante);
-      else {
-        notify.excursionista.novoStaff(nomeAceitante);
-        if (invite?.excursao_id) {
+      if (invite?.papel === "socio_raiz") {
+        // socio.accepted notifica o raiz (created_by do convite) via extraRecipients.
+        if (invite?.created_by) {
           void emitBusinessEvent({
-            type: "team.added",
-            excursaoId: invite.excursao_id,
-            title: "Novo staff",
-            message: `${nomeAceitante} entrou na equipe.`,
+            type: "socio.accepted",
+            excursaoId: invite?.excursao_id ?? undefined as unknown as string,
+            title: "Novo sócio",
+            message: `${nomeAceitante} é agora seu sócio.`,
             link: "/app/perfil",
-            recipientRoles: ["organizer_root", "organizer_socios"],
-            dedupeKey: `team.added:${invite.excursao_id}:${user?.id ?? "anon"}`,
-            data: { nome: nomeAceitante, papel: invite?.papel },
+            extraRecipients: [invite.created_by],
+            dedupeKey: `socio.accepted:${token}`,
+            data: { nome: nomeAceitante },
           });
         }
+      } else if (invite?.excursao_id) {
+        void emitBusinessEvent({
+          type: "team.added",
+          excursaoId: invite.excursao_id,
+          title: "Novo staff",
+          message: `${nomeAceitante} entrou na equipe.`,
+          link: "/app/perfil",
+          recipientRoles: ["organizer_root", "organizer_socios"],
+          dedupeKey: `team.added:${invite.excursao_id}:${user?.id ?? "anon"}`,
+          data: { nome: nomeAceitante, papel: invite?.papel },
+        });
       }
       setDone(true);
       setTimeout(() => {

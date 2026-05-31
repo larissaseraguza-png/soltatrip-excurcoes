@@ -9,7 +9,6 @@ import { useAuth } from "@/hooks/use-auth";
 import { useStaffExcursao } from "@/hooks/use-staff-excursao";
 import { useRealtimeSync } from "@/hooks/use-realtime-sync";
 import { CheckCircle2, XCircle, UserCheck, Loader2, Search, Camera, X, AlertTriangle, Bus, RotateCcw } from "lucide-react";
-import { notify } from "@/lib/notifications/emit";
 import { emitBusinessEvent } from "@/lib/notifications/business";
 import { emitSync } from "@/lib/sync/bus";
 
@@ -133,8 +132,8 @@ function CheckinStaff() {
     }
     showFeedback(true, `${pax.nome} embarcou! ${viaQr ? "(QR)" : ""}`);
     toast.success(`Check-in: ${pax.nome}`);
-    notify.staff.checkinFeito(pax.nome, { link: "/staff/checkin" });
-    notify.excursionista.checkinFeito(pax.nome, { link: `/app/excursao/${excursao.id}/checkin` });
+    // Notificações de check-in vão para staff + organizadores + sócios via emit_business_event abaixo.
+
     void emitBusinessEvent({
       type: "checkin.done",
       excursaoId: excursao.id,
@@ -168,8 +167,8 @@ function CheckinStaff() {
     }
     showFeedback(true, `Embarque de ${pax.nome} removido.`);
     toast.success(`${pax.nome} foi desembarcado.`);
-    notify.staff.desembarqueFeito(pax.nome, { link: "/staff/checkin" });
-    notify.excursionista.alteracaoStaff(`${pax.nome} foi desembarcado.`, { link: `/app/excursao/${excursao.id}/checkin` });
+    // Notificações de desembarque vão para staff + organizadores + sócios via emit_business_event abaixo.
+
     void emitBusinessEvent({
       type: "checkin.undone",
       excursaoId: excursao.id,
