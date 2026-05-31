@@ -41,6 +41,7 @@ function PassageirosPage() {
   const { onibus: onibusId } = useSearch({ from: "/app/excursao/$id/passageiros" });
   const qc = useQueryClient();
   const [search, setSearch] = useState("");
+  const confirmAction = useConfirm();
   const [pontoFilter, setPontoFilter] = useState<string>("todos");
   const [open, setOpen] = useState(false);
   const [showMap, setShowMap] = useState(false);
