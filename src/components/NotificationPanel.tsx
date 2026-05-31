@@ -80,6 +80,10 @@ type Notif = {
   createdAt: number;
   link?: string;
   excursao?: string;
+  // Campos enriquecidos (V2) — usados pelo resolver dinâmico de rota.
+  __type?: string;
+  __data?: Record<string, unknown> | null;
+  __excursaoId?: string | null;
 };
 
 type Group = Notif & { count: number };
@@ -96,6 +100,9 @@ function groupNotifications(items: Notif[]): Group[] {
         existing.createdAt = n.createdAt;
         existing.message = n.message;
         existing.id = n.id;
+        existing.__type = n.__type;
+        existing.__data = n.__data;
+        existing.__excursaoId = n.__excursaoId;
       }
     } else {
       map.set(key, { ...n, count: 1 });
