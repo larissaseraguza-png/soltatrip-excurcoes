@@ -6,7 +6,7 @@ import { Shell, Pill } from "@/components/passageiro/Shell";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useRealtimeSync } from "@/hooks/use-realtime-sync";
-import { Copy, Loader2, CheckCircle2, Armchair, QrCode, ExternalLink, CreditCard } from "lucide-react";
+import { Copy, Loader2, CheckCircle2, Armchair, QrCode, ExternalLink, CreditCard, ChevronRight, ArrowLeft, Calendar } from "lucide-react";
 import { notify } from "@/lib/notifications/emit";
 import { emitSync } from "@/lib/sync/bus";
 
@@ -68,8 +68,29 @@ function Pagamentos() {
   const reservaAtiva: any = useMemo(() => {
     if (!reservas?.length) return null;
     if (reservaParam) return reservas.find((r: any) => r.id === reservaParam) ?? reservas[0];
-    return reservas[0];
+    if (reservas.length === 1) return reservas[0];
+    // Múltiplas reservas e nenhuma selecionada → mostra lista.
+    return null;
   }, [reservas, reservaParam]);
+
+  const reservaIds = (reservas ?? []).map((r: any) => r.id);
+  const { data: pendentesPorReserva = {} } = useQuery({
+    queryKey: ["pend-pags", user?.id, reservaIds.join(",")],
+    enabled: !reservaAtiva && reservaIds.length > 1,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("pagamentos")
+        .select("reserva_id, valor")
+        .eq("status", "pendente")
+        .in("reserva_id", reservaIds);
+      const map: Record<string, number> = {};
+      (data ?? []).forEach((p: any) => {
+        const k = p.reserva_id as string;
+        map[k] = (map[k] ?? 0) + Number(p.valor || 0);
+      });
+      return map;
+    },
+  });
 
   const { data: passageiros = [] } = useQuery({
     queryKey: ["pagto-passageiros", reservaAtiva?.id],
