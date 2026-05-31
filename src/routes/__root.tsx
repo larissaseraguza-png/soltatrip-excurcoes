@@ -12,6 +12,7 @@ import {
 import appCss from "../styles.css?url";
 import { supabase } from "@/integrations/supabase/client";
 import { Toaster } from "@/components/ui/sonner";
+import { ConfirmProvider } from "@/components/ui/confirm-dialog";
 import { SafeBoundary } from "@/components/SafeBoundary";
 import { subscribeSync, SYNC_TOPIC_KEYS } from "@/lib/sync/bus";
 import { installChunkReloadHandler } from "@/lib/chunk-reload";
