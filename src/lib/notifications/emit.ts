@@ -30,7 +30,7 @@ export const notify = {
   passageiro: {
     pagamentoAprovado: (msg = "Seu pagamento foi confirmado pelo organizador.", opts: Opts = {}) => {
       resolvePending("passageiro", { titleIncludes: "pendente" });
-      add("passageiro", { icon: "credit-card", tone: "green", title: "Pagamento aprovado", message: msg, link: opts.link ?? "/passageiro/pagamentos", category: "pagamentos", excursao: opts.excursao });
+      add("passageiro", { __key: "passageiro.pagamentoAprovado", icon: "credit-card", tone: "green", title: "Pagamento aprovado", message: msg, link: opts.link ?? "/passageiro/pagamentos", category: "pagamentos", excursao: opts.excursao });
     },
     pagamentoPendente: (msg = "Aguardando confirmação do organizador.", opts: Opts = {}) =>
       add("passageiro", { icon: "clock", tone: "amber", title: "Pagamento pendente", message: msg, link: opts.link ?? "/passageiro/pagamentos", category: "pagamentos", excursao: opts.excursao }),
