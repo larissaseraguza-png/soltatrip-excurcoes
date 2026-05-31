@@ -271,6 +271,8 @@ function ItemEditor({
     (item as any)?.inclui_excursao ?? false,
   );
   const [busy, setBusy] = useState(false);
+  const confirmAction = useConfirm();
+
 
   async function save() {
     if (!nome.trim()) return toast.error("Informe o nome.");
