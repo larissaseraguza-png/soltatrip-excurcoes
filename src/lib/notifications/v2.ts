@@ -6,7 +6,7 @@
 // Sem Realtime ainda; apenas polling leve via React Query.
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useCallback, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type {
   Notification as LocalNotif,
@@ -201,15 +201,105 @@ async function fetchV2(): Promise<V2Item[]> {
     .filter((x): x is V2Item => x !== null);
 }
 
+const QK = ["notifications-v2"] as const;
+
 export function useNotificationsV2(role: NotifRole) {
   const queryClient = useQueryClient();
   const { data } = useQuery({
-    queryKey: ["notifications-v2"],
+    queryKey: QK,
     queryFn: fetchV2,
     staleTime: 30_000,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
   });
+
+  // F3: Realtime — escuta INSERT/UPDATE/DELETE escopados pelo recipient_id
+  // (RLS já garante isolamento; o filter reduz tráfego). Em caso de erro/
+  // desconexão, fazemos refetch de fallback ao reconectar.
+  const refetched = useRef(false);
+  useEffect(() => {
+    let cancelled = false;
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+    let backoff: ReturnType<typeof setTimeout> | null = null;
+
+    const setup = async () => {
+      const { data: auth } = await supabase.auth.getUser();
+      if (cancelled || !auth.user) return;
+      const uid = auth.user.id;
+
+      const applyInsert = (row: DbRow) => {
+        const item = mapRow(row);
+        if (!item) return;
+        queryClient.setQueryData<V2Item[]>(QK, (prev) => {
+          const list = prev ?? [];
+          if (list.some((n) => n.__dbId === item.__dbId)) return list;
+          return [item, ...list].slice(0, 100);
+        });
+      };
+
+      const applyUpdate = (row: DbRow) => {
+        // dismissed → remove; senão atualiza read_at/título/etc.
+        queryClient.setQueryData<V2Item[]>(QK, (prev) => {
+          const list = prev ?? [];
+          // @ts-expect-error dismissed_at não está no DbRow tipado mas vem no payload
+          if (row.dismissed_at) return list.filter((n) => n.__dbId !== row.id);
+          const mapped = mapRow(row);
+          if (!mapped) return list;
+          const idx = list.findIndex((n) => n.__dbId === row.id);
+          if (idx === -1) return [mapped, ...list].slice(0, 100);
+          const next = list.slice();
+          next[idx] = mapped;
+          return next;
+        });
+      };
+
+      const applyDelete = (row: { id: string }) => {
+        queryClient.setQueryData<V2Item[]>(QK, (prev) =>
+          (prev ?? []).filter((n) => n.__dbId !== row.id),
+        );
+      };
+
+      channel = supabase
+        .channel(`notifications:${uid}`)
+        .on(
+          "postgres_changes",
+          { event: "INSERT", schema: "public", table: "notifications", filter: `recipient_id=eq.${uid}` },
+          (payload) => applyInsert(payload.new as DbRow),
+        )
+        .on(
+          "postgres_changes",
+          { event: "UPDATE", schema: "public", table: "notifications", filter: `recipient_id=eq.${uid}` },
+          (payload) => applyUpdate(payload.new as DbRow),
+        )
+        .on(
+          "postgres_changes",
+          { event: "DELETE", schema: "public", table: "notifications", filter: `recipient_id=eq.${uid}` },
+          (payload) => applyDelete(payload.old as { id: string }),
+        )
+        .subscribe((status) => {
+          if (status === "SUBSCRIBED") {
+            // ao (re)conectar, refetch uma vez para fechar gap
+            if (refetched.current) {
+              queryClient.invalidateQueries({ queryKey: QK });
+            }
+            refetched.current = true;
+          } else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
+            // backoff: tenta refetch como fallback
+            if (backoff) clearTimeout(backoff);
+            backoff = setTimeout(() => {
+              queryClient.invalidateQueries({ queryKey: QK });
+            }, 3_000);
+          }
+        });
+    };
+
+    setup();
+    return () => {
+      cancelled = true;
+      if (backoff) clearTimeout(backoff);
+      if (channel) supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
 
   const items = useMemo(
     () => (data ?? []).filter((n) => n.role === role),
@@ -217,31 +307,38 @@ export function useNotificationsV2(role: NotifRole) {
   );
 
   const markAllRead = useCallback(async () => {
+    // Otimista: marca todas como lidas no cache imediatamente
+    const now = new Date().toISOString();
+    queryClient.setQueryData<V2Item[]>(QK, (prev) =>
+      (prev ?? []).map((n) => (n.read ? n : { ...n, read: true, __readAtDb: now })),
+    );
     try {
       await supabase.rpc("notification_mark_all_read");
     } catch (e) {
       console.warn("[notifications/v2] markAllRead failed:", e);
+      queryClient.invalidateQueries({ queryKey: QK });
     }
-    await queryClient.invalidateQueries({ queryKey: ["notifications-v2"] });
   }, [queryClient]);
 
   const dismissAllVisible = useCallback(async () => {
     const ids = items.map((i) => i.__dbId);
     if (ids.length === 0) return;
+    // Otimista: remove do cache
+    const idSet = new Set(ids);
+    queryClient.setQueryData<V2Item[]>(QK, (prev) =>
+      (prev ?? []).filter((n) => !idSet.has(n.__dbId)),
+    );
     try {
       await Promise.allSettled(
         ids.map((id) => supabase.rpc("notification_dismiss", { _id: id })),
       );
     } catch (e) {
       console.warn("[notifications/v2] dismissAll failed:", e);
+      queryClient.invalidateQueries({ queryKey: QK });
     }
-    await queryClient.invalidateQueries({ queryKey: ["notifications-v2"] });
   }, [items, queryClient]);
 
   return { items, markAllRead, dismissAllVisible };
 }
 
-// SUPPRESSED_LOCAL_EMITS removido na consolidação F2: não há mais emissão
-// local concorrente para suprimir — todo evento de negócio passa por trigger
-// de banco ou pela RPC `emit_business_event`.
 
