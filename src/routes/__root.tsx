@@ -172,12 +172,14 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <SafeBoundary label="App root">
-        <div className="notranslate" translate="no">
-          <Outlet />
-        </div>
-      </SafeBoundary>
-      <Toaster position="top-center" richColors />
+      <ConfirmProvider>
+        <SafeBoundary label="App root">
+          <div className="notranslate" translate="no">
+            <Outlet />
+          </div>
+        </SafeBoundary>
+        <Toaster position="top-center" richColors />
+      </ConfirmProvider>
     </QueryClientProvider>
   );
 }
