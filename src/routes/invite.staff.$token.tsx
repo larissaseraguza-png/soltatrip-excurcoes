@@ -9,6 +9,7 @@ import { isFlowLocked } from "@/config/flow-mode";
 import { Bus, Loader2, CheckCircle2, AlertCircle, ShieldCheck } from "lucide-react";
 import { SlowFallback } from "@/components/SlowFallback";
 import { notify } from "@/lib/notifications/emit";
+import { emitBusinessEvent } from "@/lib/notifications/business";
 
 export const Route = createFileRoute("/invite/staff/$token")({
   beforeLoad: () => {
