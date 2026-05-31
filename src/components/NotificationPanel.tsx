@@ -80,13 +80,15 @@ type Notif = {
   createdAt: number;
   link?: string;
   excursao?: string;
+  read?: boolean;
   // Campos enriquecidos (V2) — usados pelo resolver dinâmico de rota.
   __type?: string;
   __data?: Record<string, unknown> | null;
   __excursaoId?: string | null;
+  __dbId?: string;
 };
 
-type Group = Notif & { count: number };
+type Group = Notif & { count: number; __dbIds: string[] };
 
 function groupNotifications(items: Notif[]): Group[] {
   const map = new Map<string, Group>();
@@ -96,6 +98,7 @@ function groupNotifications(items: Notif[]): Group[] {
     const existing = map.get(key);
     if (existing) {
       existing.count += 1;
+      if (n.__dbId) existing.__dbIds.push(n.__dbId);
       if (n.createdAt > existing.createdAt) {
         existing.createdAt = n.createdAt;
         existing.message = n.message;
@@ -105,7 +108,7 @@ function groupNotifications(items: Notif[]): Group[] {
         existing.__excursaoId = n.__excursaoId;
       }
     } else {
-      map.set(key, { ...n, count: 1 });
+      map.set(key, { ...n, count: 1, __dbIds: n.__dbId ? [n.__dbId] : [] });
       order.push(key);
     }
   }
