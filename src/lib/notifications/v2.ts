@@ -194,12 +194,14 @@ function mapRow(row: DbRow): V2Item | null {
 async function fetchV2(): Promise<V2Item[]> {
   const { data: auth } = await supabase.auth.getUser();
   if (!auth.user) return [];
+  // Histórico permanente: trazemos lidas e não-lidas. Apenas dismissed
+  // (limpar histórico) são excluídas. RLS por recipient_id garante isolamento.
   const { data, error } = await supabase
     .from("notifications")
     .select("id,type,category,title,message,link,data,created_at,read_at,excursao_id")
     .is("dismissed_at", null)
     .order("created_at", { ascending: false })
-    .limit(50);
+    .limit(100);
   if (error) {
     console.warn("[notifications/v2] fetch error:", error.message);
     return [];
