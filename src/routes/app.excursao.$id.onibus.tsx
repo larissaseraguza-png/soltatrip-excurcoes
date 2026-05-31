@@ -381,7 +381,13 @@ function OnibusFormModal({
 
       if (isEdit && onibus) {
         if (cap < onibus.capacidade) {
-          if (!confirm("Reduzir a capacidade pode afetar poltronas já criadas. Continuar?")) {
+          const okCap = await confirmAction({
+            title: "Reduzir capacidade",
+            message: "Reduzir a capacidade pode afetar poltronas já criadas. Deseja continuar?",
+            confirmLabel: "Continuar",
+            destructive: true,
+          });
+          if (!okCap) {
             setBusy(false);
             return;
           }
