@@ -266,6 +266,17 @@ function ItemCard({ item, excursaoId, userId }: { item: any; excursaoId: string;
         }
       } else {
         toast.success("Pedido enviado! O organizador irá confirmar o pagamento e emitir.");
+        void emitBusinessEvent({
+          type: "item.ordered",
+          excursaoId: excursaoId,
+          passageiroId: pax?.id ?? null,
+          title: "Novo pedido de item",
+          message: `Pedido de ${qtd}x "${item.nome}".`,
+          link: `/app/excursao/${excursaoId}/itens`,
+          recipientRoles: ["organizer_root", "organizer_socios"],
+          dedupeKey: `item.ordered:${userId}:${item.id}:${Date.now()}`,
+          data: { item_id: item.id, item_nome: item.nome, quantidade: qtd, combo: false },
+        });
       }
     } catch (err: any) {
       const msg = String(err?.message ?? "");
