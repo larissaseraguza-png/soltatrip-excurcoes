@@ -6,7 +6,7 @@ import { Shell, Pill } from "@/components/passageiro/Shell";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useRealtimeSync } from "@/hooks/use-realtime-sync";
-import { Copy, Loader2, CheckCircle2, Armchair, QrCode, ExternalLink, CreditCard } from "lucide-react";
+import { Copy, Loader2, CheckCircle2, Armchair, QrCode, ExternalLink, CreditCard, ChevronRight, ArrowLeft, Calendar } from "lucide-react";
 import { notify } from "@/lib/notifications/emit";
 import { emitSync } from "@/lib/sync/bus";
 
@@ -68,8 +68,29 @@ function Pagamentos() {
   const reservaAtiva: any = useMemo(() => {
     if (!reservas?.length) return null;
     if (reservaParam) return reservas.find((r: any) => r.id === reservaParam) ?? reservas[0];
-    return reservas[0];
+    if (reservas.length === 1) return reservas[0];
+    // Múltiplas reservas e nenhuma selecionada → mostra lista.
+    return null;
   }, [reservas, reservaParam]);
+
+  const reservaIds = (reservas ?? []).map((r: any) => r.id);
+  const { data: pendentesPorReserva = {} } = useQuery({
+    queryKey: ["pend-pags", user?.id, reservaIds.join(",")],
+    enabled: !reservaAtiva && reservaIds.length > 1,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("pagamentos")
+        .select("reserva_id, valor")
+        .eq("status", "pendente")
+        .in("reserva_id", reservaIds);
+      const map: Record<string, number> = {};
+      (data ?? []).forEach((p: any) => {
+        const k = p.reserva_id as string;
+        map[k] = (map[k] ?? 0) + Number(p.valor || 0);
+      });
+      return map;
+    },
+  });
 
   const { data: passageiros = [] } = useQuery({
     queryKey: ["pagto-passageiros", reservaAtiva?.id],
@@ -145,6 +166,69 @@ function Pagamentos() {
   }
 
   if (!reservaAtiva) {
+    if ((reservas?.length ?? 0) > 1) {
+      // Lista de excursões para o usuário escolher.
+      return (
+        <Shell title="Pagamentos" subtitle="Escolha uma excursão">
+          <ul className="space-y-4">
+            {reservas!.map((r: any) => {
+              const ex = r.excursao;
+              if (!ex) return null;
+              const totalR = Number(r.total_price) || 0;
+              const pagoR = Number(r.amount_paid) || 0;
+              const restanteR = Math.max(0, totalR - pagoR);
+              const pendValor = (pendentesPorReserva as Record<string, number>)[r.id] ?? 0;
+              let tone: any = "yellow";
+              let label = "Pendente";
+              if (r.payment_status === "paid") {
+                tone = "green"; label = "Quitado";
+              } else if (r.payment_status === "cancelled") {
+                tone = "muted"; label = "Cancelado";
+              } else if (pendValor > 0) {
+                tone = "yellow"; label = "Em análise";
+              } else if (pagoR > 0 && restanteR > 0) {
+                tone = "purple"; label = `Falta ${brl(restanteR)}`;
+              } else if (restanteR > 0) {
+                tone = "yellow"; label = `Falta ${brl(restanteR)}`;
+              }
+              return (
+                <li key={r.id}>
+                  <button
+                    type="button"
+                    onClick={() => navigate({ to: "/passageiro/pagamentos", search: { reserva: r.id } as any })}
+                    className="w-full text-left rounded-3xl overflow-hidden glass border border-transparent hover:border-neon-pink/40 transition"
+                  >
+                    <div
+                      className="h-28 relative"
+                      style={{
+                        background: ex.banner_url
+                          ? `url(${ex.banner_url}) center/cover`
+                          : `linear-gradient(135deg, ${ex.cor ?? "#a855f7"}, #ec4899)`,
+                      }}
+                    >
+                      <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/30 to-transparent" />
+                      <div className="absolute bottom-2 left-3 right-3 flex items-end justify-between gap-2">
+                        <h3 className="font-display font-black text-lg drop-shadow leading-tight truncate">{ex.titulo}</h3>
+                      </div>
+                    </div>
+                    <div className="p-4 flex items-center justify-between gap-3">
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                          <Calendar className="size-3" />
+                          {ex.data_evento ? new Date(ex.data_evento).toLocaleDateString("pt-BR") : "—"}
+                        </div>
+                        <div className="mt-1"><Pill tone={tone}>{label}</Pill></div>
+                      </div>
+                      <ChevronRight className="size-5 text-muted-foreground shrink-0" />
+                    </div>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </Shell>
+      );
+    }
     return (
       <Shell title="Pagamentos">
         <div className="glass rounded-3xl p-10 text-center">
@@ -231,6 +315,15 @@ function Pagamentos() {
 
   return (
     <Shell title="Pagamentos" subtitle={reservaAtiva.excursao.titulo}>
+      {(reservas?.length ?? 0) > 1 && (
+        <button
+          type="button"
+          onClick={() => navigate({ to: "/passageiro/pagamentos", search: {} as any })}
+          className="mb-4 inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground"
+        >
+          <ArrowLeft className="size-3.5" /> Trocar excursão
+        </button>
+      )}
       {/* Resumo */}
       <div className="glass rounded-3xl p-6 mb-5 relative overflow-hidden">
         <div className="absolute -right-10 -top-10 size-40 rounded-full bg-neon-green/20 blur-3xl" />
