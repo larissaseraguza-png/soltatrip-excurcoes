@@ -303,9 +303,9 @@ function FinanceiroPage() {
               itemById={itemById}
               onibusById={onibusById}
               pontoById={pontoById}
-              onConfirmar={() => r.passageiro && confirmarPagamento.mutate(r.passageiro)}
+              onConfirmar={() => r.passageiro && abrirLancamento(r.passageiro.id)}
               onMarcarEnviado={(p) => marcarEnviado.mutate(p)}
-              confirmandoId={confirmarPagamento.isPending ? r.passageiro?.id : undefined}
+              confirmandoId={undefined}
             />
           ))}
         </ul>
