@@ -586,23 +586,25 @@ function Stat({ icon: Icon, label, value, color }: { icon: any; label: string; v
 }
 
 function NewPagamentoModal({
-  excursaoId, onibusId, passageiros, precoSugerido, onClose,
+  excursaoId, onibusId, passageiros, precoSugerido, preselectedPaxId, onClose,
 }: {
   excursaoId: string;
   onibusId: string | null;
   passageiros: { id: string; nome: string; onibus_id: string | null }[];
   precoSugerido: number;
+  preselectedPaxId?: string | null;
   onClose: () => void;
 }) {
   const qc = useQueryClient();
   const [form, setForm] = useState({
-    passageiro_id: passageiros[0]?.id ?? "",
-    valor: String(precoSugerido),
+    passageiro_id: preselectedPaxId ?? passageiros[0]?.id ?? "",
+    valor: "",
     metodo: "pix",
     status: "pendente",
     observacao: "",
   });
   const [saving, setSaving] = useState(false);
+  void precoSugerido;
 
   async function save(e: React.FormEvent) {
     e.preventDefault();
