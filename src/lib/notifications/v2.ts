@@ -160,6 +160,9 @@ export type V2Item = LocalNotif & {
   __source: "v2";
   __dbId: string;
   __readAtDb: string | null;
+  __type: string;
+  __data: Record<string, unknown> | null;
+  __excursaoId: string | null;
 };
 
 function mapRow(row: DbRow): V2Item | null {
@@ -170,6 +173,9 @@ function mapRow(row: DbRow): V2Item | null {
     __source: "v2",
     __dbId: row.id,
     __readAtDb: row.read_at,
+    __type: row.type,
+    __data: (row.data as Record<string, unknown> | null) ?? null,
+    __excursaoId: row.excursao_id ?? null,
     role,
     icon: TYPE_ICON[row.type] ?? "calendar",
     tone: TYPE_TONE[row.type] ?? "blue",
@@ -177,7 +183,9 @@ function mapRow(row: DbRow): V2Item | null {
     message: row.message ?? "",
     createdAt: new Date(row.created_at).getTime(),
     read: !!row.read_at,
-    link: row.link ?? undefined,
+    // F4 prep: rota resolvida dinamicamente pelo consumidor a partir de __type + __data.
+    // `link` legado do banco é ignorado para evitar rotas inválidas/"not found".
+    link: undefined,
     category: CATEGORY_MAP[row.category],
     excursao: undefined,
   };
