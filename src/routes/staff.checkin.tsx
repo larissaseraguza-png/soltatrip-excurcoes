@@ -134,6 +134,17 @@ function CheckinStaff() {
     toast.success(`Check-in: ${pax.nome}`);
     notify.staff.checkinFeito(pax.nome, { link: "/staff/checkin" });
     notify.excursionista.checkinFeito(pax.nome, { link: `/app/excursao/${excursao.id}/checkin` });
+    void emitBusinessEvent({
+      type: "checkin.done",
+      excursaoId: excursao.id,
+      passageiroId,
+      title: "Check-in realizado",
+      message: `${pax.nome} embarcou.`,
+      link: `/app/excursao/${excursao.id}/checkin`,
+      recipientRoles: ["organizer_root", "organizer_socios", "staff_excursao"],
+      dedupeKey: `checkin.done:${passageiroId}`,
+      data: { passageiro_nome: pax.nome, via_qr: viaQr },
+    });
     qc.invalidateQueries({ queryKey: ["staff-checkin-pax", excursao.id, onibusId] });
     qc.invalidateQueries({ queryKey: ["staff-checkins", excursao.id, onibusId] });
     emitSync("checkin");
@@ -158,6 +169,17 @@ function CheckinStaff() {
     toast.success(`${pax.nome} foi desembarcado.`);
     notify.staff.desembarqueFeito(pax.nome, { link: "/staff/checkin" });
     notify.excursionista.alteracaoStaff(`${pax.nome} foi desembarcado.`, { link: `/app/excursao/${excursao.id}/checkin` });
+    void emitBusinessEvent({
+      type: "checkin.undone",
+      excursaoId: excursao.id,
+      passageiroId,
+      title: "Desembarque realizado",
+      message: `${pax.nome} foi desembarcado.`,
+      link: `/app/excursao/${excursao.id}/checkin`,
+      recipientRoles: ["organizer_root", "organizer_socios", "staff_excursao"],
+      dedupeKey: `checkin.undone:${passageiroId}:${Date.now()}`,
+      data: { passageiro_nome: pax.nome },
+    });
     qc.invalidateQueries({ queryKey: ["staff-checkin-pax", excursao.id, onibusId] });
     qc.invalidateQueries({ queryKey: ["staff-checkins", excursao.id, onibusId] });
     emitSync("checkin");
