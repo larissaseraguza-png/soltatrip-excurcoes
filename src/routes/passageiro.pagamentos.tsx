@@ -405,7 +405,7 @@ function Pagamentos() {
                 key={m.v}
                 onClick={() => {
                   setMetodo(m.v as any);
-                  if (m.v === "pix") setValor(restante.toFixed(2));
+                  if (m.v !== "pix_parcelado") setValor(restante.toFixed(2));
                 }}
                 className={`py-2.5 rounded-xl text-xs font-bold transition ${
                   metodo === m.v
