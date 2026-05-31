@@ -56,6 +56,7 @@ function FinanceiroPage() {
   const { onibus: onibusId } = useSearch({ from: "/app/excursao/$id/financeiro" });
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
+  const [preselectedPaxId, setPreselectedPaxId] = useState<string | null>(null);
   const [filterAction, setFilterAction] = useState<"all" | "todo">("all");
 
   const { data: excursao } = useQuery({
