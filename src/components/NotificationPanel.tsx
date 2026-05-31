@@ -173,10 +173,16 @@ export function NotificationPanel({
       ? items
       : items.filter((n) => (n as any).category === filter);
 
-  const handleClick = (link?: string) => {
-    if (!link) return;
+  const handleClick = (g: Group) => {
+    const target = resolveNotificationRoute(
+      g.__type ?? "",
+      role,
+      g.__data ?? null,
+      g.__excursaoId ?? null,
+    );
+    if (!target) return;
     setOpen(false);
-    navigate({ to: link as never }).catch(() => {});
+    navigate({ to: target as never }).catch(() => {});
   };
 
   return (
