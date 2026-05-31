@@ -353,7 +353,19 @@ function PassageirosPage() {
                 </button>
                 <button
                   title="Remover"
-                  onClick={() => confirm(`Remover ${p.nome}?`) && removeMut.mutate(p.id)}
+                  onClick={async () => {
+                    const ok = await confirmAction({
+                      title: "Remover passageiro",
+                      message: `Deseja remover ${p.nome} da excursão?`,
+                      details: [
+                        { label: "Status atual", value: p.status },
+                        { label: "Ação", value: "Remoção da lista de passageiros" },
+                      ],
+                      confirmLabel: "Remover passageiro",
+                      destructive: true,
+                    });
+                    if (ok) removeMut.mutate(p.id);
+                  }}
                   className="h-8 w-8 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 flex items-center justify-center"
                 >
                   <Trash2 className="h-4 w-4" />
