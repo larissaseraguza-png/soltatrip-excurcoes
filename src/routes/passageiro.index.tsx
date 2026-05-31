@@ -531,18 +531,23 @@ function MinhasViagens() {
                       placeholder="Nome completo"
                       className="w-full h-10 px-3 rounded-xl bg-background border border-border text-sm"
                     />
-                    <input
-                      value={p.email}
-                      onChange={(ev) => {
-                        const next = [...paxs];
-                        next[i] = { ...p, email: ev.target.value };
-                        setPaxs(next);
-                      }}
-                      type="email"
-                      placeholder={p.titular ? "Seu email" : "Email (para enviar acesso)"}
-                      className="w-full h-10 px-3 rounded-xl bg-background border border-border text-sm"
-                      disabled={p.titular}
-                    />
+                    {p.titular ? (
+                      <p className="text-[11px] text-muted-foreground px-1">
+                        Email da sua conta: <span className="font-mono text-foreground">{p.email}</span>
+                      </p>
+                    ) : (
+                      <input
+                        value={p.email}
+                        onChange={(ev) => {
+                          const next = [...paxs];
+                          next[i] = { ...p, email: ev.target.value };
+                          setPaxs(next);
+                        }}
+                        type="email"
+                        placeholder="Email (para enviar acesso)"
+                        className="w-full h-10 px-3 rounded-xl bg-background border border-border text-sm"
+                      />
+                    )}
                   </div>
                 ))}
                 <div className="flex gap-2">
