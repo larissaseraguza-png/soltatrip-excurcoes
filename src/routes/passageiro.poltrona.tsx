@@ -276,7 +276,8 @@ function Poltrona() {
       const msg = pontoNome ? `Ponto atualizado: ${pontoNome}.` : "Ponto de embarque atualizado.";
       notify.passageiro.alteracaoEmbarque(msg, { link: `/passageiro/reserva/${(reserva as any).reserva_id ?? reserva.id}` });
       notify.staff.alteracaoEmbarque(`${pontoNome ? pontoNome + " — " : ""}atualizado por um passageiro.`, { link: "/staff/onibus" });
-      emitSync("embarque");
+      // emitSync removido: escolherPoltrona já emite "embarque"; o listener
+      // global cuida das invalidações. Evita refetch duplicado.
     } catch (err: any) {
       toast.error(err.message ?? "Erro ao escolher embarque");
     } finally {

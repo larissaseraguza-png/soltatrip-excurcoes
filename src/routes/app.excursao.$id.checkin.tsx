@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useParams, useSearch } from "@tanstack/react-router";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft, QrCode, Camera, CheckCircle2, X, Loader2, Search } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
@@ -17,7 +17,7 @@ export const Route = createFileRoute("/app/excursao/$id/checkin")({
 function CheckinPage() {
   const { id } = useParams({ from: "/app/excursao/$id/checkin" });
   const { onibus: onibusId } = useSearch({ from: "/app/excursao/$id/checkin" });
-  const qc = useQueryClient();
+  // qc removido: invalidações centralizadas via emitSync + listener global.
   const [scanning, setScanning] = useState(false);
   const [feedback, setFeedback] = useState<{ ok: boolean; msg: string } | null>(null);
   const [search, setSearch] = useState("");
@@ -63,8 +63,8 @@ function CheckinPage() {
       .update({ status: "embarcado", embarcado_em: new Date().toISOString() })
       .eq("id", pid);
     setFeedback({ ok: true, msg: `${nome} embarcou!` });
-    qc.invalidateQueries({ queryKey: ["passageiros-checkin", id, onibusId ?? "all"] });
     notify.staff.checkinFeito(nome, { link: "/staff/checkin" });
+    // invalidação específica removida: o listener de sync escopa por tópico "checkin".
     emitSync("checkin");
     setTimeout(() => setFeedback(null), 2500);
   }
@@ -77,7 +77,7 @@ function CheckinPage() {
       .eq("id", pid);
     if (error) { setFeedback({ ok: false, msg: error.message }); return; }
     setFeedback({ ok: true, msg: `Embarque de ${nome} removido.` });
-    qc.invalidateQueries({ queryKey: ["passageiros-checkin", id, onibusId ?? "all"] });
+    // invalidação específica removida: listener de sync já cobre "checkin".
     emitSync("checkin");
     setTimeout(() => setFeedback(null), 2500);
   }
