@@ -257,15 +257,21 @@ export function NotificationPanel({
           ) : (
             groupNotifications(filteredItems).map((g) => {
               const Icon = iconMap[g.icon] ?? Bell;
-              const clickable = Boolean(g.link);
+              const target = resolveNotificationRoute(
+                g.__type ?? "",
+                role,
+                g.__data ?? null,
+                g.__excursaoId ?? null,
+              );
+              const clickable = Boolean(target);
               const displayTitle = g.count > 1 ? pluralTitle(g.title, g.count) : g.title;
               const quickAction =
-                role === "excursionista" && g.link ? quickActionLabel(g.title) : null;
+                role === "excursionista" && target ? quickActionLabel(g.title) : null;
               return (
                 <div key={g.id} className="border-b border-border/40">
                   <button
                     type="button"
-                    onClick={() => handleClick(g.link)}
+                    onClick={() => handleClick(g)}
                     disabled={!clickable}
                     className={`w-full text-left flex items-start gap-3 px-5 pt-4 ${quickAction ? "pb-2" : "pb-4"} transition ${
                       clickable ? "hover:bg-muted/40 active:bg-muted/60 cursor-pointer" : "cursor-default"
