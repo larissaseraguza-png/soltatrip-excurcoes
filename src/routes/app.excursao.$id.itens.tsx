@@ -8,6 +8,7 @@ import {
   ArrowLeft, Loader2, Plus, Pencil, Trash2, Save, X, Ticket,
   Tent, HeartHandshake, Crown, KeyRound, Package, CheckCircle2, Mail, Clock,
 } from "lucide-react";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 
 export const Route = createFileRoute("/app/excursao/$id/itens")({
   component: ItensPage,
