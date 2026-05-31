@@ -871,7 +871,14 @@ function FinanceiroPaxModal({
   }
 
   async function removePagamento(pid: string) {
-    if (!confirm("Remover este pagamento?")) return;
+    const ok = await confirmAction({
+      title: "Remover pagamento",
+      message: "Deseja remover este lançamento de pagamento?",
+      details: [{ label: "Ação", value: "Exclusão definitiva do registro" }],
+      confirmLabel: "Remover pagamento",
+      destructive: true,
+    });
+    if (!ok) return;
     const { error } = await supabase.from("pagamentos").delete().eq("id", pid);
     if (error) { toast.error(error.message); return; }
     toast.success("Pagamento removido");
