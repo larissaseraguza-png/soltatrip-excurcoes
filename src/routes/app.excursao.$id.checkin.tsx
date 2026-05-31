@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useParams, useSearch } from "@tanstack/react-router";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft, QrCode, Camera, CheckCircle2, X, Loader2, Search } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
