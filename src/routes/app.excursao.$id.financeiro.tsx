@@ -212,30 +212,13 @@ function FinanceiroPage() {
   const todoCount = rows.filter((r) => needsAction(r)).length;
   const visibleRows = filterAction === "todo" ? rows.filter(needsAction) : rows;
 
-  const confirmarPagamento = useMutation({
-    mutationFn: async (pax: Passageiro) => {
-      const restante = Math.max(0, Number(pax.total_price) - Number(pax.amount_paid));
-      if (restante <= 0) throw new Error("Já está totalmente pago.");
-      const { error } = await supabase.from("pagamentos").insert({
-        excursao_id: id, onibus_id: pax.onibus_id, passageiro_id: pax.id,
-        valor: restante, metodo: "manual", status: "confirmado",
-        observacao: "Confirmado pelo organizador", pago_em: new Date().toISOString(),
-      });
-      if (error) throw error;
-    },
-    onSuccess: (_data, pax) => {
-      toast.success("Pagamento confirmado.");
-      qc.invalidateQueries({ queryKey: ["pagamentos", id, onibusId ?? "all"] });
-      qc.invalidateQueries({ queryKey: ["fin-passageiros", id, onibusId ?? "all"] });
-      // Pagamento confirmado: a trigger DB sobre `pagamentos` emite payment.approved
-      // ao passageiro automaticamente. Organizadores são o ator, então não recebem
-      // duplicidade (actor != recipient garantido pelo notify_emit).
-      void pax;
-
-      emitSync("pagamento");
-    },
-    onError: (e: any) => toast.error(e?.message ?? "Não foi possível confirmar."),
-  });
+  // Regra: não inferimos mais "quitado" automaticamente. O chip "Registrar pagamento"
+  // abre o modal de lançamento pré-selecionando o passageiro; o organizador informa
+  // o valor exato e decide o status (default: pendente até confirmação explícita).
+  const abrirLancamento = (paxId: string) => {
+    setPreselectedPaxId(paxId);
+    setOpen(true);
+  };
 
   const marcarEnviado = useMutation({
     mutationFn: async (pedido: PedidoItem) => {
