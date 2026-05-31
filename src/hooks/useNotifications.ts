@@ -26,5 +26,7 @@ export function useNotifications(role: NotifRole) {
     unread,
     markAllRead: v2.markAllRead,
     clearAll: v2.dismissAllVisible,
+    markRead: v2.markRead,
+    dismiss: v2.dismiss,
   };
 }

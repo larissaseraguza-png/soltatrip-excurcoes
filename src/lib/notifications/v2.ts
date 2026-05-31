@@ -328,6 +328,39 @@ export function useNotificationsV2(role: NotifRole) {
     }
   }, [queryClient]);
 
+  const markRead = useCallback(
+    async (dbId: string) => {
+      const now = new Date().toISOString();
+      queryClient.setQueryData<V2Item[]>(QK, (prev) =>
+        (prev ?? []).map((n) =>
+          n.__dbId === dbId && !n.read ? { ...n, read: true, __readAtDb: now } : n,
+        ),
+      );
+      try {
+        await supabase.rpc("notification_mark_read", { _id: dbId });
+      } catch (e) {
+        console.warn("[notifications/v2] markRead failed:", e);
+        queryClient.invalidateQueries({ queryKey: QK });
+      }
+    },
+    [queryClient],
+  );
+
+  const dismiss = useCallback(
+    async (dbId: string) => {
+      queryClient.setQueryData<V2Item[]>(QK, (prev) =>
+        (prev ?? []).filter((n) => n.__dbId !== dbId),
+      );
+      try {
+        await supabase.rpc("notification_dismiss", { _id: dbId });
+      } catch (e) {
+        console.warn("[notifications/v2] dismiss failed:", e);
+        queryClient.invalidateQueries({ queryKey: QK });
+      }
+    },
+    [queryClient],
+  );
+
   const dismissAllVisible = useCallback(async () => {
     const ids = items.map((i) => i.__dbId);
     if (ids.length === 0) return;
@@ -346,7 +379,7 @@ export function useNotificationsV2(role: NotifRole) {
     }
   }, [items, queryClient]);
 
-  return { items, markAllRead, dismissAllVisible };
+  return { items, markAllRead, dismissAllVisible, markRead, dismiss };
 }
 
 
