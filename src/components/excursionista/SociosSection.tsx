@@ -33,6 +33,7 @@ export function SociosSection() {
   const { user } = useAuth();
   const qc = useQueryClient();
   const [busy, setBusy] = useState(false);
+  const confirmAction = useConfirm();
   const [error, setError] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
