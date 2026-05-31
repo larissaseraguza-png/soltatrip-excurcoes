@@ -22,6 +22,7 @@ function ExcursaoDetalhe() {
   const qc = useQueryClient();
   const fileRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState<null | "cancel" | "delete" | "upload">(null);
+  const confirmAction = useConfirm();
   const [pendingFile, setPendingFile] = useState<File | null>(null);
 
   const { data, isLoading } = useQuery({
