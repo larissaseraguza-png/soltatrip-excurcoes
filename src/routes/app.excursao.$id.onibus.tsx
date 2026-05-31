@@ -9,6 +9,7 @@ import {
   ArrowLeft, Bus, ChevronRight, Loader2, Plus, Pencil, Trash2, Users,
   Clock, MapPin, DollarSign, X, BookMarked, Save,
 } from "lucide-react";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 
 export const Route = createFileRoute("/app/excursao/$id/onibus")({
   component: OnibusListPage,
