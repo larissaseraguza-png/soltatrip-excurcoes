@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import {
   Bell,
@@ -28,9 +28,8 @@ import { useNotifications } from "@/hooks/useNotifications";
 import { formatRelative, type NotifIconKey, type NotifRole, type NotifTone, type NotifCategory } from "@/lib/notifications/store";
 import { resolveNotificationRoute } from "@/lib/notifications/resolveRoute";
 
-const FILTERS_BY_ROLE: Record<NotifRole, { key: NotifCategory | "todas"; label: string }[]> = {
+const FILTERS_BY_ROLE: Record<NotifRole, { key: NotifCategory; label: string }[]> = {
   excursionista: [
-    { key: "todas", label: "Todas" },
     { key: "pagamentos", label: "Pagamentos" },
     { key: "reservas", label: "Reservas" },
     { key: "checkin", label: "Check-in" },
@@ -40,7 +39,6 @@ const FILTERS_BY_ROLE: Record<NotifRole, { key: NotifCategory | "todas"; label: 
     { key: "socio", label: "Sócio" },
   ],
   staff: [
-    { key: "todas", label: "Todas" },
     { key: "checkin", label: "Check-in" },
     { key: "embarque", label: "Embarque" },
   ],
@@ -108,25 +106,55 @@ export function NotificationPanel({
 }) {
   const { items, markAllRead, clearAll, markRead } = useNotifications(role);
   const [open, setOpen] = useState(false);
-  const [filter, setFilter] = useState<NotifCategory | "todas">("todas");
   const roleFilters = FILTERS_BY_ROLE[role] ?? [];
+  const hasFilters = roleFilters.length > 0;
+  const [filter, setFilter] = useState<NotifCategory | null>(
+    hasFilters ? roleFilters[0].key : null,
+  );
   const navigate = useNavigate();
   const now = Date.now();
 
-  // Ao abrir o sino, zera o contador marcando todas como lidas.
-  // Nada é removido do histórico — "lido não apaga, só remove do sino".
+  // Para perfis SEM filtros (passageiro), manter o comportamento original:
+  // ao abrir o sino, marca tudo como lido. Para perfis COM filtros, o
+  // indicador por categoria precisa permanecer até o usuário entrar nela —
+  // a marcação acontece quando a categoria é selecionada (ver efeito abaixo).
   useEffect(() => {
-    if (!open) return;
+    if (!open || hasFilters) return;
     if (items.some((n) => !n.read)) {
       void markAllRead();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
-  const filteredItems =
-    filter === "todas"
-      ? items
-      : items.filter((n) => (n as any).category === filter);
+  // Conta de não-lidas por categoria (para os indicadores nas abas).
+  const unreadByCategory = useMemo(() => {
+    const acc: Partial<Record<NotifCategory, number>> = {};
+    for (const n of items) {
+      if (n.read) continue;
+      const cat = (n as any).category as NotifCategory | undefined;
+      if (!cat) continue;
+      acc[cat] = (acc[cat] ?? 0) + 1;
+    }
+    return acc;
+  }, [items]);
+
+  // Ao abrir o painel ou trocar de aba, marca como lidas as notificações
+  // visíveis daquela categoria — o indicador da aba desaparece após visualizar.
+  useEffect(() => {
+    if (!open || !hasFilters || !filter) return;
+    const toMark = items.filter(
+      (n) => !n.read && (n as any).category === filter && n.__dbId,
+    );
+    if (toMark.length === 0) return;
+    for (const n of toMark) {
+      if (n.__dbId) void markRead(n.__dbId);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, filter]);
+
+  const filteredItems = hasFilters
+    ? items.filter((n) => (n as any).category === filter)
+    : items;
 
   const handleClick = (n: Notif) => {
     const target = resolveNotificationRoute(
@@ -176,32 +204,40 @@ export function NotificationPanel({
           )}
         </SheetHeader>
         <div className="flex flex-col overflow-y-auto flex-1">
-          {items.length > 0 && roleFilters.length > 0 && (
+          {hasFilters && (
             <div className="px-5 pt-3 pb-2">
               <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
                 {roleFilters.map((f) => {
                   const active = filter === f.key;
-                  const count =
-                    f.key === "todas"
-                      ? items.length
-                      : items.filter((n) => (n as any).category === f.key).length;
+                  const unread = unreadByCategory[f.key] ?? 0;
                   return (
                     <button
                       key={f.key}
                       type="button"
                       onClick={() => setFilter(f.key)}
-                      className={`shrink-0 text-xs font-medium rounded-full px-3 py-1.5 transition border ${
+                      className={`relative shrink-0 text-xs font-medium rounded-full px-3 py-1.5 transition border ${
                         active
                           ? "bg-primary text-primary-foreground border-primary"
                           : "bg-muted/60 text-muted-foreground border-border/60 hover:bg-muted hover:text-foreground"
                       }`}
                     >
-                      {f.label} {count > 0 && `(${count})`}
+                      {f.label}
+                      {unread > 0 && (
+                        <span
+                          aria-label={`${unread} não lida${unread > 1 ? "s" : ""}`}
+                          className={`ml-1.5 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-bold ${
+                            active
+                              ? "bg-primary-foreground/20 text-primary-foreground"
+                              : "bg-neon-pink text-white"
+                          }`}
+                        >
+                          {unread}
+                        </span>
+                      )}
                     </button>
                   );
                 })}
               </div>
-
             </div>
           )}
           {filteredItems.length === 0 ? (
