@@ -435,9 +435,19 @@ function PedidoCard({
           </div>
         </div>
         <div className="text-right shrink-0">
-          <p className="font-display font-black text-base leading-none">{brl(totalGeral)}</p>
-          {pago > 0 && pago < totalGeral && (
-            <p className="text-[10px] text-muted-foreground mt-0.5">Pago {brl(pago)}</p>
+          {pendingPayment ? (
+            <>
+              <p className="font-display font-black text-lg leading-none text-yellow-300">{brl(Number(pendingPayment.valor))}</p>
+              <p className="text-[10px] text-yellow-300/80 uppercase tracking-wider font-bold mt-0.5">Aguardando</p>
+              <p className="text-[10px] text-muted-foreground mt-0.5">Total {brl(totalGeral)}</p>
+            </>
+          ) : (
+            <>
+              <p className="font-display font-black text-base leading-none">{brl(totalGeral)}</p>
+              {pago > 0 && pago < totalGeral && (
+                <p className="text-[10px] text-muted-foreground mt-0.5">Pago {brl(pago)}</p>
+              )}
+            </>
           )}
         </div>
       </div>
@@ -451,7 +461,10 @@ function PedidoCard({
               disabled={!pendingPayment || confirmandoId === pendingPayment.id}
               className="inline-flex items-center gap-1.5 text-[11px] uppercase tracking-wider font-bold px-3 py-1.5 rounded-full bg-neon-green/20 text-neon-green border border-neon-green/40 hover:bg-neon-green/30 disabled:opacity-50"
             >
-              <CheckCircle2 className="size-3.5" /> Confirmar pagamento
+              <CheckCircle2 className="size-3.5" />
+              {confirmandoId === pendingPayment?.id
+                ? "Confirmando..."
+                : `Confirmar ${pendingPayment ? brl(Number(pendingPayment.valor)) : "pagamento"}`}
             </button>
           )}
           {ingressosPendentes.map((p) => {
