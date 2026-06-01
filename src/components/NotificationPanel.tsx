@@ -106,25 +106,55 @@ export function NotificationPanel({
 }) {
   const { items, markAllRead, clearAll, markRead } = useNotifications(role);
   const [open, setOpen] = useState(false);
-  const [filter, setFilter] = useState<NotifCategory | "todas">("todas");
   const roleFilters = FILTERS_BY_ROLE[role] ?? [];
+  const hasFilters = roleFilters.length > 0;
+  const [filter, setFilter] = useState<NotifCategory | null>(
+    hasFilters ? roleFilters[0].key : null,
+  );
   const navigate = useNavigate();
   const now = Date.now();
 
-  // Ao abrir o sino, zera o contador marcando todas como lidas.
-  // Nada é removido do histórico — "lido não apaga, só remove do sino".
+  // Para perfis SEM filtros (passageiro), manter o comportamento original:
+  // ao abrir o sino, marca tudo como lido. Para perfis COM filtros, o
+  // indicador por categoria precisa permanecer até o usuário entrar nela —
+  // a marcação acontece quando a categoria é selecionada (ver efeito abaixo).
   useEffect(() => {
-    if (!open) return;
+    if (!open || hasFilters) return;
     if (items.some((n) => !n.read)) {
       void markAllRead();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
-  const filteredItems =
-    filter === "todas"
-      ? items
-      : items.filter((n) => (n as any).category === filter);
+  // Conta de não-lidas por categoria (para os indicadores nas abas).
+  const unreadByCategory = useMemo(() => {
+    const acc: Partial<Record<NotifCategory, number>> = {};
+    for (const n of items) {
+      if (n.read) continue;
+      const cat = (n as any).category as NotifCategory | undefined;
+      if (!cat) continue;
+      acc[cat] = (acc[cat] ?? 0) + 1;
+    }
+    return acc;
+  }, [items]);
+
+  // Ao abrir o painel ou trocar de aba, marca como lidas as notificações
+  // visíveis daquela categoria — o indicador da aba desaparece após visualizar.
+  useEffect(() => {
+    if (!open || !hasFilters || !filter) return;
+    const toMark = items.filter(
+      (n) => !n.read && (n as any).category === filter && n.__dbId,
+    );
+    if (toMark.length === 0) return;
+    for (const n of toMark) {
+      if (n.__dbId) void markRead(n.__dbId);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, filter]);
+
+  const filteredItems = hasFilters
+    ? items.filter((n) => (n as any).category === filter)
+    : items;
 
   const handleClick = (n: Notif) => {
     const target = resolveNotificationRoute(
