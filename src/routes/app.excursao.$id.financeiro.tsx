@@ -9,7 +9,7 @@ import {
 import { useState, useEffect, useMemo } from "react";
 import { useRealtimeSync } from "@/hooks/use-realtime-sync";
 import { OnibusFilterBadge } from "@/components/OnibusFilterBadge";
-import { useConfirm } from "@/components/ui/confirm-dialog";
+
 // emitSync removido — não há mais auto-confirmação que precise sincronizar.
 // notify removido — pagamentos disparam notificações via trigger DB (payment.approved → passageiro).
 
@@ -57,7 +57,7 @@ function FinanceiroPage() {
   const { id } = useParams({ from: "/app/excursao/$id/financeiro" });
   const { onibus: onibusId } = useSearch({ from: "/app/excursao/$id/financeiro" });
   const qc = useQueryClient();
-  const confirmAction = useConfirm();
+  
   const [open, setOpen] = useState(false);
   const [preselectedPaxId, setPreselectedPaxId] = useState<string | null>(null);
   const [filterAction, setFilterAction] = useState<"all" | "todo">("all");
@@ -226,29 +226,16 @@ function FinanceiroPage() {
 
   const confirmarPagamento = useMutation({
     mutationFn: async (pagamento: Pagamento) => {
-      const ok = await confirmAction({
-        title: "Confirmar pagamento",
-        message: "Deseja confirmar este pagamento enviado pelo passageiro?",
-        details: [
-          { label: "Valor", value: brl(Number(pagamento.valor)) },
-          { label: "Método", value: pagamento.metodo.toUpperCase() },
-          { label: "Ação", value: "Somar ao valor pago da reserva" },
-        ],
-        confirmLabel: "Confirmar pagamento",
-        destructive: false,
-      });
-      if (!ok) return false;
       const { error } = await supabase
         .from("pagamentos")
         .update({ status: "confirmado", pago_em: new Date().toISOString() })
         .eq("id", pagamento.id)
         .eq("status", "pendente");
       if (error) throw error;
-      return true;
+      return pagamento;
     },
-    onSuccess: (updated) => {
-      if (!updated) return;
-      toast.success("Pagamento confirmado.");
+    onSuccess: (pag) => {
+      toast.success(`Pagamento de ${brl(Number(pag.valor))} confirmado.`);
       qc.invalidateQueries({ queryKey: ["pagamentos", id, onibusId ?? "all"] });
       qc.invalidateQueries({ queryKey: ["fin-passageiros", id, onibusId ?? "all"] });
     },
@@ -448,9 +435,19 @@ function PedidoCard({
           </div>
         </div>
         <div className="text-right shrink-0">
-          <p className="font-display font-black text-base leading-none">{brl(totalGeral)}</p>
-          {pago > 0 && pago < totalGeral && (
-            <p className="text-[10px] text-muted-foreground mt-0.5">Pago {brl(pago)}</p>
+          {pendingPayment ? (
+            <>
+              <p className="font-display font-black text-lg leading-none text-yellow-300">{brl(Number(pendingPayment.valor))}</p>
+              <p className="text-[10px] text-yellow-300/80 uppercase tracking-wider font-bold mt-0.5">Aguardando</p>
+              <p className="text-[10px] text-muted-foreground mt-0.5">Total {brl(totalGeral)}</p>
+            </>
+          ) : (
+            <>
+              <p className="font-display font-black text-base leading-none">{brl(totalGeral)}</p>
+              {pago > 0 && pago < totalGeral && (
+                <p className="text-[10px] text-muted-foreground mt-0.5">Pago {brl(pago)}</p>
+              )}
+            </>
           )}
         </div>
       </div>
@@ -464,7 +461,10 @@ function PedidoCard({
               disabled={!pendingPayment || confirmandoId === pendingPayment.id}
               className="inline-flex items-center gap-1.5 text-[11px] uppercase tracking-wider font-bold px-3 py-1.5 rounded-full bg-neon-green/20 text-neon-green border border-neon-green/40 hover:bg-neon-green/30 disabled:opacity-50"
             >
-              <CheckCircle2 className="size-3.5" /> Confirmar pagamento
+              <CheckCircle2 className="size-3.5" />
+              {confirmandoId === pendingPayment?.id
+                ? "Confirmando..."
+                : `Confirmar ${pendingPayment ? brl(Number(pendingPayment.valor)) : "pagamento"}`}
             </button>
           )}
           {ingressosPendentes.map((p) => {
