@@ -380,13 +380,14 @@ function needsAction(r: { passageiro: { payment_status: string } | null; pedidos
 }
 
 function PedidoCard({
-  row, itemById, onibusById, pontoById, onConfirmar, onMarcarEnviado, confirmandoId,
+  row, itemById, onibusById, pontoById, pendingPayment, onConfirmar, onMarcarEnviado, confirmandoId,
 }: {
   row: { key: string; passageiro: Passageiro | null; nome: string; telefone: string | null; email: string | null; pedidos: PedidoItem[]; hasExcursao: boolean };
   itemById: Map<string, ExcursaoItem>;
   onibusById: Map<string, Onibus>;
   pontoById: Map<string, Ponto>;
-  onConfirmar: () => void;
+  pendingPayment?: Pagamento;
+  onConfirmar: (p: Pagamento) => void;
   onMarcarEnviado: (p: PedidoItem) => void;
   confirmandoId?: string;
 }) {
@@ -424,7 +425,7 @@ function PedidoCard({
     (p) => p.status !== "enviado" && p.status !== "recebido" && p.status !== "nao_recebido" && p.status !== "cancelado",
   );
   const naoRecebidos = row.pedidos.filter((p) => p.status === "nao_recebido");
-  const precisaPag = pax && payStatus !== "paid" && totalGeral > 0;
+  const precisaPag = pax && payStatus !== "paid" && totalGeral > 0 && !!pendingPayment;
 
   return (
     <li className="glass rounded-2xl p-4 border border-border/60">
@@ -459,8 +460,8 @@ function PedidoCard({
         <div className="flex gap-2 flex-wrap mt-3">
           {precisaPag && pax && (
             <button
-              onClick={onConfirmar}
-              disabled={confirmandoId === pax.id}
+              onClick={() => onConfirmar(pendingPayment)}
+              disabled={confirmandoId === pendingPayment.id}
               className="inline-flex items-center gap-1.5 text-[11px] uppercase tracking-wider font-bold px-3 py-1.5 rounded-full bg-neon-green/20 text-neon-green border border-neon-green/40 hover:bg-neon-green/30 disabled:opacity-50"
             >
               <CheckCircle2 className="size-3.5" /> Confirmar pagamento
