@@ -460,8 +460,8 @@ function PedidoCard({
         <div className="flex gap-2 flex-wrap mt-3">
           {precisaPag && pax && (
             <button
-              onClick={() => onConfirmar(pendingPayment)}
-              disabled={confirmandoId === pendingPayment.id}
+              onClick={() => pendingPayment && onConfirmar(pendingPayment)}
+              disabled={!pendingPayment || confirmandoId === pendingPayment.id}
               className="inline-flex items-center gap-1.5 text-[11px] uppercase tracking-wider font-bold px-3 py-1.5 rounded-full bg-neon-green/20 text-neon-green border border-neon-green/40 hover:bg-neon-green/30 disabled:opacity-50"
             >
               <CheckCircle2 className="size-3.5" /> Confirmar pagamento
