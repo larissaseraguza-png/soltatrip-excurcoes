@@ -149,31 +149,31 @@ export function NotificationPanel({
       <SheetTrigger asChild>{children}</SheetTrigger>
       <SheetContent side="right" className="w-full sm:max-w-sm p-0 flex flex-col">
         <SheetHeader className="px-5 pt-5 pb-3 border-b border-border/60">
-          <SheetTitle className="flex items-center justify-between gap-2 text-base">
-            <span className="flex items-center gap-2">
-              <Bell className="size-5 text-primary" />
-              Notificações
-            </span>
-            {items.length > 0 && (
-              <span className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={markAllRead}
-                  className="text-xs font-normal text-muted-foreground hover:text-foreground transition"
-                >
-                  Marcar como lidas
-                </button>
-                <button
-                  type="button"
-                  onClick={clearAll}
-                  className="text-xs font-normal text-muted-foreground hover:text-foreground transition flex items-center gap-1"
-                >
-                  <Trash2 className="size-3.5" />
-                  Limpar histórico
-                </button>
-              </span>
-            )}
+          {/* Título com padding-right reservando espaço para o X do Sheet (mobile-safe). */}
+          <SheetTitle className="flex items-center gap-2 text-base pr-12">
+            <Bell className="size-5 text-primary" />
+            Notificações
           </SheetTitle>
+          {/* Ações globais em linha separada, longe do botão de fechar, com alvo de toque ≥40px. */}
+          {items.length > 0 && (
+            <div className="flex items-center gap-2 mt-3">
+              <button
+                type="button"
+                onClick={markAllRead}
+                className="flex-1 min-h-[40px] text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 active:bg-muted rounded-lg px-3 transition"
+              >
+                Marcar como lidas
+              </button>
+              <button
+                type="button"
+                onClick={clearAll}
+                className="flex-1 min-h-[40px] text-xs font-medium text-muted-foreground hover:text-destructive hover:bg-destructive/10 active:bg-destructive/15 rounded-lg px-3 transition inline-flex items-center justify-center gap-1.5"
+              >
+                <Trash2 className="size-3.5" />
+                Limpar histórico
+              </button>
+            </div>
+          )}
         </SheetHeader>
         <div className="flex flex-col overflow-y-auto flex-1">
           {items.length > 0 && roleFilters.length > 0 && (
