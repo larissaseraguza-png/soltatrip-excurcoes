@@ -9,6 +9,7 @@ import {
 import { useState, useEffect, useMemo } from "react";
 import { useRealtimeSync } from "@/hooks/use-realtime-sync";
 import { OnibusFilterBadge } from "@/components/OnibusFilterBadge";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 // emitSync removido — não há mais auto-confirmação que precise sincronizar.
 // notify removido — pagamentos disparam notificações via trigger DB (payment.approved → passageiro).
 
@@ -21,12 +22,13 @@ export const Route = createFileRoute("/app/excursao/$id/financeiro")({
 
 type Pagamento = {
   id: string; valor: number; metodo: string; status: string;
-  observacao: string | null; passageiro_id: string; onibus_id: string | null;
+  observacao: string | null; passageiro_id: string | null; reserva_id: string | null; onibus_id: string | null;
   pago_em: string | null; created_at: string;
 };
 
 type Passageiro = {
   id: string; nome: string; telefone: string | null; email: string | null;
+  reserva_id: string | null;
   onibus_id: string | null; seat_id: string | null; assento: string | null;
   ponto_embarque_id: string | null; status: string; payment_status: string;
   total_price: number; amount_paid: number; embarcado_em: string | null;
@@ -55,6 +57,7 @@ function FinanceiroPage() {
   const { id } = useParams({ from: "/app/excursao/$id/financeiro" });
   const { onibus: onibusId } = useSearch({ from: "/app/excursao/$id/financeiro" });
   const qc = useQueryClient();
+  const confirmAction = useConfirm();
   const [open, setOpen] = useState(false);
   const [preselectedPaxId, setPreselectedPaxId] = useState<string | null>(null);
   const [filterAction, setFilterAction] = useState<"all" | "todo">("all");
@@ -71,7 +74,7 @@ function FinanceiroPage() {
       let q = supabase
         .from("passageiros")
         .select(
-          "id,nome,telefone,email,onibus_id,seat_id,assento,ponto_embarque_id,status,payment_status,total_price,amount_paid,embarcado_em",
+          "id,nome,telefone,email,reserva_id,onibus_id,seat_id,assento,ponto_embarque_id,status,payment_status,total_price,amount_paid,embarcado_em",
         )
         .eq("excursao_id", id);
       if (onibusId) q = q.eq("onibus_id", onibusId);
@@ -212,13 +215,36 @@ function FinanceiroPage() {
   const todoCount = rows.filter((r) => needsAction(r)).length;
   const visibleRows = filterAction === "todo" ? rows.filter(needsAction) : rows;
 
-  // Regra: não inferimos mais "quitado" automaticamente. O chip "Registrar pagamento"
-  // abre o modal de lançamento pré-selecionando o passageiro; o organizador informa
-  // o valor exato e decide o status (default: pendente até confirmação explícita).
-  const abrirLancamento = (paxId: string) => {
-    setPreselectedPaxId(paxId);
-    setOpen(true);
-  };
+  const confirmarPagamento = useMutation({
+    mutationFn: async (pagamento: Pagamento) => {
+      const ok = await confirmAction({
+        title: "Confirmar pagamento",
+        message: "Deseja confirmar este pagamento enviado pelo passageiro?",
+        details: [
+          { label: "Valor", value: brl(Number(pagamento.valor)) },
+          { label: "Método", value: pagamento.metodo.toUpperCase() },
+          { label: "Ação", value: "Somar ao valor pago da reserva" },
+        ],
+        confirmLabel: "Confirmar pagamento",
+        destructive: false,
+      });
+      if (!ok) return false;
+      const { error } = await supabase
+        .from("pagamentos")
+        .update({ status: "confirmado", pago_em: new Date().toISOString() })
+        .eq("id", pagamento.id)
+        .eq("status", "pendente");
+      if (error) throw error;
+      return true;
+    },
+    onSuccess: (updated) => {
+      if (!updated) return;
+      toast.success("Pagamento confirmado.");
+      qc.invalidateQueries({ queryKey: ["pagamentos", id, onibusId ?? "all"] });
+      qc.invalidateQueries({ queryKey: ["fin-passageiros", id, onibusId ?? "all"] });
+    },
+    onError: (e: any) => toast.error(e?.message ?? "Erro ao confirmar pagamento."),
+  });
 
   const marcarEnviado = useMutation({
     mutationFn: async (pedido: PedidoItem) => {
