@@ -9,7 +9,7 @@ import {
 import { useState, useEffect, useMemo } from "react";
 import { useRealtimeSync } from "@/hooks/use-realtime-sync";
 import { OnibusFilterBadge } from "@/components/OnibusFilterBadge";
-import { useConfirm } from "@/components/ui/confirm-dialog";
+
 // emitSync removido — não há mais auto-confirmação que precise sincronizar.
 // notify removido — pagamentos disparam notificações via trigger DB (payment.approved → passageiro).
 
@@ -57,7 +57,7 @@ function FinanceiroPage() {
   const { id } = useParams({ from: "/app/excursao/$id/financeiro" });
   const { onibus: onibusId } = useSearch({ from: "/app/excursao/$id/financeiro" });
   const qc = useQueryClient();
-  const confirmAction = useConfirm();
+  
   const [open, setOpen] = useState(false);
   const [preselectedPaxId, setPreselectedPaxId] = useState<string | null>(null);
   const [filterAction, setFilterAction] = useState<"all" | "todo">("all");
@@ -226,29 +226,16 @@ function FinanceiroPage() {
 
   const confirmarPagamento = useMutation({
     mutationFn: async (pagamento: Pagamento) => {
-      const ok = await confirmAction({
-        title: "Confirmar pagamento",
-        message: "Deseja confirmar este pagamento enviado pelo passageiro?",
-        details: [
-          { label: "Valor", value: brl(Number(pagamento.valor)) },
-          { label: "Método", value: pagamento.metodo.toUpperCase() },
-          { label: "Ação", value: "Somar ao valor pago da reserva" },
-        ],
-        confirmLabel: "Confirmar pagamento",
-        destructive: false,
-      });
-      if (!ok) return false;
       const { error } = await supabase
         .from("pagamentos")
         .update({ status: "confirmado", pago_em: new Date().toISOString() })
         .eq("id", pagamento.id)
         .eq("status", "pendente");
       if (error) throw error;
-      return true;
+      return pagamento;
     },
-    onSuccess: (updated) => {
-      if (!updated) return;
-      toast.success("Pagamento confirmado.");
+    onSuccess: (pag) => {
+      toast.success(`Pagamento de ${brl(Number(pag.valor))} confirmado.`);
       qc.invalidateQueries({ queryKey: ["pagamentos", id, onibusId ?? "all"] });
       qc.invalidateQueries({ queryKey: ["fin-passageiros", id, onibusId ?? "all"] });
     },
