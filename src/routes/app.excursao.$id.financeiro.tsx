@@ -215,6 +215,15 @@ function FinanceiroPage() {
   const todoCount = rows.filter((r) => needsAction(r)).length;
   const visibleRows = filterAction === "todo" ? rows.filter(needsAction) : rows;
 
+  const pendingPaymentFor = (pax: Passageiro | null) => {
+    if (!pax) return undefined;
+    return pagamentos.find(
+      (p) =>
+        p.status === "pendente" &&
+        (p.passageiro_id === pax.id || (!!pax.reserva_id && p.reserva_id === pax.reserva_id)),
+    );
+  };
+
   const confirmarPagamento = useMutation({
     mutationFn: async (pagamento: Pagamento) => {
       const ok = await confirmAction({
@@ -329,16 +338,22 @@ function FinanceiroPage() {
               itemById={itemById}
               onibusById={onibusById}
               pontoById={pontoById}
-              onConfirmar={() => r.passageiro && abrirLancamento(r.passageiro.id)}
+              pendingPayment={pendingPaymentFor(r.passageiro)}
+              onConfirmar={(p) => confirmarPagamento.mutate(p)}
               onMarcarEnviado={(p) => marcarEnviado.mutate(p)}
-              confirmandoId={undefined}
+              confirmandoId={confirmarPagamento.isPending ? confirmarPagamento.variables?.id : undefined}
             />
           ))}
         </ul>
       )}
 
       {pagamentos.length > 0 && (
-        <PagamentosDetalhe pagamentos={pagamentos} passageiros={passageiros} />
+        <PagamentosDetalhe
+          pagamentos={pagamentos}
+          passageiros={passageiros}
+          onConfirmar={(p) => confirmarPagamento.mutate(p)}
+          confirmandoId={confirmarPagamento.isPending ? confirmarPagamento.variables?.id : undefined}
+        />
       )}
 
       {open && (
