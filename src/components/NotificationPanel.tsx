@@ -28,9 +28,8 @@ import { useNotifications } from "@/hooks/useNotifications";
 import { formatRelative, type NotifIconKey, type NotifRole, type NotifTone, type NotifCategory } from "@/lib/notifications/store";
 import { resolveNotificationRoute } from "@/lib/notifications/resolveRoute";
 
-const FILTERS_BY_ROLE: Record<NotifRole, { key: NotifCategory | "todas"; label: string }[]> = {
+const FILTERS_BY_ROLE: Record<NotifRole, { key: NotifCategory; label: string }[]> = {
   excursionista: [
-    { key: "todas", label: "Todas" },
     { key: "pagamentos", label: "Pagamentos" },
     { key: "reservas", label: "Reservas" },
     { key: "checkin", label: "Check-in" },
@@ -40,7 +39,6 @@ const FILTERS_BY_ROLE: Record<NotifRole, { key: NotifCategory | "todas"; label: 
     { key: "socio", label: "Sócio" },
   ],
   staff: [
-    { key: "todas", label: "Todas" },
     { key: "checkin", label: "Check-in" },
     { key: "embarque", label: "Embarque" },
   ],
