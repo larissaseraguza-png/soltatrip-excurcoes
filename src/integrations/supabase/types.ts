@@ -1493,6 +1493,14 @@ export type Database = {
               isSetofReturn: false
             }
           }
+      recalc_passageiro_financeiro: {
+        Args: { _passageiro_id: string }
+        Returns: undefined
+      }
+      recalc_reserva_financeiro: {
+        Args: { _reserva_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
       app_role: "excursionista" | "staff" | "passageiro"
