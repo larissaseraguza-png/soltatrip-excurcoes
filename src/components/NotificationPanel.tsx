@@ -204,32 +204,40 @@ export function NotificationPanel({
           )}
         </SheetHeader>
         <div className="flex flex-col overflow-y-auto flex-1">
-          {items.length > 0 && roleFilters.length > 0 && (
+          {hasFilters && (
             <div className="px-5 pt-3 pb-2">
               <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
                 {roleFilters.map((f) => {
                   const active = filter === f.key;
-                  const count =
-                    f.key === "todas"
-                      ? items.length
-                      : items.filter((n) => (n as any).category === f.key).length;
+                  const unread = unreadByCategory[f.key] ?? 0;
                   return (
                     <button
                       key={f.key}
                       type="button"
                       onClick={() => setFilter(f.key)}
-                      className={`shrink-0 text-xs font-medium rounded-full px-3 py-1.5 transition border ${
+                      className={`relative shrink-0 text-xs font-medium rounded-full px-3 py-1.5 transition border ${
                         active
                           ? "bg-primary text-primary-foreground border-primary"
                           : "bg-muted/60 text-muted-foreground border-border/60 hover:bg-muted hover:text-foreground"
                       }`}
                     >
-                      {f.label} {count > 0 && `(${count})`}
+                      {f.label}
+                      {unread > 0 && (
+                        <span
+                          aria-label={`${unread} não lida${unread > 1 ? "s" : ""}`}
+                          className={`ml-1.5 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-bold ${
+                            active
+                              ? "bg-primary-foreground/20 text-primary-foreground"
+                              : "bg-neon-pink text-white"
+                          }`}
+                        >
+                          {unread}
+                        </span>
+                      )}
                     </button>
                   );
                 })}
               </div>
-
             </div>
           )}
           {filteredItems.length === 0 ? (
