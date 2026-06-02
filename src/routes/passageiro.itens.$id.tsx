@@ -8,8 +8,9 @@ import { useRealtimeSync } from "@/hooks/use-realtime-sync";
 import {
   ArrowLeft, Loader2, Plus, Minus, ShoppingBag, Ticket, Tent, HeartHandshake,
   Crown, KeyRound, Package, Clock, CheckCircle2, Mail, Copy, QrCode,
-  CreditCard, ExternalLink, ThumbsUp, AlertTriangle, CircleDot,
+  CreditCard, ExternalLink, ThumbsUp, AlertTriangle, CircleDot, Flame,
 } from "lucide-react";
+
 import { Shell } from "@/components/passageiro/Shell";
 import { emitBusinessEvent } from "@/lib/notifications/business";
 
@@ -39,10 +40,11 @@ function ItensPassageiro() {
   const { data: ex } = useQuery({
     queryKey: ["excursao-pub", id],
     queryFn: async () => {
-      const { data } = await supabase.from("excursoes").select("id, titulo, destino, data_evento, banner_url, cor").eq("id", id).maybeSingle();
+      const { data } = await supabase.from("excursoes").select("id, titulo, destino, data_evento, banner_url, cor, preco").eq("id", id).maybeSingle();
       return data;
     },
   });
+
 
   const { data: itens = [], isLoading } = useQuery({
     queryKey: ["pax-itens", id],
@@ -122,12 +124,49 @@ function ItensPassageiro() {
           Nenhum item disponível no momento.
         </div>
       ) : (
-        <ul className="space-y-2 mb-6">
-          {itens.map((it: any) => (
-            <ItemCard key={it.id} item={it} excursaoId={id} userId={user?.id} />
-          ))}
-        </ul>
+        (() => {
+          const combos = (itens as any[]).filter((i) => i.inclui_excursao);
+          const naoCombos = (itens as any[]).filter((i) => !i.inclui_excursao);
+          // Para estimar economia do combo, escolhemos o ingresso individual mais barato
+          // (mesma categoria de ticket que normalmente compõe o combo).
+          const ingressoRef = naoCombos
+            .filter((i) => i.tipo === "ingresso")
+            .sort((a, b) => Number(a.valor) - Number(b.valor))[0];
+          return (
+            <>
+              {combos.length > 0 && (
+                <ul className="space-y-3 mb-4">
+                  {combos.map((it: any) => (
+                    <ComboHeroCard
+                      key={it.id}
+                      item={it}
+                      excursaoId={id}
+                      userId={user?.id}
+                      excursaoPreco={Number(ex?.preco ?? 0)}
+                      ingressoRefValor={ingressoRef ? Number(ingressoRef.valor) : null}
+                    />
+                  ))}
+                </ul>
+              )}
+              {naoCombos.length > 0 && (
+                <>
+                  {combos.length > 0 && (
+                    <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold mb-2 mt-1">
+                      Ou compre separado
+                    </p>
+                  )}
+                  <ul className="space-y-2 mb-6">
+                    {naoCombos.map((it: any) => (
+                      <ItemCard key={it.id} item={it} excursaoId={id} userId={user?.id} />
+                    ))}
+                  </ul>
+                </>
+              )}
+            </>
+          );
+        })()
       )}
+
 
       {(temPedidoPendente || (meusPedidos as any[]).length > 0) && (
         <PaymentPanel payInfo={payInfo} />
@@ -152,7 +191,7 @@ function ItensPassageiro() {
   );
 }
 
-function ItemCard({ item, excursaoId, userId }: { item: any; excursaoId: string; userId?: string }) {
+function ItemCard({ item, excursaoId, userId, compact }: { item: any; excursaoId: string; userId?: string; compact?: boolean }) {
   const qc = useQueryClient();
   const navigate = useNavigate();
   const meta = TIPOS[item.tipo] ?? TIPOS.outro;
@@ -289,6 +328,32 @@ function ItemCard({ item, excursaoId, userId }: { item: any; excursaoId: string;
     }
   }
 
+  if (compact) {
+    return (
+      !esgotado ? (
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 bg-background/60 rounded-xl border border-border">
+            <button onClick={() => setQtd((q) => Math.max(1, q - 1))} className="h-9 w-9 grid place-items-center" aria-label="Menos">
+              <Minus className="h-4 w-4" />
+            </button>
+            <span className="w-6 text-center text-sm font-bold">{qtd}</span>
+            <button onClick={() => setQtd((q) => q + 1)} className="h-9 w-9 grid place-items-center" aria-label="Mais">
+              <Plus className="h-4 w-4" />
+            </button>
+          </div>
+          <button
+            onClick={pedir}
+            disabled={busy}
+            className="flex-1 h-10 rounded-xl bg-gradient-to-r from-neon-purple to-neon-pink text-primary-foreground font-bold text-sm flex items-center justify-center gap-2 disabled:opacity-50"
+          >
+            {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShoppingBag className="h-4 w-4" />}
+            Reservar combo {brl(Number(item.valor) * qtd)}
+          </button>
+        </div>
+      ) : null
+    );
+  }
+
   return (
     <li className={`glass rounded-2xl p-4 ${esgotado ? "opacity-60" : ""}`}>
       <div className="flex items-start gap-3 mb-3">
@@ -317,6 +382,7 @@ function ItemCard({ item, excursaoId, userId }: { item: any; excursaoId: string;
           )}
         </div>
       </div>
+
 
       {!esgotado && (
         <div className="flex items-center gap-2">
@@ -350,6 +416,80 @@ function ItemCard({ item, excursaoId, userId }: { item: any; excursaoId: string;
     </li>
   );
 }
+
+// Card de destaque para o combo (excursão + ingresso): reaproveita o fluxo do
+// ItemCard para a ação de reservar, mas com layout "Mais vantajoso" + cálculo
+// de economia frente à compra separada (excursão + ingresso individual).
+function ComboHeroCard({
+  item,
+  excursaoId,
+  userId,
+  excursaoPreco,
+  ingressoRefValor,
+}: {
+  item: any;
+  excursaoId: string;
+  userId?: string;
+  excursaoPreco: number;
+  ingressoRefValor: number | null;
+}) {
+  const restante =
+    item.quantidade_total != null ? Math.max(0, item.quantidade_total - item.quantidade_vendida) : null;
+  const esgotado = item.status === "esgotado" || (restante != null && restante <= 0);
+  const referencia = excursaoPreco + (ingressoRefValor ?? 0);
+  const economia = ingressoRefValor != null && referencia > Number(item.valor)
+    ? referencia - Number(item.valor)
+    : 0;
+
+  return (
+    <li>
+      <div className="relative w-full rounded-3xl p-5 overflow-hidden border-2 border-neon-pink/60 bg-gradient-to-br from-neon-purple/30 via-neon-pink/20 to-neon-green/10 glow-primary">
+        <div className="absolute -right-8 -top-8 size-32 rounded-full bg-neon-pink/30 blur-3xl" />
+        <div className="absolute top-3 right-3">
+          <span className="inline-flex items-center gap-1 text-[10px] uppercase tracking-widest font-black px-2 py-1 rounded-full bg-neon-pink text-primary-foreground">
+            <Flame className="size-3" /> Melhor opção
+          </span>
+        </div>
+        <div className="relative flex items-start gap-3">
+          <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-neon-purple to-neon-pink grid place-items-center shrink-0">
+            <Package className="size-6" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-[10px] uppercase tracking-widest text-neon-pink font-black">
+              Combo · excursão + ingresso
+            </p>
+            <p className="font-display font-black text-lg leading-tight">{item.nome}</p>
+            {item.descricao && (
+              <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{item.descricao}</p>
+            )}
+            <p className="font-display font-black text-2xl mt-2 bg-gradient-to-r from-neon-pink to-neon-green bg-clip-text text-transparent">
+              {brl(item.valor)}
+            </p>
+            {economia > 0 && (
+              <p className="text-[11px] text-neon-green font-bold mt-1">
+                Economize {brl(economia)} comprando junto
+              </p>
+            )}
+            {restante != null && !esgotado && (
+              <p className="text-[10px] text-muted-foreground mt-0.5">{restante} disponíveis</p>
+            )}
+            {esgotado && (
+              <span className="inline-block mt-2 text-[10px] px-2 py-0.5 rounded-full bg-red-500/15 text-red-400 font-bold">
+                ESGOTADO
+              </span>
+            )}
+          </div>
+        </div>
+        {!esgotado && (
+          <div className="relative mt-4">
+            <ItemCard item={item} excursaoId={excursaoId} userId={userId} compact />
+          </div>
+        )}
+      </div>
+    </li>
+  );
+}
+
 
 function Status({ status }: { status: string }) {
   if (status === "recebido")

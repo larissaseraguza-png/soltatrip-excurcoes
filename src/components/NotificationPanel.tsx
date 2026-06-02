@@ -177,25 +177,25 @@ export function NotificationPanel({
       <SheetTrigger asChild>{children}</SheetTrigger>
       <SheetContent side="right" className="w-full sm:max-w-sm p-0 flex flex-col">
         <SheetHeader className="px-5 pt-5 pb-3 border-b border-border/60">
-          {/* Título com padding-right reservando espaço para o X do Sheet (mobile-safe). */}
-          <SheetTitle className="flex items-center gap-2 text-base pr-12">
+          {/* Título com padding-right ainda maior para garantir distância do X em telas pequenas. */}
+          <SheetTitle className="flex items-center gap-2 text-base pr-16">
             <Bell className="size-5 text-primary" />
             Notificações
           </SheetTitle>
-          {/* Ações globais em linha separada, longe do botão de fechar, com alvo de toque ≥40px. */}
+          {/* Ações globais bem separadas (gap-3 + margem superior maior), longe do X. */}
           {items.length > 0 && (
-            <div className="flex items-center gap-2 mt-3">
+            <div className="flex items-center gap-3 mt-5">
               <button
                 type="button"
                 onClick={markAllRead}
-                className="flex-1 min-h-[40px] text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 active:bg-muted rounded-lg px-3 transition"
+                className="flex-1 min-h-[44px] text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 active:bg-muted rounded-lg px-3 transition"
               >
                 Marcar como lidas
               </button>
               <button
                 type="button"
                 onClick={clearAll}
-                className="flex-1 min-h-[40px] text-xs font-medium text-muted-foreground hover:text-destructive hover:bg-destructive/10 active:bg-destructive/15 rounded-lg px-3 transition inline-flex items-center justify-center gap-1.5"
+                className="flex-1 min-h-[44px] text-xs font-medium text-muted-foreground hover:text-destructive hover:bg-destructive/10 active:bg-destructive/15 rounded-lg px-3 transition inline-flex items-center justify-center gap-1.5"
               >
                 <Trash2 className="size-3.5" />
                 Limpar histórico
@@ -203,6 +203,7 @@ export function NotificationPanel({
             </div>
           )}
         </SheetHeader>
+
         <div className="flex flex-col overflow-y-auto flex-1">
           {hasFilters && (
             <div className="px-5 pt-3 pb-2">
