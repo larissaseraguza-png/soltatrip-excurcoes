@@ -191,7 +191,7 @@ function ItensPassageiro() {
   );
 }
 
-function ItemCard({ item, excursaoId, userId }: { item: any; excursaoId: string; userId?: string }) {
+function ItemCard({ item, excursaoId, userId, compact }: { item: any; excursaoId: string; userId?: string; compact?: boolean }) {
   const qc = useQueryClient();
   const navigate = useNavigate();
   const meta = TIPOS[item.tipo] ?? TIPOS.outro;
