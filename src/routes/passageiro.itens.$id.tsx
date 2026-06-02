@@ -39,10 +39,11 @@ function ItensPassageiro() {
   const { data: ex } = useQuery({
     queryKey: ["excursao-pub", id],
     queryFn: async () => {
-      const { data } = await supabase.from("excursoes").select("id, titulo, destino, data_evento, banner_url, cor").eq("id", id).maybeSingle();
+      const { data } = await supabase.from("excursoes").select("id, titulo, destino, data_evento, banner_url, cor, preco").eq("id", id).maybeSingle();
       return data;
     },
   });
+
 
   const { data: itens = [], isLoading } = useQuery({
     queryKey: ["pax-itens", id],
