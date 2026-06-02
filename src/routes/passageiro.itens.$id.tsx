@@ -328,6 +328,32 @@ function ItemCard({ item, excursaoId, userId, compact }: { item: any; excursaoId
     }
   }
 
+  if (compact) {
+    return (
+      !esgotado ? (
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 bg-background/60 rounded-xl border border-border">
+            <button onClick={() => setQtd((q) => Math.max(1, q - 1))} className="h-9 w-9 grid place-items-center" aria-label="Menos">
+              <Minus className="h-4 w-4" />
+            </button>
+            <span className="w-6 text-center text-sm font-bold">{qtd}</span>
+            <button onClick={() => setQtd((q) => q + 1)} className="h-9 w-9 grid place-items-center" aria-label="Mais">
+              <Plus className="h-4 w-4" />
+            </button>
+          </div>
+          <button
+            onClick={pedir}
+            disabled={busy}
+            className="flex-1 h-10 rounded-xl bg-gradient-to-r from-neon-purple to-neon-pink text-primary-foreground font-bold text-sm flex items-center justify-center gap-2 disabled:opacity-50"
+          >
+            {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShoppingBag className="h-4 w-4" />}
+            Reservar combo {brl(Number(item.valor) * qtd)}
+          </button>
+        </div>
+      ) : null
+    );
+  }
+
   return (
     <li className={`glass rounded-2xl p-4 ${esgotado ? "opacity-60" : ""}`}>
       <div className="flex items-start gap-3 mb-3">
@@ -356,6 +382,7 @@ function ItemCard({ item, excursaoId, userId, compact }: { item: any; excursaoId
           )}
         </div>
       </div>
+
 
       {!esgotado && (
         <div className="flex items-center gap-2">
