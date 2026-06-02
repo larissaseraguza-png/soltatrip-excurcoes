@@ -123,12 +123,49 @@ function ItensPassageiro() {
           Nenhum item disponível no momento.
         </div>
       ) : (
-        <ul className="space-y-2 mb-6">
-          {itens.map((it: any) => (
-            <ItemCard key={it.id} item={it} excursaoId={id} userId={user?.id} />
-          ))}
-        </ul>
+        (() => {
+          const combos = (itens as any[]).filter((i) => i.inclui_excursao);
+          const naoCombos = (itens as any[]).filter((i) => !i.inclui_excursao);
+          // Para estimar economia do combo, escolhemos o ingresso individual mais barato
+          // (mesma categoria de ticket que normalmente compõe o combo).
+          const ingressoRef = naoCombos
+            .filter((i) => i.tipo === "ingresso")
+            .sort((a, b) => Number(a.valor) - Number(b.valor))[0];
+          return (
+            <>
+              {combos.length > 0 && (
+                <ul className="space-y-3 mb-4">
+                  {combos.map((it: any) => (
+                    <ComboHeroCard
+                      key={it.id}
+                      item={it}
+                      excursaoId={id}
+                      userId={user?.id}
+                      excursaoPreco={Number(ex?.preco ?? 0)}
+                      ingressoRefValor={ingressoRef ? Number(ingressoRef.valor) : null}
+                    />
+                  ))}
+                </ul>
+              )}
+              {naoCombos.length > 0 && (
+                <>
+                  {combos.length > 0 && (
+                    <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold mb-2 mt-1">
+                      Ou compre separado
+                    </p>
+                  )}
+                  <ul className="space-y-2 mb-6">
+                    {naoCombos.map((it: any) => (
+                      <ItemCard key={it.id} item={it} excursaoId={id} userId={user?.id} />
+                    ))}
+                  </ul>
+                </>
+              )}
+            </>
+          );
+        })()
       )}
+
 
       {(temPedidoPendente || (meusPedidos as any[]).length > 0) && (
         <PaymentPanel payInfo={payInfo} />
