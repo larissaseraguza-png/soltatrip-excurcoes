@@ -390,6 +390,80 @@ function ItemCard({ item, excursaoId, userId }: { item: any; excursaoId: string;
   );
 }
 
+// Card de destaque para o combo (excursão + ingresso): reaproveita o fluxo do
+// ItemCard para a ação de reservar, mas com layout "Mais vantajoso" + cálculo
+// de economia frente à compra separada (excursão + ingresso individual).
+function ComboHeroCard({
+  item,
+  excursaoId,
+  userId,
+  excursaoPreco,
+  ingressoRefValor,
+}: {
+  item: any;
+  excursaoId: string;
+  userId?: string;
+  excursaoPreco: number;
+  ingressoRefValor: number | null;
+}) {
+  const restante =
+    item.quantidade_total != null ? Math.max(0, item.quantidade_total - item.quantidade_vendida) : null;
+  const esgotado = item.status === "esgotado" || (restante != null && restante <= 0);
+  const referencia = excursaoPreco + (ingressoRefValor ?? 0);
+  const economia = ingressoRefValor != null && referencia > Number(item.valor)
+    ? referencia - Number(item.valor)
+    : 0;
+
+  return (
+    <li>
+      <div className="relative w-full rounded-3xl p-5 overflow-hidden border-2 border-neon-pink/60 bg-gradient-to-br from-neon-purple/30 via-neon-pink/20 to-neon-green/10 glow-primary">
+        <div className="absolute -right-8 -top-8 size-32 rounded-full bg-neon-pink/30 blur-3xl" />
+        <div className="absolute top-3 right-3">
+          <span className="inline-flex items-center gap-1 text-[10px] uppercase tracking-widest font-black px-2 py-1 rounded-full bg-neon-pink text-primary-foreground">
+            <Flame className="size-3" /> Melhor opção
+          </span>
+        </div>
+        <div className="relative flex items-start gap-3">
+          <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-neon-purple to-neon-pink grid place-items-center shrink-0">
+            <Package className="size-6" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-[10px] uppercase tracking-widest text-neon-pink font-black">
+              Combo · excursão + ingresso
+            </p>
+            <p className="font-display font-black text-lg leading-tight">{item.nome}</p>
+            {item.descricao && (
+              <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{item.descricao}</p>
+            )}
+            <p className="font-display font-black text-2xl mt-2 bg-gradient-to-r from-neon-pink to-neon-green bg-clip-text text-transparent">
+              {brl(item.valor)}
+            </p>
+            {economia > 0 && (
+              <p className="text-[11px] text-neon-green font-bold mt-1">
+                Economize {brl(economia)} comprando junto
+              </p>
+            )}
+            {restante != null && !esgotado && (
+              <p className="text-[10px] text-muted-foreground mt-0.5">{restante} disponíveis</p>
+            )}
+            {esgotado && (
+              <span className="inline-block mt-2 text-[10px] px-2 py-0.5 rounded-full bg-red-500/15 text-red-400 font-bold">
+                ESGOTADO
+              </span>
+            )}
+          </div>
+        </div>
+        {!esgotado && (
+          <div className="relative mt-4">
+            <ItemCard item={item} excursaoId={excursaoId} userId={userId} compact />
+          </div>
+        )}
+      </div>
+    </li>
+  );
+}
+
+
 function Status({ status }: { status: string }) {
   if (status === "recebido")
     return <span className="text-[10px] px-2 py-0.5 rounded-full bg-neon-green/20 text-neon-green font-bold inline-flex items-center gap-1"><ThumbsUp className="h-3 w-3" />Recebido</span>;
