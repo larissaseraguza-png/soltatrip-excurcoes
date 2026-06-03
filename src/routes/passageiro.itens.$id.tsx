@@ -104,7 +104,7 @@ function ItensPassageiro() {
   const temPedidoPendente = (meusPedidos as any[]).some((p) => p.status === "pendente");
 
   return (
-    <Shell back={`/passageiro/reserva/${id}` as any} title="Itens da festa" subtitle={ex?.titulo}>
+    <Shell back={"/passageiro" as any} title="Itens da festa" subtitle={ex?.titulo}>
       <Link
         to="/passageiro"
         className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-3"
