@@ -8,6 +8,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useRealtimeSync } from "@/hooks/use-realtime-sync";
 import { Calendar, MapPin, Loader2, Sparkles, Ticket, Compass, X, Plus, Minus, Users, Bus, Clock, Package, Tent, Crown, HeartHandshake, KeyRound, Flame, ChevronRight } from "lucide-react";
 import { emitSync } from "@/lib/sync/bus";
+import { emitBusinessEvent } from "@/lib/notifications/business";
 
 export const Route = createFileRoute("/passageiro/")({
   component: MinhasViagens,
