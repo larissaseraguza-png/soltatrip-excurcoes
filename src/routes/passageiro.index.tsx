@@ -8,6 +8,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useRealtimeSync } from "@/hooks/use-realtime-sync";
 import { Calendar, MapPin, Loader2, Sparkles, Ticket, Compass, X, Plus, Minus, Users, Bus, Clock, Package, Tent, Crown, HeartHandshake, KeyRound, Flame, ChevronRight } from "lucide-react";
 import { emitSync } from "@/lib/sync/bus";
+import { emitBusinessEvent } from "@/lib/notifications/business";
 
 export const Route = createFileRoute("/passageiro/")({
   component: MinhasViagens,
@@ -225,25 +226,45 @@ function MinhasViagens() {
       if (error) throw error;
       const reservaId = data as unknown as string;
 
-      // Se escolheu combo (excursão + ingresso), cria o pedido do ingresso vinculado
+      // COMBO: se foi escolhido um item que inclui a excursão, registra a compra
+      // do item via RPC `comprar_item` (atômica, valida estoque, atualiza
+      // quantidade_vendida e cria o pedido em pedidos_itens — nunca INSERT cru).
       if (selectedItem) {
-        const valorUnit = Number(selectedItem.valor) || 0;
-        const { error: pedErr } = await supabase.from("pedidos_itens").insert({
-          excursao_id: modalEx.id,
-          item_id: selectedItem.id,
-          comprador_id: user.id,
-          quantidade: qtd,
-          valor_unitario: valorUnit,
-          valor_total: valorUnit * qtd,
-          status: "pendente",
-          observacao: `Combo vinculado à reserva ${reservaId}`,
+        const { error: errCompra } = await supabase.rpc("comprar_item", {
+          p_item_id: selectedItem.id,
+          p_qtd: qtd,
+          p_excursao_id: modalEx.id,
         } as any);
-        if (pedErr) {
-          toast.warning("Reserva criada, mas houve um problema ao registrar o combo. Você pode finalizar pelo evento.");
+        if (errCompra) {
+          const msg = errCompra.message ?? "";
+          if (msg.includes("sold_out")) toast.warning("Reserva criada, mas o combo esgotou.");
+          else if (msg.includes("invalid_quantity")) toast.warning("Reserva criada, mas a quantidade do combo é inválida.");
+          else toast.warning("Reserva criada, mas houve um problema ao registrar o combo. Finalize pelo evento.");
+        } else {
+          // Notifica organizador/sócios sobre o pedido do combo (item.ordered),
+          // mantendo o mesmo evento usado pelo fluxo /passageiro/itens/$id.
+          void emitBusinessEvent({
+            type: "item.ordered",
+            excursaoId: modalEx.id,
+            reservaId,
+            title: "Novo pedido de item",
+            message: `Pedido do combo "${selectedItem.nome}".`,
+            link: `/app/excursao/${modalEx.id}/passageiros`,
+            recipientRoles: ["organizer_root", "organizer_socios"],
+            dedupeKey: `item.ordered:${reservaId}:${selectedItem.id}`,
+            data: {
+              item_id: selectedItem.id,
+              item_nome: selectedItem.nome,
+              quantidade: qtd,
+              combo: true,
+            },
+          });
         }
       }
 
       qc.invalidateQueries({ queryKey: ["minhas-reservas"] });
+      qc.invalidateQueries({ queryKey: ["pax-pedidos", modalEx.id, user.id] });
+      qc.invalidateQueries({ queryKey: ["pax-itens", modalEx.id] });
       emitSync("reserva");
       setModalEx(null);
       navigate({ to: "/passageiro/pagamentos", search: { reserva: reservaId } as any });
@@ -698,8 +719,8 @@ function ExperienciaStep({
     );
   }
 
-  const combos = itens.filter((i) => i.tipo === "combo");
-  const ingressos = itens.filter((i) => i.tipo !== "combo");
+  const combos = itens.filter((i) => !!i.inclui_excursao);
+  const ingressos = itens.filter((i) => !i.inclui_excursao);
   const comboPrincipal = combos[0];
   const outrosCombos = combos.slice(1);
 
@@ -718,7 +739,7 @@ function ExperienciaStep({
           <div className="absolute -right-8 -top-8 size-32 rounded-full bg-neon-pink/30 blur-3xl" />
           <div className="absolute top-3 right-3">
             <span className="inline-flex items-center gap-1 text-[10px] uppercase tracking-widest font-black px-2 py-1 rounded-full bg-neon-pink text-primary-foreground">
-              <Flame className="size-3" /> Mais vantajoso
+              <Flame className="size-3" /> Melhor opção
             </span>
           </div>
           <div className="relative flex items-start gap-3">
