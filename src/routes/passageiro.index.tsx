@@ -719,8 +719,8 @@ function ExperienciaStep({
     );
   }
 
-  const combos = itens.filter((i) => i.tipo === "combo");
-  const ingressos = itens.filter((i) => i.tipo !== "combo");
+  const combos = itens.filter((i) => !!i.inclui_excursao);
+  const ingressos = itens.filter((i) => !i.inclui_excursao);
   const comboPrincipal = combos[0];
   const outrosCombos = combos.slice(1);
 
