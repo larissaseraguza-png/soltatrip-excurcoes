@@ -278,25 +278,25 @@ function ItemCard({ item, excursaoId, userId, compact }: { item: any; excursaoId
       setQtd(1);
 
       if (ehCombo) {
-        const reservaId = novaReservaId ?? pax?.reserva_id;
+        const reservaId = novaReservaId ?? pax?.reserva_id ?? null;
         toast.success("Combo reservado! Escolha ônibus, poltrona e embarque.");
-        if (novaReservaId) {
-          const reservaLink = reservaId ? `/passageiro/reserva/${reservaId}` : "/passageiro";
-          // booking.created da nova reserva é emitido pela trigger DB em `reservas`;
-          // o item.ordered (abaixo) cobre a faceta de pedido para organizadores/sócios.
-
-          void emitBusinessEvent({
-            type: "item.ordered",
-            excursaoId: excursaoId,
-            reservaId: novaReservaId,
-            title: "Novo pedido de item",
-            message: `Pedido do combo "${item.nome}".`,
-            link: `/app/excursao/${excursaoId}/passageiros`,
-            recipientRoles: ["organizer_root", "organizer_socios"],
-            dedupeKey: `item.ordered:${novaReservaId}:${item.id}`,
-            data: { item_id: item.id, item_nome: item.nome, quantidade: qtd, combo: true },
-          });
-        }
+        // Emite item.ordered para combo SEMPRE (nova reserva OU reuso de reserva
+        // existente). booking.created já é emitido pela trigger DB em `reservas`
+        // quando aplicável; item.ordered cobre a faceta de pedido do combo.
+        void emitBusinessEvent({
+          type: "item.ordered",
+          excursaoId: excursaoId,
+          reservaId: reservaId ?? undefined,
+          passageiroId: pax?.id ?? null,
+          title: "Novo pedido de item",
+          message: `Pedido do combo "${item.nome}".`,
+          link: `/app/excursao/${excursaoId}/passageiros`,
+          recipientRoles: ["organizer_root", "organizer_socios"],
+          dedupeKey: reservaId
+            ? `item.ordered:${reservaId}:${item.id}`
+            : `item.ordered:${userId}:${item.id}:${Date.now()}`,
+          data: { item_id: item.id, item_nome: item.nome, quantidade: qtd, combo: true },
+        });
         if (reservaId) {
           navigate({ to: "/passageiro/reserva/$id", params: { id: reservaId } });
         } else if (pax?.id) {
