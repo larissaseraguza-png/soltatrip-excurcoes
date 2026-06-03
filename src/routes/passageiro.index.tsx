@@ -739,7 +739,7 @@ function ExperienciaStep({
           <div className="absolute -right-8 -top-8 size-32 rounded-full bg-neon-pink/30 blur-3xl" />
           <div className="absolute top-3 right-3">
             <span className="inline-flex items-center gap-1 text-[10px] uppercase tracking-widest font-black px-2 py-1 rounded-full bg-neon-pink text-primary-foreground">
-              <Flame className="size-3" /> Mais vantajoso
+              <Flame className="size-3" /> Melhor opção
             </span>
           </div>
           <div className="relative flex items-start gap-3">
