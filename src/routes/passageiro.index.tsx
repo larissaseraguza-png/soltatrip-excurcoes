@@ -234,6 +234,7 @@ function MinhasViagens() {
           p_item_id: selectedItem.id,
           p_qtd: qtd,
           p_excursao_id: modalEx.id,
+          p_reserva_id: reservaId,
         } as any);
         if (errCompra) {
           const msg = errCompra.message ?? "";

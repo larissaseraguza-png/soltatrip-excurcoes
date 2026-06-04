@@ -262,6 +262,7 @@ function ItemCard({ item, excursaoId, userId, compact }: { item: any; excursaoId
         p_item_id: item.id,
         p_qtd: qtd,
         p_excursao_id: excursaoId,
+        p_reserva_id: novaReservaId ?? pax?.reserva_id ?? null,
       } as any);
       if (errCompra) {
         const msg = errCompra.message ?? "";
