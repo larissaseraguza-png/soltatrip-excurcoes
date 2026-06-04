@@ -133,16 +133,22 @@ function ReservaDetalhes() {
     },
   });
 
+  // IDs dos passageiros desta reserva — usados para localizar os pedidos
+  // do combo vinculados a esta reserva específica (sem depender de texto livre
+  // em `observacao`, que a RPC `comprar_item` não preenche).
+  const paxIds = (passageiros as any[]).map((p) => p.id).filter(Boolean) as string[];
+  const paxIdsKey = paxIds.join(",");
+
   const { data: pedidosItens = [] } = useQuery({
-    queryKey: ["reserva-pedidos-itens", id, user?.id, reserva?.excursao?.id],
-    enabled: !!reserva && !!user,
+    queryKey: ["reserva-pedidos-itens", id, user?.id, reserva?.excursao?.id, paxIdsKey],
+    enabled: !!reserva && !!user && paxIds.length > 0,
     queryFn: async () => {
       const { data } = await supabase
         .from("pedidos_itens")
         .select("*, item:excursao_itens(id, nome, tipo)")
         .eq("excursao_id", reserva!.excursao.id)
         .eq("comprador_id", user!.id)
-        .ilike("observacao", `%${id}%`)
+        .in("passageiro_id", paxIds)
         .order("created_at", { ascending: false });
       return data ?? [];
     },
