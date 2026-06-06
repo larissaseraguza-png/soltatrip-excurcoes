@@ -261,8 +261,24 @@ function ReservaDetalhes() {
   };
   const s = statusMap[status] ?? statusMap.pending_payment;
   const passageirosList = passageiros as any[];
+  const faltaOnibus = passageirosList.some((p) => !p.onibus_id);
   const faltamPoltronas = passageirosList.some((p) => !p.seat_id);
   const faltamEmbarques = passageirosList.some((p) => p.seat_id && !p.ponto_embarque_id);
+  const temPendencias = faltaOnibus || faltamPoltronas || faltamEmbarques;
+  // Após o primeiro pagamento, priorizamos visualmente as etapas pendentes
+  // (ônibus → poltrona → embarque) em vez do banner do evento, para reduzir
+  // casos de passageiro que paga e não finaliza a reserva.
+  const priorizarAcoes = pago > 0 && temPendencias && status !== "cancelled" && isComprador;
+  const primeiroPaxPendente =
+    passageirosList.find((p) => !p.seat_id || !p.ponto_embarque_id) ?? passageirosList[0];
+  const etapas = [
+    { key: "onibus", label: "Escolher ônibus", icon: Bus, done: !faltaOnibus },
+    { key: "poltrona", label: "Escolher poltrona", icon: Armchair, done: !faltamPoltronas },
+    { key: "embarque", label: "Escolher embarque", icon: MapPinned, done: !faltamEmbarques },
+  ];
+  const etapasFeitas = etapas.filter((e) => e.done).length;
+  const proximaEtapa = etapas.find((e) => !e.done);
+
 
 
   async function escolherPonto(paxId: string, pontoId: string) {
@@ -282,10 +298,96 @@ function ReservaDetalhes() {
 
   return (
     <Shell back="/passageiro" title="Reserva" subtitle={ex?.titulo}>
-      {/* Banner */}
-      <div className="relative rounded-3xl overflow-hidden mb-5 glow-primary">
+      {/* Bloco de prioridade pós-pagamento: etapas pendentes da reserva */}
+      {priorizarAcoes && (
+        <div className="mb-5 rounded-3xl p-5 border-2 border-neon-pink/60 bg-gradient-to-br from-neon-pink/15 via-neon-purple/10 to-neon-green/10 glow-primary relative overflow-hidden">
+          <div className="absolute -right-10 -top-10 size-40 rounded-full bg-neon-pink/30 blur-3xl pointer-events-none" />
+          <div className="relative">
+            <div className="flex items-center gap-2 mb-1">
+              <AlertTriangle className="size-5 text-neon-pink" />
+              <span className="text-[10px] uppercase tracking-widest font-bold text-neon-pink">
+                Falta concluir sua reserva
+              </span>
+            </div>
+            <h2 className="font-display font-black text-2xl leading-tight">
+              Pagamento confirmado!
+            </h2>
+            <p className="text-sm text-muted-foreground mt-1">
+              Conclua as próximas etapas para garantir sua vaga.
+            </p>
+
+            <div className="mt-4 flex items-center gap-2">
+              <div className="flex-1 h-2 rounded-full bg-muted overflow-hidden">
+                <div
+                  className="h-full bg-gradient-to-r from-neon-pink to-neon-green transition-all"
+                  style={{ width: `${Math.round((etapasFeitas / etapas.length) * 100)}%` }}
+                />
+              </div>
+              <span className="text-xs font-bold text-neon-green">
+                {etapasFeitas}/{etapas.length}
+              </span>
+            </div>
+
+            <ul className="mt-4 space-y-2">
+              {etapas.map((e) => {
+                const Icon = e.icon;
+                return (
+                  <li
+                    key={e.key}
+                    className={`flex items-center gap-3 rounded-2xl px-3 py-2 border ${
+                      e.done
+                        ? "bg-neon-green/10 border-neon-green/30"
+                        : "bg-background/50 border-border"
+                    }`}
+                  >
+                    <div
+                      className={`size-8 grid place-items-center rounded-xl ${
+                        e.done
+                          ? "bg-neon-green/20 text-neon-green"
+                          : "bg-neon-pink/15 text-neon-pink"
+                      }`}
+                    >
+                      {e.done ? <CheckCircle2 className="size-4" /> : <Icon className="size-4" />}
+                    </div>
+                    <span
+                      className={`text-sm font-bold flex-1 ${
+                        e.done ? "text-neon-green line-through decoration-neon-green/40" : ""
+                      }`}
+                    >
+                      {e.label}
+                    </span>
+                    {!e.done && <CircleDot className="size-4 text-neon-pink animate-pulse" />}
+                  </li>
+                );
+              })}
+            </ul>
+
+            {proximaEtapa && primeiroPaxPendente && (() => {
+              const NextIcon = proximaEtapa.icon;
+              return (
+                <button
+                  onClick={() =>
+                    navigate({
+                      to: "/passageiro/poltrona",
+                      search: { pax: primeiroPaxPendente.id } as any,
+                    })
+                  }
+                  className="mt-4 w-full h-14 rounded-2xl font-display font-black bg-gradient-to-r from-neon-pink to-neon-purple text-primary-foreground glow-primary inline-flex items-center justify-center gap-2"
+                >
+                  <NextIcon className="size-5" />
+                  {proximaEtapa.label}
+                </button>
+              );
+            })()}
+
+          </div>
+        </div>
+      )}
+
+      {/* Banner — compacto quando há ações pendentes pós-pagamento */}
+      <div className="relative rounded-3xl overflow-hidden mb-5">
         <div
-          className="h-40 relative"
+          className={`relative ${priorizarAcoes ? "h-20" : "h-40"}`}
           style={{
             background: ex?.banner_url
               ? `url(${ex.banner_url}) center/cover`
@@ -295,11 +397,18 @@ function ReservaDetalhes() {
           <div className="absolute inset-0 grid-bg opacity-30" />
           <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent" />
           <div className="absolute bottom-3 left-4 right-4">
-            <Pill tone={s.tone}>{s.label}</Pill>
-            <h1 className="font-display font-black text-2xl mt-2 leading-tight">{ex?.titulo}</h1>
+            {!priorizarAcoes && <Pill tone={s.tone}>{s.label}</Pill>}
+            <h1
+              className={`font-display font-black leading-tight ${
+                priorizarAcoes ? "text-base mt-0" : "text-2xl mt-2"
+              }`}
+            >
+              {ex?.titulo}
+            </h1>
           </div>
         </div>
       </div>
+
 
       {/* Resumo da excursão */}
       <div className="grid grid-cols-2 gap-3 mb-5">
