@@ -410,30 +410,17 @@ function ReservaDetalhes() {
       </div>
 
 
-      {/* Resumo da excursão — recolhido após o pagamento para priorizar ações */}
-      {pago > 0 ? (
-        <details className="glass rounded-3xl mb-5 group">
-          <summary className="cursor-pointer list-none px-5 py-4 flex items-center justify-between">
-            <span className="flex items-center gap-2 text-sm font-bold">
-              <Calendar className="size-4 text-neon-purple" />
-              Ver detalhes da viagem
-            </span>
-            <span className="text-xs text-muted-foreground group-open:hidden">Expandir</span>
-            <span className="text-xs text-muted-foreground hidden group-open:inline">Recolher</span>
-          </summary>
-          <div className="px-5 pb-5 grid grid-cols-2 gap-3">
-            <Info4
-              icon={Calendar}
-              label="Data"
-              value={ex?.data_evento ? new Date(ex.data_evento).toLocaleDateString("pt-BR") : "—"}
-            />
-            <Info4 icon={MapPin} label="Destino" value={ex?.destino ?? "—"} />
-            <Info4 icon={Clock} label="Saída" value={onibusInfo?.horario_saida ?? ex?.horario_saida ?? "—"} />
-            <Info4 icon={Users} label="Passageiros" value={String(reserva.quantidade)} />
-          </div>
-        </details>
-      ) : (
-        <div className="grid grid-cols-2 gap-3 mb-5">
+      {/* Resumo da excursão — sempre recolhido para priorizar ações operacionais */}
+      <details className="glass rounded-3xl mb-5 group">
+        <summary className="cursor-pointer list-none px-5 py-4 flex items-center justify-between">
+          <span className="flex items-center gap-2 text-sm font-bold">
+            <Calendar className="size-4 text-neon-purple" />
+            Detalhes da viagem
+          </span>
+          <span className="text-xs text-muted-foreground group-open:hidden">Expandir</span>
+          <span className="text-xs text-muted-foreground hidden group-open:inline">Recolher</span>
+        </summary>
+        <div className="px-5 pb-5 grid grid-cols-2 gap-3">
           <Info4
             icon={Calendar}
             label="Data"
@@ -443,7 +430,7 @@ function ReservaDetalhes() {
           <Info4 icon={Clock} label="Saída" value={onibusInfo?.horario_saida ?? ex?.horario_saida ?? "—"} />
           <Info4 icon={Users} label="Passageiros" value={String(reserva.quantidade)} />
         </div>
-      )}
+      </details>
 
       {/* Ônibus do passageiro — prioridade visual após o pagamento */}
       {onibusInfo && (
