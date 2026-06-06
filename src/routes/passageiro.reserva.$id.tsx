@@ -261,8 +261,24 @@ function ReservaDetalhes() {
   };
   const s = statusMap[status] ?? statusMap.pending_payment;
   const passageirosList = passageiros as any[];
+  const faltaOnibus = passageirosList.some((p) => !p.onibus_id);
   const faltamPoltronas = passageirosList.some((p) => !p.seat_id);
   const faltamEmbarques = passageirosList.some((p) => p.seat_id && !p.ponto_embarque_id);
+  const temPendencias = faltaOnibus || faltamPoltronas || faltamEmbarques;
+  // Após o primeiro pagamento, priorizamos visualmente as etapas pendentes
+  // (ônibus → poltrona → embarque) em vez do banner do evento, para reduzir
+  // casos de passageiro que paga e não finaliza a reserva.
+  const priorizarAcoes = pago > 0 && temPendencias && status !== "cancelled" && isComprador;
+  const primeiroPaxPendente =
+    passageirosList.find((p) => !p.seat_id || !p.ponto_embarque_id) ?? passageirosList[0];
+  const etapas = [
+    { key: "onibus", label: "Escolher ônibus", icon: Bus, done: !faltaOnibus },
+    { key: "poltrona", label: "Escolher poltrona", icon: Armchair, done: !faltamPoltronas },
+    { key: "embarque", label: "Escolher embarque", icon: MapPinned, done: !faltamEmbarques },
+  ];
+  const etapasFeitas = etapas.filter((e) => e.done).length;
+  const proximaEtapa = etapas.find((e) => !e.done);
+
 
 
   async function escolherPonto(paxId: string, pontoId: string) {
