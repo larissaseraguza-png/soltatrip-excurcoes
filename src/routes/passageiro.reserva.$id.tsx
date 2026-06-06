@@ -410,52 +410,42 @@ function ReservaDetalhes() {
       </div>
 
 
-      {/* Resumo da excursão */}
-      <div className="grid grid-cols-2 gap-3 mb-5">
-        <Info4
-          icon={Calendar}
-          label="Data"
-          value={ex?.data_evento ? new Date(ex.data_evento).toLocaleDateString("pt-BR") : "—"}
-        />
-        <Info4 icon={MapPin} label="Destino" value={ex?.destino ?? "—"} />
-        <Info4 icon={Clock} label="Saída" value={onibusInfo?.horario_saida ?? ex?.horario_saida ?? "—"} />
-        <Info4 icon={Users} label="Passageiros" value={String(reserva.quantidade)} />
-      </div>
-
-      {/* Ingresso / combo vinculado à reserva */}
-      {pedidosItens.length > 0 && (
-        <ReservaIngressosCard
-          pedidos={pedidosItens as any[]}
-          pago={pago}
-          onChanged={() => qc.invalidateQueries({ queryKey: ["reserva-pedidos-itens", id, user?.id, reserva?.excursao?.id] })}
-        />
+      {/* Resumo da excursão — recolhido após o pagamento para priorizar ações */}
+      {pago > 0 ? (
+        <details className="glass rounded-3xl mb-5 group">
+          <summary className="cursor-pointer list-none px-5 py-4 flex items-center justify-between">
+            <span className="flex items-center gap-2 text-sm font-bold">
+              <Calendar className="size-4 text-neon-purple" />
+              Ver detalhes da viagem
+            </span>
+            <span className="text-xs text-muted-foreground group-open:hidden">Expandir</span>
+            <span className="text-xs text-muted-foreground hidden group-open:inline">Recolher</span>
+          </summary>
+          <div className="px-5 pb-5 grid grid-cols-2 gap-3">
+            <Info4
+              icon={Calendar}
+              label="Data"
+              value={ex?.data_evento ? new Date(ex.data_evento).toLocaleDateString("pt-BR") : "—"}
+            />
+            <Info4 icon={MapPin} label="Destino" value={ex?.destino ?? "—"} />
+            <Info4 icon={Clock} label="Saída" value={onibusInfo?.horario_saida ?? ex?.horario_saida ?? "—"} />
+            <Info4 icon={Users} label="Passageiros" value={String(reserva.quantidade)} />
+          </div>
+        </details>
+      ) : (
+        <div className="grid grid-cols-2 gap-3 mb-5">
+          <Info4
+            icon={Calendar}
+            label="Data"
+            value={ex?.data_evento ? new Date(ex.data_evento).toLocaleDateString("pt-BR") : "—"}
+          />
+          <Info4 icon={MapPin} label="Destino" value={ex?.destino ?? "—"} />
+          <Info4 icon={Clock} label="Saída" value={onibusInfo?.horario_saida ?? ex?.horario_saida ?? "—"} />
+          <Info4 icon={Users} label="Passageiros" value={String(reserva.quantidade)} />
+        </div>
       )}
 
-
-      {/* Grupo WhatsApp — liberado após primeiro pagamento */}
-      {pago > 0 && (() => {
-        const waUrl = onibusInfo?.whatsapp_group_url ?? ex?.whatsapp_group_url ?? null;
-        if (!waUrl) {
-          return (
-            <div className="glass rounded-3xl p-4 mb-5 text-center text-xs text-muted-foreground">
-              O organizador ainda não cadastrou o link do grupo de WhatsApp.
-            </div>
-          );
-        }
-        return (
-          <a
-            href={waUrl}
-            target="_blank"
-            rel="noreferrer"
-            className="mb-5 w-full h-14 rounded-2xl bg-gradient-to-r from-neon-green to-neon-purple text-primary-foreground font-display font-bold flex items-center justify-center gap-2 glow-primary"
-          >
-            <MessageCircle className="size-5" /> Entrar no grupo da excursão
-          </a>
-        );
-      })()}
-
-
-      {/* Ônibus do passageiro */}
+      {/* Ônibus do passageiro — prioridade visual após o pagamento */}
       {onibusInfo && (
         <div className="glass rounded-3xl p-5 mb-5 border border-neon-purple/30">
           <div className="flex items-center gap-2 mb-3">
@@ -485,6 +475,39 @@ function ReservaDetalhes() {
           </div>
         </div>
       )}
+
+      {/* Ingresso / combo vinculado à reserva */}
+      {pedidosItens.length > 0 && (
+        <ReservaIngressosCard
+          pedidos={pedidosItens as any[]}
+          pago={pago}
+          onChanged={() => qc.invalidateQueries({ queryKey: ["reserva-pedidos-itens", id, user?.id, reserva?.excursao?.id] })}
+        />
+      )}
+
+      {/* Grupo WhatsApp — liberado após primeiro pagamento */}
+      {pago > 0 && (() => {
+        const waUrl = onibusInfo?.whatsapp_group_url ?? ex?.whatsapp_group_url ?? null;
+        if (!waUrl) {
+          return (
+            <div className="glass rounded-3xl p-4 mb-5 text-center text-xs text-muted-foreground">
+              O organizador ainda não cadastrou o link do grupo de WhatsApp.
+            </div>
+          );
+        }
+        return (
+          <a
+            href={waUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="mb-5 w-full h-14 rounded-2xl bg-gradient-to-r from-neon-green to-neon-purple text-primary-foreground font-display font-bold flex items-center justify-center gap-2 glow-primary"
+          >
+            <MessageCircle className="size-5" /> Entrar no grupo da excursão
+          </a>
+        );
+      })()}
+
+
 
 
       {/* Lista de passageiros */}
