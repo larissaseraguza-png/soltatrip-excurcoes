@@ -362,20 +362,24 @@ function ReservaDetalhes() {
               })}
             </ul>
 
-            {proximaEtapa && primeiroPaxPendente && (
-              <button
-                onClick={() =>
-                  navigate({
-                    to: "/passageiro/poltrona",
-                    search: { pax: primeiroPaxPendente.id } as any,
-                  })
-                }
-                className="mt-4 w-full h-14 rounded-2xl font-display font-black bg-gradient-to-r from-neon-pink to-neon-purple text-primary-foreground glow-primary inline-flex items-center justify-center gap-2"
-              >
-                <proximaEtapa.icon className="size-5" />
-                {proximaEtapa.label}
-              </button>
-            )}
+            {proximaEtapa && primeiroPaxPendente && (() => {
+              const NextIcon = proximaEtapa.icon;
+              return (
+                <button
+                  onClick={() =>
+                    navigate({
+                      to: "/passageiro/poltrona",
+                      search: { pax: primeiroPaxPendente.id } as any,
+                    })
+                  }
+                  className="mt-4 w-full h-14 rounded-2xl font-display font-black bg-gradient-to-r from-neon-pink to-neon-purple text-primary-foreground glow-primary inline-flex items-center justify-center gap-2"
+                >
+                  <NextIcon className="size-5" />
+                  {proximaEtapa.label}
+                </button>
+              );
+            })()}
+
           </div>
         </div>
       )}
