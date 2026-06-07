@@ -1,4 +1,5 @@
 import { createFileRoute, Navigate, useNavigate, redirect } from "@tanstack/react-router";
+import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
 import { useRole, setActiveRole, type AppRole } from "@/hooks/use-role";
 import { isFlowLocked } from "@/config/flow-mode";
