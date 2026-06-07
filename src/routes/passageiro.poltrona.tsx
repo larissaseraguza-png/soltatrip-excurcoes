@@ -191,16 +191,28 @@ function Poltrona() {
           <button
             disabled={!currentPontoId}
             onClick={async () => {
-              // Garante que a tela da reserva não exiba cache antigo
               await qc.invalidateQueries({ queryKey: ["reserva-passageiros"] });
-              navigate({
-                to: "/passageiro/reserva/$id",
-                params: { id: (reserva as any).reserva_id ?? reserva.id },
-              });
+              const reservaId = (reserva as any).reserva_id ?? reserva.id;
+              // Encadeia o próximo passageiro pendente da mesma reserva.
+              const { data: irmaos } = await supabase
+                .from("passageiros")
+                .select("id, seat_id, ponto_embarque_id, created_at")
+                .eq("reserva_id", reservaId)
+                .order("created_at", { ascending: true });
+              const proximo = (irmaos ?? []).find(
+                (p: any) => p.id !== reserva.id && (!p.seat_id || !p.ponto_embarque_id),
+              );
+              if (proximo) {
+                setSelectedSeat(null);
+                setSelectedPontoId(null);
+                navigate({ to: "/passageiro/poltrona", search: { pax: proximo.id } as any });
+              } else {
+                navigate({ to: "/passageiro/reserva/$id", params: { id: reservaId } });
+              }
             }}
             className="mt-5 w-full h-12 rounded-2xl font-bold bg-primary text-primary-foreground glow-primary disabled:opacity-40 disabled:cursor-not-allowed"
           >
-            Continuar para a reserva
+            Continuar
           </button>
         </div>
       </Shell>

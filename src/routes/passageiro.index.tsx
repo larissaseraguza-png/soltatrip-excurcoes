@@ -505,21 +505,24 @@ function MinhasViagens() {
                       Total: R$ {(Number(modalEx.preco) * qtd).toFixed(2)}
                     </p>
                   </div>
-                  <button onClick={() => setQtd(Math.min(10, qtd + 1))} className="size-10 grid place-items-center rounded-xl bg-primary text-primary-foreground">
+                  <button onClick={() => setQtd(Math.min(2, qtd + 1))} className="size-10 grid place-items-center rounded-xl bg-primary text-primary-foreground">
                     <Plus className="size-4" />
                   </button>
                 </div>
-                <div className="grid grid-cols-4 gap-2">
-                  {[1, 2, 3, 4].map((n) => (
+                <div className="grid grid-cols-2 gap-2">
+                  {[1, 2].map((n) => (
                     <button
                       key={n}
                       onClick={() => setQtd(n)}
                       className={`py-2 rounded-xl text-sm font-bold ${qtd === n ? "bg-neon-pink text-primary-foreground" : "bg-background/40 text-muted-foreground"}`}
                     >
-                      {n}
+                      {n === 1 ? "Só eu" : "Eu + 1"}
                     </button>
                   ))}
                 </div>
+                <p className="text-[11px] text-muted-foreground">
+                  Durante esta fase de testes, cada compra aceita no máximo 2 passageiros (você + 1 acompanhante).
+                </p>
                 <p className="text-[11px] text-muted-foreground">
                   Você é o titular. Uma única reserva é criada com pagamento consolidado e poltrona/embarque/QR Code individuais por passageiro.
                 </p>

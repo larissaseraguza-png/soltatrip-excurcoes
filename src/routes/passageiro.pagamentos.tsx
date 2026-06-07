@@ -286,12 +286,16 @@ function Pagamentos() {
       // payment.submitted dispara via trigger DB para organizador raiz + sócios.
       void brl(v);
 
-      // Fluxo automático: avançar para poltrona/embarque mesmo aguardando confirmação
+      // Fluxo automático: pular tela da reserva e abrir direto poltrona/embarque
+      // do primeiro passageiro pendente. Após concluir, /passageiro/poltrona
+      // encadeia o próximo ou volta para /passageiro/reserva/$id.
       if (faltamPoltronas || faltamEmbarques) {
-        navigate({
-          to: "/passageiro/reserva/$id",
-          params: { id: reservaAtiva.id },
-        });
+        const proximo = passageirosList.find((p) => !p.seat_id || !p.ponto_embarque_id);
+        if (proximo) {
+          navigate({ to: "/passageiro/poltrona", search: { pax: proximo.id } as any });
+        } else {
+          navigate({ to: "/passageiro/reserva/$id", params: { id: reservaAtiva.id } });
+        }
       }
     } catch (err: any) {
       toast.error(err.message ?? "Erro ao registrar pagamento");
@@ -368,9 +372,14 @@ function Pagamentos() {
       {/* Botão poltrona — abre a reserva centralizada com todos os passageiros */}
       {(pago > 0 || pendentesConfirmacao.length > 0) && status !== "cancelled" && (faltamPoltronas || faltamEmbarques) && (
         <button
-          onClick={() =>
-            navigate({ to: "/passageiro/reserva/$id", params: { id: reservaAtiva.id } })
-          }
+          onClick={() => {
+            const proximo = passageirosList.find((p) => !p.seat_id || !p.ponto_embarque_id);
+            if (proximo) {
+              navigate({ to: "/passageiro/poltrona", search: { pax: proximo.id } as any });
+            } else {
+              navigate({ to: "/passageiro/reserva/$id", params: { id: reservaAtiva.id } });
+            }
+          }}
           className="w-full mb-5 flex items-center justify-center gap-2 h-14 rounded-2xl font-display font-bold bg-gradient-to-r from-neon-green to-neon-purple text-primary-foreground glow-primary"
         >
           <Armchair className="size-5" />
