@@ -25,6 +25,10 @@ export function RoleHeader({ role, label }: { role: AppRole; label: string }) {
   function trocarPerfil(novo: AppRole) {
     if (novo === role) return;
     setActiveRole(novo);
+    // B-07: isolamento de contexto por perfil — limpa cache de notificações
+    // (sino + painel) e demais queries para forçar refetch do perfil ativo.
+    queryClient.removeQueries({ queryKey: ["notifications-v2"] });
+    queryClient.clear();
     navigate({ to: roleHome[novo] });
   }
 
