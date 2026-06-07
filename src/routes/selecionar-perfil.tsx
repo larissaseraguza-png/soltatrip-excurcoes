@@ -65,6 +65,7 @@ function SelecionarPerfilPage() {
   const { user, loading } = useAuth();
   const { roles, loading: rLoading } = useRole();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   if (loading || rLoading) {
     return (
@@ -77,6 +78,9 @@ function SelecionarPerfilPage() {
 
   function escolher(p: Perfil) {
     setActiveRole(p.id);
+    // B-07: limpa contexto/cache do perfil anterior antes de entrar no novo.
+    queryClient.removeQueries({ queryKey: ["notifications-v2"] });
+    queryClient.clear();
     navigate({ to: p.to });
   }
 
