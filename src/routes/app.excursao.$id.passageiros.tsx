@@ -205,6 +205,25 @@ function PassageirosPage() {
     return t;
   }, [passageiros, pagoMap, seatById]);
 
+  // Deep-link vindo do painel Operacional: ?focus=<paxId>&action=seat|ponto
+  // abre direto o modal de edição de poltrona/embarque desse passageiro.
+  const [autoFocusHandled, setAutoFocusHandled] = useState<string | null>(null);
+  useEffect(() => {
+    if (!focusPaxId || autoFocusHandled === focusPaxId) return;
+    if (!passageiros.length) return;
+    const pax = passageiros.find((p) => p.id === focusPaxId);
+    if (!pax) return;
+    setEditing(pax);
+    setAutoFocusHandled(focusPaxId);
+    if (focusAction === "ponto" || focusAction === "seat") {
+      // sinal visual sutil
+      toast.message(
+        focusAction === "ponto" ? "Selecione o embarque" : "Selecione a poltrona",
+      );
+    }
+  }, [focusPaxId, focusAction, passageiros, autoFocusHandled]);
+
+
   const filtered = passageiros.filter((p) => {
     const matchSearch =
       p.nome.toLowerCase().includes(search.toLowerCase()) ||
