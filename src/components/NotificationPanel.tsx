@@ -31,7 +31,8 @@ import { resolveNotificationRoute } from "@/lib/notifications/resolveRoute";
 const FILTERS_BY_ROLE: Record<NotifRole, { key: NotifCategory; label: string }[]> = {
   excursionista: [
     { key: "pagamentos", label: "Pagamentos" },
-    { key: "reservas", label: "Reservas" },
+    // B-08: aba "Reservas" removida — pendências operacionais agora vivem
+    // no novo botão Operacional (ver OperacionalBell).
     { key: "checkin", label: "Check-in" },
     { key: "embarque", label: "Embarque" },
     { key: "alteracoes", label: "Alterações" },

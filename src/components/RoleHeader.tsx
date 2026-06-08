@@ -4,6 +4,7 @@ import { Bus, LogOut, Repeat, UserCircle2 } from "lucide-react";
 import { signOutAndClean } from "@/lib/auth-cleanup";
 import { roleHome, useRole, setActiveRole, type AppRole } from "@/hooks/use-role";
 import { NotificationBell } from "@/components/NotificationBell";
+import { OperacionalBell } from "@/components/OperacionalBell";
 
 const ROLE_LABEL: Record<AppRole, string> = {
   excursionista: "Excursionista",
@@ -85,7 +86,10 @@ export function RoleHeader({ role, label }: { role: AppRole; label: string }) {
             <UserCircle2 className="h-4 w-4" /> Trocar conta
           </Link>
           {role === "excursionista" && (
-            <NotificationBell role="excursionista" variant="outline" />
+            <>
+              <OperacionalBell />
+              <NotificationBell role="excursionista" variant="outline" />
+            </>
           )}
           <button
             onClick={logout}
