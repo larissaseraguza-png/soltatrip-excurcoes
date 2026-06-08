@@ -2,7 +2,7 @@ import { createFileRoute, Link, useParams, useSearch } from "@tanstack/react-rou
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft, Plus, Loader2, Trash2, QrCode, UserCheck, Search, MapPin, Armchair, Edit3, X, DollarSign, Wallet, Trash } from "lucide-react";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { SeatMap } from "@/components/SeatMap";
 import { OnibusFilterBadge } from "@/components/OnibusFilterBadge";
 import { useRealtimeSync } from "@/hooks/use-realtime-sync";
@@ -13,6 +13,11 @@ import { useConfirm } from "@/components/ui/confirm-dialog";
 export const Route = createFileRoute("/app/excursao/$id/passageiros")({
   validateSearch: (search: Record<string, unknown>) => ({
     onibus: typeof search.onibus === "string" ? search.onibus : undefined,
+    focus: typeof search.focus === "string" ? search.focus : undefined,
+    action:
+      search.action === "seat" || search.action === "ponto"
+        ? (search.action as "seat" | "ponto")
+        : undefined,
   }),
   component: PassageirosPage,
 });
