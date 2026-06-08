@@ -43,7 +43,7 @@ type Seat = { id: string; seat_number: string; occupied: boolean; passageiro_id:
 
 function PassageirosPage() {
   const { id } = useParams({ from: "/app/excursao/$id/passageiros" });
-  const { onibus: onibusId } = useSearch({ from: "/app/excursao/$id/passageiros" });
+  const { onibus: onibusId, focus: focusPaxId, action: focusAction } = useSearch({ from: "/app/excursao/$id/passageiros" });
   const qc = useQueryClient();
   const [search, setSearch] = useState("");
   const confirmAction = useConfirm();
