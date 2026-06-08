@@ -2,7 +2,7 @@ import { createFileRoute, Link, useParams, useSearch } from "@tanstack/react-rou
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft, Plus, Loader2, Trash2, QrCode, UserCheck, Search, MapPin, Armchair, Edit3, X, DollarSign, Wallet, Trash } from "lucide-react";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { SeatMap } from "@/components/SeatMap";
 import { OnibusFilterBadge } from "@/components/OnibusFilterBadge";
 import { useRealtimeSync } from "@/hooks/use-realtime-sync";
@@ -13,6 +13,11 @@ import { useConfirm } from "@/components/ui/confirm-dialog";
 export const Route = createFileRoute("/app/excursao/$id/passageiros")({
   validateSearch: (search: Record<string, unknown>) => ({
     onibus: typeof search.onibus === "string" ? search.onibus : undefined,
+    focus: typeof search.focus === "string" ? search.focus : undefined,
+    action:
+      search.action === "seat" || search.action === "ponto"
+        ? (search.action as "seat" | "ponto")
+        : undefined,
   }),
   component: PassageirosPage,
 });
@@ -38,7 +43,7 @@ type Seat = { id: string; seat_number: string; occupied: boolean; passageiro_id:
 
 function PassageirosPage() {
   const { id } = useParams({ from: "/app/excursao/$id/passageiros" });
-  const { onibus: onibusId } = useSearch({ from: "/app/excursao/$id/passageiros" });
+  const { onibus: onibusId, focus: focusPaxId, action: focusAction } = useSearch({ from: "/app/excursao/$id/passageiros" });
   const qc = useQueryClient();
   const [search, setSearch] = useState("");
   const confirmAction = useConfirm();
@@ -199,6 +204,25 @@ function PassageirosPage() {
     }
     return t;
   }, [passageiros, pagoMap, seatById]);
+
+  // Deep-link vindo do painel Operacional: ?focus=<paxId>&action=seat|ponto
+  // abre direto o modal de edição de poltrona/embarque desse passageiro.
+  const [autoFocusHandled, setAutoFocusHandled] = useState<string | null>(null);
+  useEffect(() => {
+    if (!focusPaxId || autoFocusHandled === focusPaxId) return;
+    if (!passageiros.length) return;
+    const pax = passageiros.find((p) => p.id === focusPaxId);
+    if (!pax) return;
+    setEditing(pax);
+    setAutoFocusHandled(focusPaxId);
+    if (focusAction === "ponto" || focusAction === "seat") {
+      // sinal visual sutil
+      toast.message(
+        focusAction === "ponto" ? "Selecione o embarque" : "Selecione a poltrona",
+      );
+    }
+  }, [focusPaxId, focusAction, passageiros, autoFocusHandled]);
+
 
   const filtered = passageiros.filter((p) => {
     const matchSearch =
