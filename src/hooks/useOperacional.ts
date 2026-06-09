@@ -5,6 +5,7 @@ import { useRealtimeSync } from "@/hooks/use-realtime-sync";
 
 export type OperacionalGroupKey =
   | "convites"
+  | "recebimentos"
   | "sem_poltrona"
   | "sem_embarque"
   | "combos";
