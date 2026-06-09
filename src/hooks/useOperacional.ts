@@ -180,6 +180,7 @@ export function useOperacional() {
           { table: "passageiros" },
           { table: "invitations", filter: `created_by=eq.${uid}` },
           { table: "pedidos_itens" },
+          { table: "pagamentos" },
         ]
       : [],
     [["operacional", uid]],
