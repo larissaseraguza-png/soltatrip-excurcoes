@@ -12,8 +12,17 @@ export function NotificationBell({
   role: NotifRole;
   variant?: Variant;
 }) {
-  const { unread } = useNotifications(role);
-  const display = unread > 99 ? "99+" : String(unread);
+  const { items, unread } = useNotifications(role);
+  // Contador externo = nº de categorias com ao menos 1 não-lida (filas de trabalho
+  // separadas, evita poluição visual). Para roles sem categorias (passageiro),
+  // mantém o total de não-lidas.
+  const categoryUnread = new Set(
+    items
+      .filter((n: any) => !n.read && n.category)
+      .map((n: any) => n.category as string),
+  ).size;
+  const count = role === "passageiro" ? unread : categoryUnread;
+  const display = count > 99 ? "99+" : String(count);
 
   const buttonClass =
     variant === "outline"
