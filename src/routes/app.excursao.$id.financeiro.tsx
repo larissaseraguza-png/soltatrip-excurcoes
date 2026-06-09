@@ -437,7 +437,7 @@ function PedidoCard({
   const precisaPag = pax && payStatus !== "paid" && totalGeral > 0 && !!pendingPayment;
 
   return (
-    <li className="glass rounded-2xl p-4 border border-border/60">
+    <li id={`pax-${row.key}`} className="glass rounded-2xl p-4 border border-border/60 transition-shadow">
       <div className="flex items-start gap-3">
         <div className="size-10 rounded-xl bg-gradient-to-br from-neon-purple/30 to-neon-pink/20 grid place-items-center shrink-0">
           <User className="size-4 text-neon-pink" />
