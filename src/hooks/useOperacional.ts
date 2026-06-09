@@ -5,6 +5,7 @@ import { useRealtimeSync } from "@/hooks/use-realtime-sync";
 
 export type OperacionalGroupKey =
   | "convites"
+  | "recebimentos"
   | "sem_poltrona"
   | "sem_embarque"
   | "combos";
@@ -48,6 +49,7 @@ async function fetchOperacional(userId: string): Promise<OperacionalGroup[]> {
   if (excIds.length === 0) {
     return [
       empty("convites", "convites pendentes"),
+      empty("recebimentos", "recebimentos pendentes"),
       empty("sem_poltrona", "passageiros sem poltrona"),
       empty("sem_embarque", "passageiros sem embarque"),
       empty("combos", "combos aguardando envio"),
@@ -56,13 +58,20 @@ async function fetchOperacional(userId: string): Promise<OperacionalGroup[]> {
 
   const nowIso = new Date().toISOString();
 
-  const [convitesRes, semPoltronaRes, semEmbarqueRes, combosRes] = await Promise.all([
+  const [convitesRes, recebimentosRes, semPoltronaRes, semEmbarqueRes, combosRes] = await Promise.all([
     supabase
       .from("invitations")
       .select("id, token, papel, excursao_id, created_at")
       .eq("created_by", userId)
       .eq("used", false)
       .gt("expires_at", nowIso)
+      .order("created_at", { ascending: false })
+      .limit(50),
+    supabase
+      .from("pagamentos")
+      .select("id, valor, passageiro_id, excursao_id, pax:passageiros(nome)")
+      .in("excursao_id", excIds)
+      .eq("status", "pendente")
       .order("created_at", { ascending: false })
       .limit(50),
     supabase
@@ -130,8 +139,21 @@ async function fetchOperacional(userId: string): Promise<OperacionalGroup[]> {
     to: `/app/excursao/${p.excursao_id}/itens`,
   }));
 
+  const recebimentos: OperacionalItem[] = (recebimentosRes.data ?? []).map((p: any) => ({
+    id: p.id,
+    titulo: p.pax?.nome ?? "Pagamento pendente",
+    subtitulo: [
+      `R$ ${Number(p.valor ?? 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`,
+      exTitle.get(p.excursao_id),
+    ]
+      .filter(Boolean)
+      .join(" — ") || null,
+    to: `/app/excursao/${p.excursao_id}/financeiro?focus=${p.passageiro_id ?? p.id}`,
+  }));
+
   return [
     { key: "convites", label: "convites pendentes", count: convites.length, items: convites },
+    { key: "recebimentos", label: "recebimentos pendentes", count: recebimentos.length, items: recebimentos },
     { key: "sem_poltrona", label: "passageiros sem poltrona", count: sem_poltrona.length, items: sem_poltrona },
     { key: "sem_embarque", label: "passageiros sem embarque", count: sem_embarque.length, items: sem_embarque },
     { key: "combos", label: "combos aguardando envio", count: combos.length, items: combos },
@@ -158,6 +180,7 @@ export function useOperacional() {
           { table: "passageiros" },
           { table: "invitations", filter: `created_by=eq.${uid}` },
           { table: "pedidos_itens" },
+          { table: "pagamentos" },
         ]
       : [],
     [["operacional", uid]],

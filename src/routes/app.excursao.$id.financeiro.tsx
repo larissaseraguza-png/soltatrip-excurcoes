@@ -16,6 +16,7 @@ import { OnibusFilterBadge } from "@/components/OnibusFilterBadge";
 export const Route = createFileRoute("/app/excursao/$id/financeiro")({
   validateSearch: (search: Record<string, unknown>) => ({
     onibus: typeof search.onibus === "string" ? search.onibus : undefined,
+    focus: typeof search.focus === "string" ? search.focus : undefined,
   }),
   component: FinanceiroPage,
 });
@@ -55,8 +56,29 @@ function brl(v: number) {
 
 function FinanceiroPage() {
   const { id } = useParams({ from: "/app/excursao/$id/financeiro" });
-  const { onibus: onibusId } = useSearch({ from: "/app/excursao/$id/financeiro" });
+  const { onibus: onibusId, focus: focusPaxId } = useSearch({ from: "/app/excursao/$id/financeiro" });
   const qc = useQueryClient();
+
+  // Deep-link do Operacional: rola até o card do passageiro e destaca por 2s.
+  useEffect(() => {
+    if (!focusPaxId) return;
+    const tryScroll = () => {
+      const el = document.getElementById(`pax-${focusPaxId}`);
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+        el.classList.add("ring-2", "ring-primary", "ring-offset-2", "ring-offset-background");
+        setTimeout(() => {
+          el.classList.remove("ring-2", "ring-primary", "ring-offset-2", "ring-offset-background");
+        }, 2500);
+        return true;
+      }
+      return false;
+    };
+    if (!tryScroll()) {
+      const t = setTimeout(tryScroll, 400);
+      return () => clearTimeout(t);
+    }
+  }, [focusPaxId]);
   
   const [open, setOpen] = useState(false);
   const [preselectedPaxId, setPreselectedPaxId] = useState<string | null>(null);
@@ -415,7 +437,7 @@ function PedidoCard({
   const precisaPag = pax && payStatus !== "paid" && totalGeral > 0 && !!pendingPayment;
 
   return (
-    <li className="glass rounded-2xl p-4 border border-border/60">
+    <li id={`pax-${row.key}`} className="glass rounded-2xl p-4 border border-border/60 transition-shadow">
       <div className="flex items-start gap-3">
         <div className="size-10 rounded-xl bg-gradient-to-br from-neon-purple/30 to-neon-pink/20 grid place-items-center shrink-0">
           <User className="size-4 text-neon-pink" />
