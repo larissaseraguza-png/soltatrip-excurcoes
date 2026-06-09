@@ -139,8 +139,21 @@ async function fetchOperacional(userId: string): Promise<OperacionalGroup[]> {
     to: `/app/excursao/${p.excursao_id}/itens`,
   }));
 
+  const recebimentos: OperacionalItem[] = (recebimentosRes.data ?? []).map((p: any) => ({
+    id: p.id,
+    titulo: p.pax?.nome ?? "Pagamento pendente",
+    subtitulo: [
+      `R$ ${Number(p.valor ?? 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`,
+      exTitle.get(p.excursao_id),
+    ]
+      .filter(Boolean)
+      .join(" — ") || null,
+    to: `/app/excursao/${p.excursao_id}/financeiro?focus=${p.passageiro_id ?? p.id}`,
+  }));
+
   return [
     { key: "convites", label: "convites pendentes", count: convites.length, items: convites },
+    { key: "recebimentos", label: "recebimentos pendentes", count: recebimentos.length, items: recebimentos },
     { key: "sem_poltrona", label: "passageiros sem poltrona", count: sem_poltrona.length, items: sem_poltrona },
     { key: "sem_embarque", label: "passageiros sem embarque", count: sem_embarque.length, items: sem_embarque },
     { key: "combos", label: "combos aguardando envio", count: combos.length, items: combos },
