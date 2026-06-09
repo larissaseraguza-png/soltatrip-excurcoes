@@ -38,7 +38,7 @@ export function NotificationBell({
     <NotificationPanel role={role}>
       <button type="button" className={buttonClass} aria-label="Notificações">
         <Bell className={iconClass} />
-        {unread > 0 && (
+        {count > 0 && (
           <span
             className={`absolute ${badgeTop} min-w-[18px] h-[18px] flex items-center justify-center px-1 text-[10px] font-bold rounded-full bg-neon-pink text-white border-2 border-background`}
           >
