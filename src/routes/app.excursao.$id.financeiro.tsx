@@ -16,6 +16,7 @@ import { OnibusFilterBadge } from "@/components/OnibusFilterBadge";
 export const Route = createFileRoute("/app/excursao/$id/financeiro")({
   validateSearch: (search: Record<string, unknown>) => ({
     onibus: typeof search.onibus === "string" ? search.onibus : undefined,
+    focus: typeof search.focus === "string" ? search.focus : undefined,
   }),
   component: FinanceiroPage,
 });
