@@ -315,7 +315,15 @@ export function useNotificationsV2(role: NotifRole) {
   }, [queryClient]);
 
   const items = useMemo(
-    () => (data ?? []).filter((n) => n.role === role),
+    () =>
+      (data ?? []).filter((n) => {
+        if (n.role !== role) return false;
+        // payment.submitted (pagamento aguardando confirmação) é tarefa
+        // operacional do excursionista — fica APENAS no painel Operacional,
+        // nunca no sino de notificações. Evita duplicidade entre as filas.
+        if (role === "excursionista" && n.__type === "payment.submitted") return false;
+        return true;
+      }),
     [data, role],
   );
 
