@@ -289,6 +289,8 @@ function Pagamentos() {
       } as any);
       if (error) throw error;
       setValor("");
+      setPagador("");
+      setPagadorNome("");
       await Promise.all([
         qc.invalidateQueries({ queryKey: ["pagamentos"] }),
         qc.invalidateQueries({ queryKey: ["reservas-pagto"] }),
