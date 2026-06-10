@@ -616,6 +616,11 @@ function Pagamentos() {
                   {new Date(p.created_at).toLocaleString("pt-BR")}
                   {p.parcelas > 1 && ` · ${p.parcelas}x`}
                 </p>
+                {p.pagador_nome && (
+                  <p className="text-[11px] text-muted-foreground mt-0.5">
+                    Pagador informado: <span className="text-foreground font-semibold">{p.pagador_nome}</span>
+                  </p>
+                )}
               </div>
               <div className="text-right">
                 <p className="font-display font-bold">{brl(Number(p.valor))}</p>
