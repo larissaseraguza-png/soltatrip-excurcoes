@@ -33,6 +33,8 @@ function Pagamentos() {
   const [valor, setValor] = useState<string>("");
   const [parcelas, setParcelas] = useState(1);
   const [submitting, setSubmitting] = useState(false);
+  const [pagador, setPagador] = useState<"" | "eu" | "outra">("");
+  const [pagadorNome, setPagadorNome] = useState("");
 
   const { data: reservas, isLoading } = useQuery({
     queryKey: ["reservas-pagto", user?.id, reservaParam],
