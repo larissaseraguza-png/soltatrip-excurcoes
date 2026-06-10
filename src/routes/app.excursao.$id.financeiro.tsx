@@ -462,6 +462,11 @@ function PedidoCard({
             <>
               <p className="font-display font-black text-lg leading-none text-yellow-300">{brl(Number(pendingPayment.valor))}</p>
               <p className="text-[10px] text-yellow-300/80 uppercase tracking-wider font-bold mt-0.5">Aguardando</p>
+              {pendingPayment.pagador_nome && (
+                <p className="text-[10px] text-muted-foreground mt-0.5">
+                  Pagador: <span className="text-foreground font-semibold">{pendingPayment.pagador_nome}</span>
+                </p>
+              )}
               <p className="text-[10px] text-muted-foreground mt-0.5">Total {brl(totalGeral)}</p>
             </>
           ) : (
