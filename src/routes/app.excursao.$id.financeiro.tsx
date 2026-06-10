@@ -25,6 +25,7 @@ type Pagamento = {
   id: string; valor: number; metodo: string; status: string;
   observacao: string | null; passageiro_id: string | null; reserva_id: string | null; onibus_id: string | null;
   pago_em: string | null; created_at: string;
+  pagador_nome?: string | null;
 };
 
 type Passageiro = {
@@ -461,6 +462,11 @@ function PedidoCard({
             <>
               <p className="font-display font-black text-lg leading-none text-yellow-300">{brl(Number(pendingPayment.valor))}</p>
               <p className="text-[10px] text-yellow-300/80 uppercase tracking-wider font-bold mt-0.5">Aguardando</p>
+              {pendingPayment.pagador_nome && (
+                <p className="text-[10px] text-muted-foreground mt-0.5">
+                  Pagador: <span className="text-foreground font-semibold">{pendingPayment.pagador_nome}</span>
+                </p>
+              )}
               <p className="text-[10px] text-muted-foreground mt-0.5">Total {brl(totalGeral)}</p>
             </>
           ) : (
@@ -637,20 +643,27 @@ function PagamentosDetalhe({
               ? reservaNomeMap.get(p.reserva_id)
               : undefined;
             return (
-              <li key={p.id} className="glass rounded-xl px-3 py-2 flex items-center gap-2 text-xs">
-                <span className="flex-1 truncate">{nome ?? "—"}</span>
-                <span className="text-muted-foreground uppercase text-[10px]">{p.metodo}</span>
-                <span className="font-bold">{brl(Number(p.valor))}</span>
-                <button
-                  type="button"
-                  onClick={() => isPendente && onConfirmar(p)}
-                  disabled={!isPendente || confirmandoId === p.id}
-                  className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded-full disabled:cursor-default ${
-                    p.status === "pago" || p.status === "confirmado" ? "bg-neon-green/15 text-neon-green"
-                    : p.status === "estornado" ? "bg-red-500/15 text-red-400"
-                    : "bg-yellow-400/15 text-yellow-300 hover:bg-yellow-400/25"
-                  }`}
-                >{confirmandoId === p.id ? "confirmando" : p.status}</button>
+              <li key={p.id} className="glass rounded-xl px-3 py-2 text-xs">
+                <div className="flex items-center gap-2">
+                  <span className="flex-1 truncate">{nome ?? "—"}</span>
+                  <span className="text-muted-foreground uppercase text-[10px]">{p.metodo}</span>
+                  <span className="font-bold">{brl(Number(p.valor))}</span>
+                  <button
+                    type="button"
+                    onClick={() => isPendente && onConfirmar(p)}
+                    disabled={!isPendente || confirmandoId === p.id}
+                    className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded-full disabled:cursor-default ${
+                      p.status === "pago" || p.status === "confirmado" ? "bg-neon-green/15 text-neon-green"
+                      : p.status === "estornado" ? "bg-red-500/15 text-red-400"
+                      : "bg-yellow-400/15 text-yellow-300 hover:bg-yellow-400/25"
+                    }`}
+                  >{confirmandoId === p.id ? "confirmando" : p.status}</button>
+                </div>
+                {p.pagador_nome && (
+                  <p className="text-[10px] text-muted-foreground mt-1">
+                    Pagador informado: <span className="text-foreground font-semibold">{p.pagador_nome}</span>
+                  </p>
+                )}
               </li>
             );
           })}

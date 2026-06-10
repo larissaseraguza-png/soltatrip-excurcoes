@@ -33,6 +33,8 @@ function Pagamentos() {
   const [valor, setValor] = useState<string>("");
   const [parcelas, setParcelas] = useState(1);
   const [submitting, setSubmitting] = useState(false);
+  const [pagador, setPagador] = useState<"" | "eu" | "outra">("");
+  const [pagadorNome, setPagadorNome] = useState("");
 
   const { data: reservas, isLoading } = useQuery({
     queryKey: ["reservas-pagto", user?.id, reservaParam],
@@ -264,6 +266,16 @@ function Pagamentos() {
       toast.error(`Valor máximo: ${brl(restante)}`);
       return;
     }
+    const isPix = metodo === "pix" || metodo === "pix_parcelado";
+    if (isPix && !pagador) {
+      toast.error("Informe quem realizará o PIX");
+      return;
+    }
+    const nomePagador = pagador === "outra" ? pagadorNome.trim() : "";
+    if (isPix && pagador === "outra" && !nomePagador) {
+      toast.error("Digite o nome de quem fará o PIX");
+      return;
+    }
     setSubmitting(true);
     try {
       const { error } = await supabase.from("pagamentos").insert({
@@ -273,9 +285,12 @@ function Pagamentos() {
         metodo,
         parcelas: metodo === "credito" ? parcelas : 1,
         status: "pendente",
-      });
+        pagador_nome: isPix && pagador === "outra" ? nomePagador : null,
+      } as any);
       if (error) throw error;
       setValor("");
+      setPagador("");
+      setPagadorNome("");
       await Promise.all([
         qc.invalidateQueries({ queryKey: ["pagamentos"] }),
         qc.invalidateQueries({ queryKey: ["reservas-pagto"] }),
@@ -492,6 +507,45 @@ function Pagamentos() {
               )}
             </div>
           )}
+
+          {(metodo === "pix" || metodo === "pix_parcelado") && (
+            <div className="mb-3 rounded-2xl border border-border bg-background/40 p-3">
+              <p className="text-xs font-bold mb-2">Quem realizará este pagamento?</p>
+              <div className="grid grid-cols-2 gap-2">
+                {[
+                  { v: "eu", l: "Eu mesmo(a)" },
+                  { v: "outra", l: "Outra pessoa" },
+                ].map((o) => (
+                  <button
+                    key={o.v}
+                    type="button"
+                    onClick={() => setPagador(o.v as any)}
+                    className={`py-2.5 rounded-xl text-xs font-bold transition border ${
+                      pagador === o.v
+                        ? "bg-gradient-to-br from-neon-purple/30 to-neon-pink/20 text-neon-pink border-neon-pink/40"
+                        : "bg-background/40 text-muted-foreground border-transparent"
+                    }`}
+                  >
+                    {o.l}
+                  </button>
+                ))}
+              </div>
+              {pagador === "outra" && (
+                <div className="mt-3">
+                  <label className="text-xs text-muted-foreground">
+                    Nome de quem realizará o pagamento
+                  </label>
+                  <input
+                    value={pagadorNome}
+                    onChange={(e) => setPagadorNome(e.target.value)}
+                    placeholder="Digite o nome de quem fará o PIX"
+                    maxLength={120}
+                    className="w-full mt-1 h-11 rounded-xl bg-background/60 px-3 text-sm"
+                  />
+                </div>
+              )}
+            </div>
+          )}
           {copied && <p className="text-xs text-neon-green mb-2">Chave copiada!</p>}
 
           {(metodo === "debito" || metodo === "credito") && (
@@ -524,14 +578,22 @@ function Pagamentos() {
           )}
 
 
-          <button
-            onClick={pagar}
-            disabled={submitting}
-            className="w-full h-12 rounded-2xl font-bold bg-primary text-primary-foreground glow-primary disabled:opacity-50 inline-flex items-center justify-center gap-2"
-          >
-            {submitting && <Loader2 className="size-4 animate-spin" />}
-            Confirmar pagamento
-          </button>
+          {(() => {
+            const isPix = metodo === "pix" || metodo === "pix_parcelado";
+            const bloqueado =
+              submitting ||
+              (isPix && (!pagador || (pagador === "outra" && !pagadorNome.trim())));
+            return (
+              <button
+                onClick={pagar}
+                disabled={bloqueado}
+                className="w-full h-12 rounded-2xl font-bold bg-primary text-primary-foreground glow-primary disabled:opacity-50 inline-flex items-center justify-center gap-2"
+              >
+                {submitting && <Loader2 className="size-4 animate-spin" />}
+                Confirmar pagamento
+              </button>
+            );
+          })()}
         </div>
       )}
 
@@ -554,6 +616,11 @@ function Pagamentos() {
                   {new Date(p.created_at).toLocaleString("pt-BR")}
                   {p.parcelas > 1 && ` · ${p.parcelas}x`}
                 </p>
+                {p.pagador_nome && (
+                  <p className="text-[11px] text-muted-foreground mt-0.5">
+                    Pagador informado: <span className="text-foreground font-semibold">{p.pagador_nome}</span>
+                  </p>
+                )}
               </div>
               <div className="text-right">
                 <p className="font-display font-bold">{brl(Number(p.valor))}</p>
