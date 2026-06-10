@@ -578,14 +578,22 @@ function Pagamentos() {
           )}
 
 
-          <button
-            onClick={pagar}
-            disabled={submitting}
-            className="w-full h-12 rounded-2xl font-bold bg-primary text-primary-foreground glow-primary disabled:opacity-50 inline-flex items-center justify-center gap-2"
-          >
-            {submitting && <Loader2 className="size-4 animate-spin" />}
-            Confirmar pagamento
-          </button>
+          {(() => {
+            const isPix = metodo === "pix" || metodo === "pix_parcelado";
+            const bloqueado =
+              submitting ||
+              (isPix && (!pagador || (pagador === "outra" && !pagadorNome.trim())));
+            return (
+              <button
+                onClick={pagar}
+                disabled={bloqueado}
+                className="w-full h-12 rounded-2xl font-bold bg-primary text-primary-foreground glow-primary disabled:opacity-50 inline-flex items-center justify-center gap-2"
+              >
+                {submitting && <Loader2 className="size-4 animate-spin" />}
+                Confirmar pagamento
+              </button>
+            );
+          })()}
         </div>
       )}
 
