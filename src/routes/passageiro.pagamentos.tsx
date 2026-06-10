@@ -507,6 +507,45 @@ function Pagamentos() {
               )}
             </div>
           )}
+
+          {(metodo === "pix" || metodo === "pix_parcelado") && (
+            <div className="mb-3 rounded-2xl border border-border bg-background/40 p-3">
+              <p className="text-xs font-bold mb-2">Quem realizará este pagamento?</p>
+              <div className="grid grid-cols-2 gap-2">
+                {[
+                  { v: "eu", l: "Eu mesmo(a)" },
+                  { v: "outra", l: "Outra pessoa" },
+                ].map((o) => (
+                  <button
+                    key={o.v}
+                    type="button"
+                    onClick={() => setPagador(o.v as any)}
+                    className={`py-2.5 rounded-xl text-xs font-bold transition border ${
+                      pagador === o.v
+                        ? "bg-gradient-to-br from-neon-purple/30 to-neon-pink/20 text-neon-pink border-neon-pink/40"
+                        : "bg-background/40 text-muted-foreground border-transparent"
+                    }`}
+                  >
+                    {o.l}
+                  </button>
+                ))}
+              </div>
+              {pagador === "outra" && (
+                <div className="mt-3">
+                  <label className="text-xs text-muted-foreground">
+                    Nome de quem realizará o pagamento
+                  </label>
+                  <input
+                    value={pagadorNome}
+                    onChange={(e) => setPagadorNome(e.target.value)}
+                    placeholder="Digite o nome de quem fará o PIX"
+                    maxLength={120}
+                    className="w-full mt-1 h-11 rounded-xl bg-background/60 px-3 text-sm"
+                  />
+                </div>
+              )}
+            </div>
+          )}
           {copied && <p className="text-xs text-neon-green mb-2">Chave copiada!</p>}
 
           {(metodo === "debito" || metodo === "credito") && (
