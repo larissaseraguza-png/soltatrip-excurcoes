@@ -266,6 +266,16 @@ function Pagamentos() {
       toast.error(`Valor máximo: ${brl(restante)}`);
       return;
     }
+    const isPix = metodo === "pix" || metodo === "pix_parcelado";
+    if (isPix && !pagador) {
+      toast.error("Informe quem realizará o PIX");
+      return;
+    }
+    const nomePagador = pagador === "outra" ? pagadorNome.trim() : "";
+    if (isPix && pagador === "outra" && !nomePagador) {
+      toast.error("Digite o nome de quem fará o PIX");
+      return;
+    }
     setSubmitting(true);
     try {
       const { error } = await supabase.from("pagamentos").insert({
@@ -275,7 +285,8 @@ function Pagamentos() {
         metodo,
         parcelas: metodo === "credito" ? parcelas : 1,
         status: "pendente",
-      });
+        pagador_nome: isPix && pagador === "outra" ? nomePagador : null,
+      } as any);
       if (error) throw error;
       setValor("");
       await Promise.all([
