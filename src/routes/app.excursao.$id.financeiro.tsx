@@ -25,6 +25,7 @@ type Pagamento = {
   id: string; valor: number; metodo: string; status: string;
   observacao: string | null; passageiro_id: string | null; reserva_id: string | null; onibus_id: string | null;
   pago_em: string | null; created_at: string;
+  pagador_nome?: string | null;
 };
 
 type Passageiro = {
