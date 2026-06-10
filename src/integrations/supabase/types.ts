@@ -542,6 +542,7 @@ export type Database = {
           metodo: string
           observacao: string | null
           onibus_id: string | null
+          pagador_nome: string | null
           pago_em: string | null
           parcelas: number
           passageiro_id: string | null
@@ -558,6 +559,7 @@ export type Database = {
           metodo?: string
           observacao?: string | null
           onibus_id?: string | null
+          pagador_nome?: string | null
           pago_em?: string | null
           parcelas?: number
           passageiro_id?: string | null
@@ -574,6 +576,7 @@ export type Database = {
           metodo?: string
           observacao?: string | null
           onibus_id?: string | null
+          pagador_nome?: string | null
           pago_em?: string | null
           parcelas?: number
           passageiro_id?: string | null
