@@ -647,3 +647,12 @@ function Pagamentos() {
     </Shell>
   );
 }
+
+function FinCell({ label, value, tone }: { label: string; value: string; tone?: string }) {
+  return (
+    <div className="rounded-xl bg-background/40 border border-border/60 px-2 py-1.5">
+      <div className="text-[9px] uppercase text-muted-foreground tracking-wider">{label}</div>
+      <p className={`font-display font-bold text-sm mt-0.5 truncate ${tone ?? ""}`}>{value}</p>
+    </div>
+  );
+}
