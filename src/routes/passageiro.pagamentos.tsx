@@ -169,9 +169,13 @@ function Pagamentos() {
 
   if (!reservaAtiva) {
     if ((reservas?.length ?? 0) > 1) {
-      // Lista de excursões para o usuário escolher.
+      // Lista de excursões — cada uma é um bloco financeiro INDEPENDENTE.
+      // Nunca somar valores entre excursões diferentes.
       return (
-        <Shell title="Pagamentos" subtitle="Escolha uma excursão">
+        <Shell title="Pagamentos" subtitle="Cada excursão tem seu próprio saldo">
+          <p className="text-xs text-muted-foreground mb-3">
+            Os valores abaixo são separados por excursão. Nada é somado entre festas diferentes.
+          </p>
           <ul className="space-y-4">
             {reservas!.map((r: any) => {
               const ex = r.excursao;
@@ -189,9 +193,9 @@ function Pagamentos() {
               } else if (pendValor > 0) {
                 tone = "yellow"; label = "Em análise";
               } else if (pagoR > 0 && restanteR > 0) {
-                tone = "purple"; label = `Falta ${brl(restanteR)}`;
+                tone = "purple"; label = "Parcial";
               } else if (restanteR > 0) {
-                tone = "yellow"; label = `Falta ${brl(restanteR)}`;
+                tone = "yellow"; label = "Pendente";
               }
               return (
                 <li key={r.id}>
@@ -201,7 +205,7 @@ function Pagamentos() {
                     className="w-full text-left rounded-3xl overflow-hidden glass border border-transparent hover:border-neon-pink/40 transition"
                   >
                     <div
-                      className="h-28 relative"
+                      className="h-24 relative"
                       style={{
                         background: ex.banner_url
                           ? `url(${ex.banner_url}) center/cover`
@@ -211,17 +215,27 @@ function Pagamentos() {
                       <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/30 to-transparent" />
                       <div className="absolute bottom-2 left-3 right-3 flex items-end justify-between gap-2">
                         <h3 className="font-display font-black text-lg drop-shadow leading-tight truncate">{ex.titulo}</h3>
+                        <Pill tone={tone}>{label}</Pill>
                       </div>
                     </div>
-                    <div className="p-4 flex items-center justify-between gap-3">
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-                          <Calendar className="size-3" />
-                          {ex.data_evento ? new Date(ex.data_evento).toLocaleDateString("pt-BR") : "—"}
-                        </div>
-                        <div className="mt-1"><Pill tone={tone}>{label}</Pill></div>
+                    <div className="p-4">
+                      <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground mb-3">
+                        <Calendar className="size-3" />
+                        {ex.data_evento ? new Date(ex.data_evento).toLocaleDateString("pt-BR") : "—"}
                       </div>
-                      <ChevronRight className="size-5 text-muted-foreground shrink-0" />
+                      <div className="grid grid-cols-3 gap-2">
+                        <FinCell label="Total" value={brl(totalR)} />
+                        <FinCell label="Pago" value={brl(pagoR)} tone="text-neon-green" />
+                        <FinCell label="Pendente" value={brl(restanteR)} tone={restanteR > 0 ? "text-yellow-300" : "text-muted-foreground"} />
+                      </div>
+                      {pendValor > 0 && (
+                        <p className="text-[11px] text-yellow-300 mt-2">
+                          {brl(pendValor)} aguardando confirmação do organizador
+                        </p>
+                      )}
+                      <div className="mt-3 flex items-center justify-end text-xs font-semibold text-muted-foreground">
+                        Abrir <ChevronRight className="size-4" />
+                      </div>
                     </div>
                   </button>
                 </li>
@@ -631,5 +645,14 @@ function Pagamentos() {
         </div>
       )}
     </Shell>
+  );
+}
+
+function FinCell({ label, value, tone }: { label: string; value: string; tone?: string }) {
+  return (
+    <div className="rounded-xl bg-background/40 border border-border/60 px-2 py-1.5">
+      <div className="text-[9px] uppercase text-muted-foreground tracking-wider">{label}</div>
+      <p className={`font-display font-bold text-sm mt-0.5 truncate ${tone ?? ""}`}>{value}</p>
+    </div>
   );
 }

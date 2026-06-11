@@ -111,9 +111,16 @@ function PassageirosReport() {
         </div>
       ) : (
         <div className="space-y-2">
+          <p className="text-[11px] text-muted-foreground mb-1">
+            Cada linha é um vínculo independente: valores nunca são somados entre excursões diferentes.
+          </p>
           {filtered.map((p) => {
-            const pago = p.amount_paid >= p.total_price && p.total_price > 0;
-            const parcial = p.amount_paid > 0 && p.amount_paid < p.total_price;
+            const total = Number(p.total_price) || 0;
+            const paid = Number(p.amount_paid) || 0;
+            const restante = Math.max(0, total - paid);
+            const pago = paid >= total && total > 0;
+            const parcial = paid > 0 && paid < total;
+            const statusLabel = pago ? "Quitado" : parcial ? "Parcial" : "Pendente";
             return (
               <Link key={p.id} to="/app/excursao/$id" params={{ id: p.excursao_id }}
                 className="block glass rounded-2xl p-4 hover:border-primary/50 transition">
@@ -126,12 +133,16 @@ function PassageirosReport() {
                     pago ? "bg-neon-green/20 text-neon-green border-neon-green/30"
                     : parcial ? "bg-yellow-500/20 text-yellow-300 border-yellow-500/30"
                     : "bg-red-500/20 text-red-400 border-red-500/30"
-                  }`}>{pago ? "pago" : parcial ? "parcial" : "pendente"}</span>
+                  }`}>{statusLabel}</span>
                 </div>
-                <div className="grid grid-cols-4 gap-2 text-[11px]">
+                <div className="grid grid-cols-3 gap-2 text-[11px] mb-2">
+                  <Cell label="Total" value={brl(total)} />
+                  <Cell label="Pago" value={brl(paid)} tone="text-neon-green" />
+                  <Cell label="Pendente" value={brl(restante)} tone={restante > 0 ? "text-yellow-300" : "text-muted-foreground"} />
+                </div>
+                <div className="grid grid-cols-3 gap-2 text-[11px]">
                   <Cell label="Ônibus" value={p.onibus_id ? (onMap[p.onibus_id] ?? "—") : "—"} />
                   <Cell label="Poltrona" value={p.assento ?? "—"} />
-                  <Cell label="Pago" value={brl(p.amount_paid)} tone="text-neon-green" />
                   <Cell
                     label="Check-in"
                     value={p.embarcado_em ? "Sim" : "Não"}
