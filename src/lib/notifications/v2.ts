@@ -55,6 +55,9 @@ type DbRow = {
   created_at: string;
   read_at: string | null;
   excursao_id: string | null;
+  reserva_id: string | null;
+  passageiro_id: string | null;
+  pagamento_id: string | null;
 };
 
 const TYPE_ROLE: Record<DbNotifType, NotifRole> = {
