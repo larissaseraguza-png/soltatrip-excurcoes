@@ -211,7 +211,7 @@ async function fetchV2(): Promise<V2Item[]> {
   // (limpar histórico) são excluídas. RLS por recipient_id garante isolamento.
   const { data, error } = await supabase
     .from("notifications")
-    .select("id,type,category,title,message,link,data,created_at,read_at,excursao_id")
+    .select("id,type,category,title,message,link,data,created_at,read_at,excursao_id,reserva_id,passageiro_id,pagamento_id")
     .is("dismissed_at", null)
     .order("created_at", { ascending: false })
     .limit(100);
