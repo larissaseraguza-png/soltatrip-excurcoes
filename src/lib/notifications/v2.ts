@@ -318,16 +318,21 @@ export function useNotificationsV2(role: NotifRole) {
     () =>
       (data ?? []).filter((n) => {
         if (n.role !== role) return false;
-        // B-14: separação definitiva — Notificações = acontecimentos,
-        // Operacional = tarefas pendentes. Os tipos abaixo representam
-        // pendências ativas (não eventos) e vivem APENAS no Operacional:
-        //   - payment.submitted → "recebimentos pendentes"
+        // B-14.1: separação definitiva — Notificações = acontecimentos
+        // (clicáveis, sempre com nome da pessoa), Operacional = tarefas
+        // pendentes (entregas / ações futuras).
+        //
+        // payment.submitted volta para Notificações (ex.: "Maria enviou
+        // pagamento") e CONTINUA aparecendo em Operacional como
+        // "recebimentos pendentes" — são sistemas independentes com
+        // contadores próprios.
+        //
+        // Os tipos abaixo permanecem APENAS no Operacional pois representam
+        // a própria ação do excursionista (não geram acontecimento):
         //   - invitation.created / socio.invited → "convites pendentes"
-        //     (são a própria ação do excursionista; não devem voltar como aviso)
-        //   - item.ordered → "combos aguardando envio"
+        //   - item.ordered                       → "combos aguardando envio"
         if (role === "excursionista") {
           if (
-            n.__type === "payment.submitted" ||
             n.__type === "invitation.created" ||
             n.__type === "socio.invited" ||
             n.__type === "item.ordered"
