@@ -55,6 +55,9 @@ type DbRow = {
   created_at: string;
   read_at: string | null;
   excursao_id: string | null;
+  reserva_id: string | null;
+  passageiro_id: string | null;
+  pagamento_id: string | null;
 };
 
 const TYPE_ROLE: Record<DbNotifType, NotifRole> = {
@@ -168,13 +171,23 @@ export type V2Item = LocalNotif & {
 function mapRow(row: DbRow): V2Item | null {
   const role = TYPE_ROLE[row.type];
   if (!role) return null;
+  // Mescla colunas de escopo (passageiro/reserva/pagamento) no `data` para
+  // que resolveNotificationRoute consiga montar URLs específicas (focus).
+  const baseData = (row.data as Record<string, unknown> | null) ?? null;
+  const mergedData: Record<string, unknown> = { ...(baseData ?? {}) };
+  if (row.passageiro_id && mergedData.passageiro_id == null)
+    mergedData.passageiro_id = row.passageiro_id;
+  if (row.reserva_id && mergedData.reserva_id == null)
+    mergedData.reserva_id = row.reserva_id;
+  if (row.pagamento_id && mergedData.pagamento_id == null)
+    mergedData.pagamento_id = row.pagamento_id;
   return {
     id: `v2:${row.id}`,
     __source: "v2",
     __dbId: row.id,
     __readAtDb: row.read_at,
     __type: row.type,
-    __data: (row.data as Record<string, unknown> | null) ?? null,
+    __data: mergedData,
     __excursaoId: row.excursao_id ?? null,
     role,
     icon: TYPE_ICON[row.type] ?? "calendar",
@@ -198,7 +211,7 @@ async function fetchV2(): Promise<V2Item[]> {
   // (limpar histórico) são excluídas. RLS por recipient_id garante isolamento.
   const { data, error } = await supabase
     .from("notifications")
-    .select("id,type,category,title,message,link,data,created_at,read_at,excursao_id")
+    .select("id,type,category,title,message,link,data,created_at,read_at,excursao_id,reserva_id,passageiro_id,pagamento_id")
     .is("dismissed_at", null)
     .order("created_at", { ascending: false })
     .limit(100);
@@ -318,16 +331,21 @@ export function useNotificationsV2(role: NotifRole) {
     () =>
       (data ?? []).filter((n) => {
         if (n.role !== role) return false;
-        // B-14: separação definitiva — Notificações = acontecimentos,
-        // Operacional = tarefas pendentes. Os tipos abaixo representam
-        // pendências ativas (não eventos) e vivem APENAS no Operacional:
-        //   - payment.submitted → "recebimentos pendentes"
+        // B-14.1: separação definitiva — Notificações = acontecimentos
+        // (clicáveis, sempre com nome da pessoa), Operacional = tarefas
+        // pendentes (entregas / ações futuras).
+        //
+        // payment.submitted volta para Notificações (ex.: "Maria enviou
+        // pagamento") e CONTINUA aparecendo em Operacional como
+        // "recebimentos pendentes" — são sistemas independentes com
+        // contadores próprios.
+        //
+        // Os tipos abaixo permanecem APENAS no Operacional pois representam
+        // a própria ação do excursionista (não geram acontecimento):
         //   - invitation.created / socio.invited → "convites pendentes"
-        //     (são a própria ação do excursionista; não devem voltar como aviso)
-        //   - item.ordered → "combos aguardando envio"
+        //   - item.ordered                       → "combos aguardando envio"
         if (role === "excursionista") {
           if (
-            n.__type === "payment.submitted" ||
             n.__type === "invitation.created" ||
             n.__type === "socio.invited" ||
             n.__type === "item.ordered"

@@ -57,7 +57,12 @@ export function resolveNotificationRoute(
   switch (type as NotifType) {
     // ---- Pagamentos ----
     case "payment.submitted":
-      if (role === "excursionista" && excursaoId) return `/app/excursao/${excursaoId}/financeiro`;
+      if (role === "excursionista" && excursaoId) {
+        const focus = paxId ?? reservaId;
+        return focus
+          ? `/app/excursao/${excursaoId}/financeiro?focus=${focus}`
+          : `/app/excursao/${excursaoId}/financeiro`;
+      }
       return "/passageiro/pagamentos";
     case "payment.approved":
     case "payment.rejected":
