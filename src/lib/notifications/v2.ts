@@ -318,10 +318,23 @@ export function useNotificationsV2(role: NotifRole) {
     () =>
       (data ?? []).filter((n) => {
         if (n.role !== role) return false;
-        // payment.submitted (pagamento aguardando confirmação) é tarefa
-        // operacional do excursionista — fica APENAS no painel Operacional,
-        // nunca no sino de notificações. Evita duplicidade entre as filas.
-        if (role === "excursionista" && n.__type === "payment.submitted") return false;
+        // B-14: separação definitiva — Notificações = acontecimentos,
+        // Operacional = tarefas pendentes. Os tipos abaixo representam
+        // pendências ativas (não eventos) e vivem APENAS no Operacional:
+        //   - payment.submitted → "recebimentos pendentes"
+        //   - invitation.created / socio.invited → "convites pendentes"
+        //     (são a própria ação do excursionista; não devem voltar como aviso)
+        //   - item.ordered → "combos aguardando envio"
+        if (role === "excursionista") {
+          if (
+            n.__type === "payment.submitted" ||
+            n.__type === "invitation.created" ||
+            n.__type === "socio.invited" ||
+            n.__type === "item.ordered"
+          ) {
+            return false;
+          }
+        }
         return true;
       }),
     [data, role],
