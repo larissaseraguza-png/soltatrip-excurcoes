@@ -171,13 +171,23 @@ export type V2Item = LocalNotif & {
 function mapRow(row: DbRow): V2Item | null {
   const role = TYPE_ROLE[row.type];
   if (!role) return null;
+  // Mescla colunas de escopo (passageiro/reserva/pagamento) no `data` para
+  // que resolveNotificationRoute consiga montar URLs específicas (focus).
+  const baseData = (row.data as Record<string, unknown> | null) ?? null;
+  const mergedData: Record<string, unknown> = { ...(baseData ?? {}) };
+  if (row.passageiro_id && mergedData.passageiro_id == null)
+    mergedData.passageiro_id = row.passageiro_id;
+  if (row.reserva_id && mergedData.reserva_id == null)
+    mergedData.reserva_id = row.reserva_id;
+  if (row.pagamento_id && mergedData.pagamento_id == null)
+    mergedData.pagamento_id = row.pagamento_id;
   return {
     id: `v2:${row.id}`,
     __source: "v2",
     __dbId: row.id,
     __readAtDb: row.read_at,
     __type: row.type,
-    __data: (row.data as Record<string, unknown> | null) ?? null,
+    __data: mergedData,
     __excursaoId: row.excursao_id ?? null,
     role,
     icon: TYPE_ICON[row.type] ?? "calendar",
