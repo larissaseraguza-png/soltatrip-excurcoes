@@ -1,9 +1,19 @@
 import { Bell } from "lucide-react";
 import { NotificationPanel } from "@/components/NotificationPanel";
 import { useNotifications } from "@/hooks/useNotifications";
-import type { NotifRole } from "@/lib/notifications/store";
+import type { NotifCategory, NotifRole } from "@/lib/notifications/store";
 
 type Variant = "glass" | "outline";
+
+// B-14.2: o contador do sino só pode considerar categorias que existem como
+// aba visível no painel para o perfil atual. Categorias sem aba (ex.: "reservas"
+// para o excursionista, removida em B-08) gerariam contagem fantasma — número
+// no sino sem conteúdo correspondente ao abrir.
+const VISIBLE_CATEGORIES: Record<NotifRole, NotifCategory[] | null> = {
+  excursionista: ["pagamentos", "checkin", "embarque", "alteracoes", "staff", "socio"],
+  staff: ["checkin", "embarque"],
+  passageiro: null, // passageiro não tem filtros — conta todas
+};
 
 export function NotificationBell({
   role,
@@ -13,15 +23,19 @@ export function NotificationBell({
   variant?: Variant;
 }) {
   const { items, unread } = useNotifications(role);
-  // Contador externo = nº de categorias com ao menos 1 não-lida (filas de trabalho
-  // separadas, evita poluição visual). Para roles sem categorias (passageiro),
-  // mantém o total de não-lidas.
+  // Contador externo = nº de categorias visíveis com ao menos 1 não-lida.
+  // Para passageiro (sem categorias) usamos o total de não-lidas.
+  const visible = VISIBLE_CATEGORIES[role];
   const categoryUnread = new Set(
     items
-      .filter((n: any) => !n.read && n.category)
+      .filter((n: any) => {
+        if (n.read || !n.category) return false;
+        if (visible && !visible.includes(n.category as NotifCategory)) return false;
+        return true;
+      })
       .map((n: any) => n.category as string),
   ).size;
-  const count = role === "passageiro" ? unread : categoryUnread;
+  const count = visible === null ? unread : categoryUnread;
   const display = count > 99 ? "99+" : String(count);
 
   const buttonClass =
