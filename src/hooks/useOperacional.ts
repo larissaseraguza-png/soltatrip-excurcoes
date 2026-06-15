@@ -3,22 +3,23 @@ import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { useRealtimeSync } from "@/hooks/use-realtime-sync";
 
+// B-14.3: Operacional = painel de entregas pendentes.
+// Pagamentos têm fluxo próprio (financeiro) e NÃO entram aqui.
+// Confirmar pagamento não resolve a pendência de entrega — somente o envio do item.
 export type OperacionalGroupKey =
   | "convites"
-  | "recebimentos"
   | "sem_poltrona"
   | "sem_embarque"
-  | "combos";
+  | "combos"
+  | "ingressos"
+  | "camping"
+  | "outros";
 
 export type OperacionalItem = {
   id: string;
-  // Texto principal (ex: nome do passageiro, "Convite — staff")
   titulo: string;
-  // Texto secundário (ex: nome da excursão)
   subtitulo: string | null;
-  // Onde abrir para resolver. Para convites pode ser null (ação é copy-link).
   to?: string;
-  // Token de convite quando aplicável (categoria convites).
   token?: string;
   papel?: string;
 };
@@ -29,6 +30,14 @@ export type OperacionalGroup = {
   count: number;
   items: OperacionalItem[];
 };
+
+const ITEM_GROUP_BY_TIPO: Record<string, { key: OperacionalGroupKey; label: string }> = {
+  combo: { key: "combos", label: "combos aguardando envio" },
+  ingresso: { key: "ingressos", label: "ingressos aguardando envio" },
+  camping: { key: "camping", label: "camping aguardando envio" },
+};
+
+const OUTROS_GROUP = { key: "outros" as const, label: "itens aguardando envio" };
 
 async function fetchOperacional(userId: string): Promise<OperacionalGroup[]> {
   const { data: excursoes } = await supabase
@@ -49,31 +58,23 @@ async function fetchOperacional(userId: string): Promise<OperacionalGroup[]> {
   if (excIds.length === 0) {
     return [
       empty("convites", "convites pendentes"),
-      empty("recebimentos", "recebimentos pendentes"),
       empty("sem_poltrona", "passageiros sem poltrona"),
       empty("sem_embarque", "passageiros sem embarque"),
       empty("combos", "combos aguardando envio"),
+      empty("ingressos", "ingressos aguardando envio"),
+      empty("camping", "camping aguardando envio"),
     ];
   }
 
   const nowIso = new Date().toISOString();
 
-  const [convitesRes, recebimentosRes, semPoltronaRes, semEmbarqueRes, combosRes] = await Promise.all([
+  const [convitesRes, semPoltronaRes, semEmbarqueRes, pedidosRes] = await Promise.all([
     supabase
       .from("invitations")
       .select("id, token, papel, excursao_id, created_at")
       .eq("created_by", userId)
       .eq("used", false)
       .gt("expires_at", nowIso)
-      .order("created_at", { ascending: false })
-      .limit(50),
-    supabase
-      .from("pagamentos")
-      .select(
-        "id, valor, passageiro_id, reserva_id, excursao_id, pax:passageiros(nome), reserva:reservas(id, passageiros(id, nome))",
-      )
-      .in("excursao_id", excIds)
-      .eq("status", "pendente")
       .order("created_at", { ascending: false })
       .limit(50),
     supabase
@@ -94,11 +95,13 @@ async function fetchOperacional(userId: string): Promise<OperacionalGroup[]> {
       .limit(50),
     supabase
       .from("pedidos_itens")
-      .select("id, excursao_id, passageiro_id, item:excursao_itens(nome), pax:passageiros(nome)")
+      .select(
+        "id, excursao_id, passageiro_id, status, item:excursao_itens(nome, tipo), pax:passageiros(nome)",
+      )
       .in("excursao_id", excIds)
       .eq("status", "pendente")
       .order("created_at", { ascending: false })
-      .limit(50),
+      .limit(100),
   ]);
 
   const convites: OperacionalItem[] = (convitesRes.data ?? []).map((c: any) => {
@@ -134,42 +137,39 @@ async function fetchOperacional(userId: string): Promise<OperacionalGroup[]> {
     to: `/app/excursao/${p.excursao_id}/passageiros?focus=${p.id}&action=ponto`,
   }));
 
-  const combos: OperacionalItem[] = (combosRes.data ?? []).map((p: any) => ({
-    id: p.id,
-    titulo: p.item?.nome ?? "Combo",
-    subtitulo: [p.pax?.nome, exTitle.get(p.excursao_id)].filter(Boolean).join(" — ") || null,
-    to: `/app/excursao/${p.excursao_id}/itens`,
-  }));
+  // Agrupar pedidos por tipo de item (combo / ingresso / camping / outros).
+  // Regra B-14.3: pendência só desaparece quando status='enviado'.
+  const bucket: Record<OperacionalGroupKey, OperacionalItem[]> = {
+    convites: [],
+    sem_poltrona: [],
+    sem_embarque: [],
+    combos: [],
+    ingressos: [],
+    camping: [],
+    outros: [],
+  };
 
-  const recebimentos: OperacionalItem[] = (recebimentosRes.data ?? []).map((p: any) => {
-    // B-14.2: fallback de identificação — passageiro_id → reserva.passageiros[0].
-    // Pagamentos antigos/parciais podem ter passageiro_id nulo mesmo com reserva
-    // vinculada; sem fallback o item aparece como "Pagamento pendente" genérico.
-    const reservaPax = Array.isArray(p.reserva?.passageiros)
-      ? p.reserva.passageiros[0]
-      : null;
-    const nome = p.pax?.nome ?? reservaPax?.nome ?? "Pagamento pendente";
-    const focusId = p.passageiro_id ?? reservaPax?.id ?? p.id;
-    return {
-      id: p.id,
-      titulo: nome,
-      subtitulo:
-        [
-          `R$ ${Number(p.valor ?? 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`,
-          exTitle.get(p.excursao_id),
-        ]
-          .filter(Boolean)
-          .join(" — ") || null,
-      to: `/app/excursao/${p.excursao_id}/financeiro?focus=${focusId}`,
-    };
-  });
+  for (const p of pedidosRes.data ?? []) {
+    const tipo = (p as any).item?.tipo ?? "";
+    const target = ITEM_GROUP_BY_TIPO[tipo]?.key ?? OUTROS_GROUP.key;
+    const paxNome = (p as any).pax?.nome ?? "Passageiro";
+    const festa = exTitle.get((p as any).excursao_id) ?? null;
+    bucket[target].push({
+      id: (p as any).id,
+      titulo: paxNome,
+      subtitulo: [festa, (p as any).item?.nome].filter(Boolean).join(" — ") || null,
+      to: `/app/excursao/${(p as any).excursao_id}/itens`,
+    });
+  }
 
   return [
     { key: "convites", label: "convites pendentes", count: convites.length, items: convites },
-    { key: "recebimentos", label: "recebimentos pendentes", count: recebimentos.length, items: recebimentos },
     { key: "sem_poltrona", label: "passageiros sem poltrona", count: sem_poltrona.length, items: sem_poltrona },
     { key: "sem_embarque", label: "passageiros sem embarque", count: sem_embarque.length, items: sem_embarque },
-    { key: "combos", label: "combos aguardando envio", count: combos.length, items: combos },
+    { key: "combos", label: "combos aguardando envio", count: bucket.combos.length, items: bucket.combos },
+    { key: "ingressos", label: "ingressos aguardando envio", count: bucket.ingressos.length, items: bucket.ingressos },
+    { key: "camping", label: "camping aguardando envio", count: bucket.camping.length, items: bucket.camping },
+    { key: "outros", label: OUTROS_GROUP.label, count: bucket.outros.length, items: bucket.outros },
   ];
 }
 
@@ -193,7 +193,6 @@ export function useOperacional() {
           { table: "passageiros" },
           { table: "invitations", filter: `created_by=eq.${uid}` },
           { table: "pedidos_itens" },
-          { table: "pagamentos" },
         ]
       : [],
     [["operacional", uid]],
