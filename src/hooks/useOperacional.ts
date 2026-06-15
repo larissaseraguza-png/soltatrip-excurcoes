@@ -69,7 +69,9 @@ async function fetchOperacional(userId: string): Promise<OperacionalGroup[]> {
       .limit(50),
     supabase
       .from("pagamentos")
-      .select("id, valor, passageiro_id, excursao_id, pax:passageiros(nome)")
+      .select(
+        "id, valor, passageiro_id, reserva_id, excursao_id, pax:passageiros(nome), reserva:reservas(id, passageiros(id, nome))",
+      )
       .in("excursao_id", excIds)
       .eq("status", "pendente")
       .order("created_at", { ascending: false })
