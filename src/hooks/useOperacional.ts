@@ -35,6 +35,7 @@ const ITEM_GROUP_BY_TIPO: Record<string, { key: OperacionalGroupKey; label: stri
   combo: { key: "combos", label: "combos aguardando envio" },
   ingresso: { key: "ingressos", label: "ingressos aguardando envio" },
   camping: { key: "camping", label: "camping aguardando envio" },
+  solidario: { key: "outros", label: "itens aguardando envio" },
 };
 
 const OUTROS_GROUP = { key: "outros" as const, label: "itens aguardando envio" };
