@@ -97,13 +97,34 @@ async function fetchOperacional(userId: string): Promise<OperacionalGroup[]> {
     supabase
       .from("pedidos_itens")
       .select(
-        "id, excursao_id, passageiro_id, comprador_id, status, item:excursao_itens(nome, tipo), pax:passageiros(nome), comprador:profiles!pedidos_itens_comprador_id_fkey(full_name)",
+        "id, excursao_id, passageiro_id, comprador_id, status, item:excursao_itens(nome, tipo), pax:passageiros(nome)",
       )
       .in("excursao_id", excIds)
       .eq("status", "pendente")
       .order("created_at", { ascending: false })
       .limit(100),
   ]);
+
+  // Fallback: alguns pedidos podem não ter passageiro_id (ex.: passageiro foi
+  // removido ou compra ocorreu antes da vinculação). Buscamos o nome do
+  // comprador via profiles para sempre identificar o responsável pela entrega.
+  const compradorIdsMissingPax = Array.from(
+    new Set(
+      (pedidosRes.data ?? [])
+        .filter((p: any) => !p.pax?.nome && p.comprador_id)
+        .map((p: any) => p.comprador_id as string),
+    ),
+  );
+  const compradorNome = new Map<string, string>();
+  if (compradorIdsMissingPax.length > 0) {
+    const { data: profs } = await supabase
+      .from("profiles")
+      .select("id, full_name")
+      .in("id", compradorIdsMissingPax);
+    for (const pr of profs ?? []) {
+      if ((pr as any).full_name) compradorNome.set((pr as any).id, (pr as any).full_name);
+    }
+  }
 
   const convites: OperacionalItem[] = (convitesRes.data ?? []).map((c: any) => {
     const exTit = c.excursao_id ? exTitle.get(c.excursao_id) ?? null : null;
