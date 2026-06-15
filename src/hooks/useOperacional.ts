@@ -174,7 +174,8 @@ async function fetchOperacional(userId: string): Promise<OperacionalGroup[]> {
   for (const p of pedidosRes.data ?? []) {
     const tipo = (p as any).item?.tipo ?? "";
     const target = ITEM_GROUP_BY_TIPO[tipo]?.key ?? OUTROS_GROUP.key;
-    const paxNome = (p as any).pax?.nome ?? "Passageiro";
+    const paxNome =
+      (p as any).pax?.nome ?? compradorNome.get((p as any).comprador_id) ?? "Comprador";
     const festa = exTitle.get((p as any).excursao_id) ?? null;
     bucket[target].push({
       id: (p as any).id,
