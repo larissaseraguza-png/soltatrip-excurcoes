@@ -6,7 +6,9 @@ import {
   Armchair,
   MapPin,
   Gift,
-  CreditCard,
+  Ticket,
+  Tent,
+  Package,
   ChevronRight,
   ChevronLeft,
   Copy,
@@ -29,18 +31,22 @@ import { toast } from "sonner";
 
 const ICONS: Record<OperacionalGroupKey, React.ComponentType<{ className?: string }>> = {
   convites: Mail,
-  recebimentos: CreditCard,
   sem_poltrona: Armchair,
   sem_embarque: MapPin,
   combos: Gift,
+  ingressos: Ticket,
+  camping: Tent,
+  outros: Package,
 };
 
 const TONES: Record<OperacionalGroupKey, string> = {
   convites: "bg-neon-purple/15 text-neon-purple",
-  recebimentos: "bg-neon-green/15 text-neon-green",
   sem_poltrona: "bg-amber-500/15 text-amber-400",
   sem_embarque: "bg-blue-500/15 text-blue-400",
   combos: "bg-neon-pink/15 text-neon-pink",
+  ingressos: "bg-neon-green/15 text-neon-green",
+  camping: "bg-emerald-500/15 text-emerald-400",
+  outros: "bg-muted text-muted-foreground",
 };
 
 function inviteLink(papel: string | undefined, token: string): string {
