@@ -141,17 +141,28 @@ async function fetchOperacional(userId: string): Promise<OperacionalGroup[]> {
     to: `/app/excursao/${p.excursao_id}/itens`,
   }));
 
-  const recebimentos: OperacionalItem[] = (recebimentosRes.data ?? []).map((p: any) => ({
-    id: p.id,
-    titulo: p.pax?.nome ?? "Pagamento pendente",
-    subtitulo: [
-      `R$ ${Number(p.valor ?? 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`,
-      exTitle.get(p.excursao_id),
-    ]
-      .filter(Boolean)
-      .join(" — ") || null,
-    to: `/app/excursao/${p.excursao_id}/financeiro?focus=${p.passageiro_id ?? p.id}`,
-  }));
+  const recebimentos: OperacionalItem[] = (recebimentosRes.data ?? []).map((p: any) => {
+    // B-14.2: fallback de identificação — passageiro_id → reserva.passageiros[0].
+    // Pagamentos antigos/parciais podem ter passageiro_id nulo mesmo com reserva
+    // vinculada; sem fallback o item aparece como "Pagamento pendente" genérico.
+    const reservaPax = Array.isArray(p.reserva?.passageiros)
+      ? p.reserva.passageiros[0]
+      : null;
+    const nome = p.pax?.nome ?? reservaPax?.nome ?? "Pagamento pendente";
+    const focusId = p.passageiro_id ?? reservaPax?.id ?? p.id;
+    return {
+      id: p.id,
+      titulo: nome,
+      subtitulo:
+        [
+          `R$ ${Number(p.valor ?? 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`,
+          exTitle.get(p.excursao_id),
+        ]
+          .filter(Boolean)
+          .join(" — ") || null,
+      to: `/app/excursao/${p.excursao_id}/financeiro?focus=${focusId}`,
+    };
+  });
 
   return [
     { key: "convites", label: "convites pendentes", count: convites.length, items: convites },
