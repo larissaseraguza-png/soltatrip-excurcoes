@@ -116,15 +116,28 @@ async function fetchOperacional(userId: string): Promise<OperacionalGroup[]> {
     ),
   );
   const compradorNome = new Map<string, string>();
+  // B-14.6: pendência operacional só aparece após pagamento aprovado.
+  // Para pedidos sem passageiro vinculado, validamos se o comprador possui
+  // ao menos um passageiro pago naquela excursão (escopo (excursao_id, comprador_id)).
+  const compradorPaidPairs = new Set<string>();
   if (compradorIdsMissingPax.length > 0) {
-    const { data: profs } = await supabase
-      .from("profiles")
-      .select("id, full_name")
-      .in("id", compradorIdsMissingPax);
+    const [{ data: profs }, { data: paidPax }] = await Promise.all([
+      supabase.from("profiles").select("id, full_name").in("id", compradorIdsMissingPax),
+      supabase
+        .from("passageiros")
+        .select("excursao_id, comprador_id")
+        .in("excursao_id", excIds)
+        .in("comprador_id", compradorIdsMissingPax)
+        .eq("payment_status", "paid"),
+    ]);
     for (const pr of profs ?? []) {
       if ((pr as any).full_name) compradorNome.set((pr as any).id, (pr as any).full_name);
     }
+    for (const pp of paidPax ?? []) {
+      compradorPaidPairs.add(`${(pp as any).excursao_id}:${(pp as any).comprador_id}`);
+    }
   }
+
 
   const convites: OperacionalItem[] = (convitesRes.data ?? []).map((c: any) => {
     const exTit = c.excursao_id ? exTitle.get(c.excursao_id) ?? null : null;
