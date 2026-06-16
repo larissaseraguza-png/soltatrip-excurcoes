@@ -97,7 +97,7 @@ async function fetchOperacional(userId: string): Promise<OperacionalGroup[]> {
     supabase
       .from("pedidos_itens")
       .select(
-        "id, excursao_id, passageiro_id, comprador_id, status, item:excursao_itens(nome, tipo), pax:passageiros(nome)",
+        "id, excursao_id, passageiro_id, comprador_id, status, item:excursao_itens(nome, tipo), pax:passageiros(nome, payment_status)",
       )
       .in("excursao_id", excIds)
       .eq("status", "pendente")
@@ -116,15 +116,28 @@ async function fetchOperacional(userId: string): Promise<OperacionalGroup[]> {
     ),
   );
   const compradorNome = new Map<string, string>();
+  // B-14.6: pendência operacional só aparece após pagamento aprovado.
+  // Para pedidos sem passageiro vinculado, validamos se o comprador possui
+  // ao menos um passageiro pago naquela excursão (escopo (excursao_id, comprador_id)).
+  const compradorPaidPairs = new Set<string>();
   if (compradorIdsMissingPax.length > 0) {
-    const { data: profs } = await supabase
-      .from("profiles")
-      .select("id, full_name")
-      .in("id", compradorIdsMissingPax);
+    const [{ data: profs }, { data: paidPax }] = await Promise.all([
+      supabase.from("profiles").select("id, full_name").in("id", compradorIdsMissingPax),
+      supabase
+        .from("passageiros")
+        .select("excursao_id, comprador_id")
+        .in("excursao_id", excIds)
+        .in("comprador_id", compradorIdsMissingPax)
+        .eq("payment_status", "paid"),
+    ]);
     for (const pr of profs ?? []) {
       if ((pr as any).full_name) compradorNome.set((pr as any).id, (pr as any).full_name);
     }
+    for (const pp of paidPax ?? []) {
+      compradorPaidPairs.add(`${(pp as any).excursao_id}:${(pp as any).comprador_id}`);
+    }
   }
+
 
   const convites: OperacionalItem[] = (convitesRes.data ?? []).map((c: any) => {
     const exTit = c.excursao_id ? exTitle.get(c.excursao_id) ?? null : null;
@@ -172,18 +185,27 @@ async function fetchOperacional(userId: string): Promise<OperacionalGroup[]> {
   };
 
   for (const p of pedidosRes.data ?? []) {
+    const pax = (p as any).pax;
+    const compradorId = (p as any).comprador_id as string | null;
+    const excursaoId = (p as any).excursao_id as string;
+    // B-14.6: pendência operacional só após pagamento aprovado.
+    const paxPaid = pax?.payment_status === "paid";
+    const compradorPaid =
+      !pax && compradorId ? compradorPaidPairs.has(`${excursaoId}:${compradorId}`) : false;
+    if (!paxPaid && !compradorPaid) continue;
+
     const tipo = (p as any).item?.tipo ?? "";
     const target = ITEM_GROUP_BY_TIPO[tipo]?.key ?? OUTROS_GROUP.key;
-    const paxNome =
-      (p as any).pax?.nome ?? compradorNome.get((p as any).comprador_id) ?? "Comprador";
-    const festa = exTitle.get((p as any).excursao_id) ?? null;
+    const paxNome = pax?.nome ?? (compradorId ? compradorNome.get(compradorId) : null) ?? "Comprador";
+    const festa = exTitle.get(excursaoId) ?? null;
     bucket[target].push({
       id: (p as any).id,
       titulo: paxNome,
       subtitulo: [festa, (p as any).item?.nome].filter(Boolean).join(" — ") || null,
-      to: `/app/excursao/${(p as any).excursao_id}/itens`,
+      to: `/app/excursao/${excursaoId}/itens?focus=${(p as any).id}`,
     });
   }
+
 
   return [
     { key: "convites", label: "convites pendentes", count: convites.length, items: convites },

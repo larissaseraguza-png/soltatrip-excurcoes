@@ -53,6 +53,8 @@ export function resolveNotificationRoute(
   const reservaId = pick(data, "reserva_id", "reservaId");
   const paxId = pick(data, "passageiro_id", "passageiroId", "pax_id");
   const itemId = pick(data, "item_id", "itemId");
+  const pedidoId = pick(data, "pedido_id", "pedidoId");
+
 
   switch (type as NotifType) {
     // ---- Pagamentos ----
@@ -106,7 +108,11 @@ export function resolveNotificationRoute(
 
     // ---- Itens ----
     case "item.ordered":
-      if (role === "excursionista" && excursaoId) return `/app/excursao/${excursaoId}/itens`;
+      if (role === "excursionista" && excursaoId) {
+        return pedidoId
+          ? `/app/excursao/${excursaoId}/itens?focus=${pedidoId}`
+          : `/app/excursao/${excursaoId}/itens`;
+      }
       if (role === "passageiro" && reservaId) return `/passageiro/itens/${reservaId}`;
       return undefined;
     case "item.delivered":
