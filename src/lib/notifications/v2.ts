@@ -345,11 +345,12 @@ export function useNotificationsV2(role: NotifRole) {
         //   - invitation.created / socio.invited → "convites pendentes"
         //   - item.ordered                       → "combos aguardando envio"
         if (role === "excursionista") {
-          if (
-            n.__type === "invitation.created" ||
-            n.__type === "socio.invited" ||
-            n.__type === "item.ordered"
-          ) {
+          // invitation.created/socio.invited continuam só no Operacional
+          // (representam ação do próprio excursionista). item.ordered volta
+          // para o sino (B-14.7) — é um acontecimento ("Fulano solicitou
+          // ingresso") e também permanece no Operacional como pendência de
+          // entrega, são sistemas independentes.
+          if (n.__type === "invitation.created" || n.__type === "socio.invited") {
             return false;
           }
         }

@@ -10,7 +10,9 @@ type Variant = "glass" | "outline";
 // para o excursionista, removida em B-08) gerariam contagem fantasma — número
 // no sino sem conteúdo correspondente ao abrir.
 const VISIBLE_CATEGORIES: Record<NotifRole, NotifCategory[] | null> = {
-  excursionista: ["pagamentos", "checkin", "embarque", "alteracoes", "staff", "socio"],
+  // B-14.7: "reservas" volta como aba "Eventos" para acolher item.ordered
+  // (ingresso/combo/camping/copo) — notificações do módulo Eventos.
+  excursionista: ["pagamentos", "reservas", "checkin", "embarque", "alteracoes", "staff", "socio"],
   staff: ["checkin", "embarque"],
   passageiro: null, // passageiro não tem filtros — conta todas
 };
