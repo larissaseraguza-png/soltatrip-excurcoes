@@ -31,8 +31,10 @@ import { resolveNotificationRoute } from "@/lib/notifications/resolveRoute";
 const FILTERS_BY_ROLE: Record<NotifRole, { key: NotifCategory; label: string }[]> = {
   excursionista: [
     { key: "pagamentos", label: "Pagamentos" },
-    // B-08: aba "Reservas" removida — pendências operacionais agora vivem
-    // no novo botão Operacional (ver OperacionalBell).
+    // B-14.7: aba "Eventos" acolhe item.ordered (ingresso/combo/camping/copo).
+    // Operacional continua mostrando as mesmas compras como pendência de
+    // entrega — sistemas independentes (acontecimento × tarefa).
+    { key: "reservas", label: "Eventos" },
     { key: "checkin", label: "Check-in" },
     { key: "embarque", label: "Embarque" },
     { key: "alteracoes", label: "Alterações" },

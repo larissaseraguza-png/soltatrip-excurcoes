@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 
 import { Shell } from "@/components/passageiro/Shell";
-import { emitBusinessEvent } from "@/lib/notifications/business";
+
 
 export const Route = createFileRoute("/passageiro/itens/$id")({
   component: ItensPassageiro,
@@ -281,23 +281,9 @@ function ItemCard({ item, excursaoId, userId, compact }: { item: any; excursaoId
       if (ehCombo) {
         const reservaId = novaReservaId ?? pax?.reserva_id ?? null;
         toast.success("Combo reservado! Escolha ônibus, poltrona e embarque.");
-        // Emite item.ordered para combo SEMPRE (nova reserva OU reuso de reserva
-        // existente). booking.created já é emitido pela trigger DB em `reservas`
-        // quando aplicável; item.ordered cobre a faceta de pedido do combo.
-        void emitBusinessEvent({
-          type: "item.ordered",
-          excursaoId: excursaoId,
-          reservaId: reservaId ?? undefined,
-          passageiroId: pax?.id ?? null,
-          title: "Novo pedido de item",
-          message: `Pedido do combo "${item.nome}".`,
-          link: `/app/excursao/${excursaoId}/passageiros`,
-          recipientRoles: ["organizer_root", "organizer_socios"],
-          dedupeKey: reservaId
-            ? `item.ordered:${reservaId}:${item.id}`
-            : `item.ordered:${userId}:${item.id}:${Date.now()}`,
-          data: { item_id: item.id, item_nome: item.nome, quantidade: qtd, combo: true },
-        });
+        // B-14.7: notificação `item.ordered` é emitida exclusivamente pela
+        // trigger `trg_pedidos_itens_notify_ordered` no banco. Cliente não
+        // emite mais para evitar duplicidade.
         if (reservaId) {
           navigate({ to: "/passageiro/reserva/$id", params: { id: reservaId } });
         } else if (pax?.id) {
@@ -305,17 +291,8 @@ function ItemCard({ item, excursaoId, userId, compact }: { item: any; excursaoId
         }
       } else {
         toast.success("Pedido enviado! O organizador irá confirmar o pagamento e emitir.");
-        void emitBusinessEvent({
-          type: "item.ordered",
-          excursaoId: excursaoId,
-          passageiroId: pax?.id ?? null,
-          title: "Novo pedido de item",
-          message: `Pedido de ${qtd}x "${item.nome}".`,
-          link: `/app/excursao/${excursaoId}/itens`,
-          recipientRoles: ["organizer_root", "organizer_socios"],
-          dedupeKey: `item.ordered:${userId}:${item.id}:${Date.now()}`,
-          data: { item_id: item.id, item_nome: item.nome, quantidade: qtd, combo: false },
-        });
+        // B-14.7: notificação `item.ordered` é emitida exclusivamente pela
+        // trigger do banco — sem emit no cliente.
       }
     } catch (err: any) {
       const msg = String(err?.message ?? "");

@@ -8,7 +8,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useRealtimeSync } from "@/hooks/use-realtime-sync";
 import { Calendar, MapPin, Loader2, Sparkles, Ticket, Compass, X, Plus, Minus, Users, Bus, Clock, Package, Tent, Crown, HeartHandshake, KeyRound, Flame, ChevronRight } from "lucide-react";
 import { emitSync } from "@/lib/sync/bus";
-import { emitBusinessEvent } from "@/lib/notifications/business";
+
 
 export const Route = createFileRoute("/passageiro/")({
   component: MinhasViagens,
@@ -241,26 +241,10 @@ function MinhasViagens() {
           if (msg.includes("sold_out")) toast.warning("Reserva criada, mas o combo esgotou.");
           else if (msg.includes("invalid_quantity")) toast.warning("Reserva criada, mas a quantidade do combo é inválida.");
           else toast.warning("Reserva criada, mas houve um problema ao registrar o combo. Finalize pelo evento.");
-        } else {
-          // Notifica organizador/sócios sobre o pedido do combo (item.ordered),
-          // mantendo o mesmo evento usado pelo fluxo /passageiro/itens/$id.
-          void emitBusinessEvent({
-            type: "item.ordered",
-            excursaoId: modalEx.id,
-            reservaId,
-            title: "Novo pedido de item",
-            message: `Pedido do combo "${selectedItem.nome}".`,
-            link: `/app/excursao/${modalEx.id}/passageiros`,
-            recipientRoles: ["organizer_root", "organizer_socios"],
-            dedupeKey: `item.ordered:${reservaId}:${selectedItem.id}`,
-            data: {
-              item_id: selectedItem.id,
-              item_nome: selectedItem.nome,
-              quantidade: qtd,
-              combo: true,
-            },
-          });
         }
+        // B-14.7: notificação `item.ordered` é emitida exclusivamente pela
+        // trigger `trg_pedidos_itens_notify_ordered` no banco. Cliente não
+        // emite para evitar duplicidade.
       }
 
       qc.invalidateQueries({ queryKey: ["minhas-reservas"] });
