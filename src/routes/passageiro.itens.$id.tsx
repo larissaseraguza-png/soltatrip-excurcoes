@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 
 import { Shell } from "@/components/passageiro/Shell";
-import { emitBusinessEvent } from "@/lib/notifications/business";
+
 
 export const Route = createFileRoute("/passageiro/itens/$id")({
   component: ItensPassageiro,
