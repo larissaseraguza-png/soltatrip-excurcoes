@@ -546,6 +546,7 @@ export type Database = {
           pago_em: string | null
           parcelas: number
           passageiro_id: string | null
+          pedido_item_id: string | null
           reserva_id: string | null
           status: string
           updated_at: string
@@ -563,6 +564,7 @@ export type Database = {
           pago_em?: string | null
           parcelas?: number
           passageiro_id?: string | null
+          pedido_item_id?: string | null
           reserva_id?: string | null
           status?: string
           updated_at?: string
@@ -580,6 +582,7 @@ export type Database = {
           pago_em?: string | null
           parcelas?: number
           passageiro_id?: string | null
+          pedido_item_id?: string | null
           reserva_id?: string | null
           status?: string
           updated_at?: string
@@ -605,6 +608,13 @@ export type Database = {
             columns: ["passageiro_id"]
             isOneToOne: false
             referencedRelation: "passageiros"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pagamentos_pedido_item_id_fkey"
+            columns: ["pedido_item_id"]
+            isOneToOne: false
+            referencedRelation: "pedidos_itens"
             referencedColumns: ["id"]
           },
           {
