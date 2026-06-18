@@ -177,11 +177,8 @@ async function fetchOperacional(userId: string): Promise<OperacionalGroup[]> {
     const pax = (p as any).pax;
     const compradorId = (p as any).comprador_id as string | null;
     const excursaoId = (p as any).excursao_id as string;
-    // B-14.6: pendência operacional só após pagamento aprovado.
-    const paxPaid = pax?.payment_status === "paid";
-    const compradorPaid =
-      !pax && compradorId ? compradorPaidPairs.has(`${excursaoId}:${compradorId}`) : false;
-    if (!paxPaid && !compradorPaid) continue;
+    // B-14.8: sem gate de pagamento — o pedido em si é a entrega pendente.
+    // Só some quando status='enviado' (filtrado na query).
 
     const tipo = (p as any).item?.tipo ?? "";
     const target = ITEM_GROUP_BY_TIPO[tipo]?.key ?? OUTROS_GROUP.key;
