@@ -101,7 +101,7 @@ async function fetchOperacional(userId: string): Promise<OperacionalGroup[]> {
     supabase
       .from("pedidos_itens")
       .select(
-        "id, excursao_id, passageiro_id, comprador_id, status, item:excursao_itens(nome, tipo), pax:passageiros(nome, payment_status)",
+        "id, excursao_id, passageiro_id, comprador_id, status, item:excursao_itens(nome, tipo)",
       )
       .in("excursao_id", excIds)
       .eq("status", "pendente")
