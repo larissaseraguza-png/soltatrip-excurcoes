@@ -46,9 +46,12 @@ async function fetchOperacional(userId: string): Promise<OperacionalGroup[]> {
   // (equipe_excursoes). Filtrar apenas por organizer_id deixava sócios
   // com Operacional vazio mesmo havendo pedidos pendentes.
   const { data: rpcRows } = await (supabase as any).rpc("list_managed_excursoes");
-  const exList = (rpcRows ?? []).map((r: any) => ({ id: r.id as string, titulo: r.titulo as string }));
+  const exList: { id: string; titulo: string }[] = (rpcRows ?? []).map((r: any) => ({
+    id: r.id as string,
+    titulo: (r.titulo as string) ?? "",
+  }));
   const excIds = exList.map((e) => e.id);
-  const exTitle = new Map(exList.map((e) => [e.id, e.titulo as string]));
+  const exTitle = new Map<string, string>(exList.map((e) => [e.id, e.titulo]));
 
   const empty = (key: OperacionalGroupKey, label: string): OperacionalGroup => ({
     key,
