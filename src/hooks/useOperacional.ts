@@ -41,11 +41,12 @@ const ITEM_GROUP_BY_TIPO: Record<string, { key: OperacionalGroupKey; label: stri
 const OUTROS_GROUP = { key: "outros" as const, label: "itens aguardando envio" };
 
 async function fetchOperacional(userId: string): Promise<OperacionalGroup[]> {
-  const { data: excursoes } = await supabase
-    .from("excursoes")
-    .select("id,titulo")
-    .eq("organizer_id", userId);
-  const exList = excursoes ?? [];
+  // Usa a mesma RPC do painel /app — inclui excursões onde o usuário é
+  // organizador raiz, sócio (excursionista_socios) ou coorganizador
+  // (equipe_excursoes). Filtrar apenas por organizer_id deixava sócios
+  // com Operacional vazio mesmo havendo pedidos pendentes.
+  const { data: rpcRows } = await (supabase as any).rpc("list_managed_excursoes");
+  const exList = (rpcRows ?? []).map((r: any) => ({ id: r.id as string, titulo: r.titulo as string }));
   const excIds = exList.map((e) => e.id);
   const exTitle = new Map(exList.map((e) => [e.id, e.titulo as string]));
 
