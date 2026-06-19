@@ -113,10 +113,25 @@ async function fetchOperacional(userId: string): Promise<OperacionalGroup[]> {
   // de pagamento. O pedido em si é a entrega pendente — só sai quando
   // `status='enviado'`. Isso vale para combos (com passageiro), ingressos
   // avulsos, camping e copos (sem passageiro/reserva vinculados).
+  const pedidos = pedidosRes.data ?? [];
+  const paxIds = Array.from(
+    new Set(pedidos.map((p: any) => p.passageiro_id).filter(Boolean) as string[]),
+  );
+  const paxNomeById = new Map<string, string>();
+  if (paxIds.length > 0) {
+    const { data: paxRows } = await supabase
+      .from("passageiros")
+      .select("id, nome")
+      .in("id", paxIds);
+    for (const px of paxRows ?? []) {
+      if ((px as any).nome) paxNomeById.set((px as any).id, (px as any).nome);
+    }
+  }
+
   const compradorIdsMissingPax = Array.from(
     new Set(
-      (pedidosRes.data ?? [])
-        .filter((p: any) => !p.pax?.nome && p.comprador_id)
+      pedidos
+        .filter((p: any) => !paxNomeById.get(p.passageiro_id) && p.comprador_id)
         .map((p: any) => p.comprador_id as string),
     ),
   );
