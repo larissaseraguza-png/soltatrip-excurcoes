@@ -192,8 +192,8 @@ async function fetchOperacional(userId: string): Promise<OperacionalGroup[]> {
     outros: [],
   };
 
-  for (const p of pedidosRes.data ?? []) {
-    const pax = (p as any).pax;
+  for (const p of pedidos) {
+    const passageiroId = (p as any).passageiro_id as string | null;
     const compradorId = (p as any).comprador_id as string | null;
     const excursaoId = (p as any).excursao_id as string;
     // B-14.8: sem gate de pagamento — o pedido em si é a entrega pendente.
@@ -201,7 +201,10 @@ async function fetchOperacional(userId: string): Promise<OperacionalGroup[]> {
 
     const tipo = (p as any).item?.tipo ?? "";
     const target = ITEM_GROUP_BY_TIPO[tipo]?.key ?? OUTROS_GROUP.key;
-    const paxNome = pax?.nome ?? (compradorId ? compradorNome.get(compradorId) : null) ?? "Comprador";
+    const paxNome =
+      (passageiroId ? paxNomeById.get(passageiroId) : null) ??
+      (compradorId ? compradorNome.get(compradorId) : null) ??
+      "Comprador";
     const festa = exTitle.get(excursaoId) ?? null;
     bucket[target].push({
       id: (p as any).id,
