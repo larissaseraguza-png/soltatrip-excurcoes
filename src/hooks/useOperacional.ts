@@ -101,7 +101,7 @@ async function fetchOperacional(userId: string): Promise<OperacionalGroup[]> {
     supabase
       .from("pedidos_itens")
       .select(
-        "id, excursao_id, passageiro_id, comprador_id, status, item:excursao_itens(nome, tipo), pax:passageiros(nome, payment_status)",
+        "id, excursao_id, passageiro_id, comprador_id, status, item:excursao_itens(nome, tipo)",
       )
       .in("excursao_id", excIds)
       .eq("status", "pendente")
@@ -113,10 +113,25 @@ async function fetchOperacional(userId: string): Promise<OperacionalGroup[]> {
   // de pagamento. O pedido em si é a entrega pendente — só sai quando
   // `status='enviado'`. Isso vale para combos (com passageiro), ingressos
   // avulsos, camping e copos (sem passageiro/reserva vinculados).
+  const pedidos = pedidosRes.data ?? [];
+  const paxIds = Array.from(
+    new Set(pedidos.map((p: any) => p.passageiro_id).filter(Boolean) as string[]),
+  );
+  const paxNomeById = new Map<string, string>();
+  if (paxIds.length > 0) {
+    const { data: paxRows } = await supabase
+      .from("passageiros")
+      .select("id, nome")
+      .in("id", paxIds);
+    for (const px of paxRows ?? []) {
+      if ((px as any).nome) paxNomeById.set((px as any).id, (px as any).nome);
+    }
+  }
+
   const compradorIdsMissingPax = Array.from(
     new Set(
-      (pedidosRes.data ?? [])
-        .filter((p: any) => !p.pax?.nome && p.comprador_id)
+      pedidos
+        .filter((p: any) => !paxNomeById.get(p.passageiro_id) && p.comprador_id)
         .map((p: any) => p.comprador_id as string),
     ),
   );
@@ -177,8 +192,8 @@ async function fetchOperacional(userId: string): Promise<OperacionalGroup[]> {
     outros: [],
   };
 
-  for (const p of pedidosRes.data ?? []) {
-    const pax = (p as any).pax;
+  for (const p of pedidos) {
+    const passageiroId = (p as any).passageiro_id as string | null;
     const compradorId = (p as any).comprador_id as string | null;
     const excursaoId = (p as any).excursao_id as string;
     // B-14.8: sem gate de pagamento — o pedido em si é a entrega pendente.
@@ -186,7 +201,10 @@ async function fetchOperacional(userId: string): Promise<OperacionalGroup[]> {
 
     const tipo = (p as any).item?.tipo ?? "";
     const target = ITEM_GROUP_BY_TIPO[tipo]?.key ?? OUTROS_GROUP.key;
-    const paxNome = pax?.nome ?? (compradorId ? compradorNome.get(compradorId) : null) ?? "Comprador";
+    const paxNome =
+      (passageiroId ? paxNomeById.get(passageiroId) : null) ??
+      (compradorId ? compradorNome.get(compradorId) : null) ??
+      "Comprador";
     const festa = exTitle.get(excursaoId) ?? null;
     bucket[target].push({
       id: (p as any).id,
