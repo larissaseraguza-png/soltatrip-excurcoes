@@ -192,6 +192,7 @@ async function fetchOperacional(userId: string): Promise<OperacionalGroup[]> {
     combos: [],
     ingressos: [],
     camping: [],
+    copos: [],
     outros: [],
   };
 
@@ -203,7 +204,7 @@ async function fetchOperacional(userId: string): Promise<OperacionalGroup[]> {
     // Só some quando status='enviado' (filtrado na query).
 
     const tipo = (p as any).item?.tipo ?? "";
-    const target = ITEM_GROUP_BY_TIPO[tipo]?.key ?? OUTROS_GROUP.key;
+    const target: OperacionalGroupKey = ITEM_GROUP_BY_TIPO[tipo] ?? "outros";
     const paxNome =
       (passageiroId ? paxNomeById.get(passageiroId) : null) ??
       (compradorId ? compradorNome.get(compradorId) : null) ??
@@ -225,7 +226,8 @@ async function fetchOperacional(userId: string): Promise<OperacionalGroup[]> {
     { key: "combos", label: "combos aguardando envio", count: bucket.combos.length, items: bucket.combos },
     { key: "ingressos", label: "ingressos aguardando envio", count: bucket.ingressos.length, items: bucket.ingressos },
     { key: "camping", label: "camping aguardando envio", count: bucket.camping.length, items: bucket.camping },
-    { key: "outros", label: OUTROS_GROUP.label, count: bucket.outros.length, items: bucket.outros },
+    { key: "copos", label: "copos/solidários aguardando envio", count: bucket.copos.length, items: bucket.copos },
+    { key: "outros", label: "itens aguardando envio", count: bucket.outros.length, items: bucket.outros },
   ];
 }
 
@@ -255,7 +257,12 @@ export function useOperacional() {
   );
 
   const groups = query.data ?? [];
+  // B-14.10.4: o badge representa TAREFAS pendentes (soma de itens),
+  // não categorias. Abrir/visualizar uma categoria NUNCA altera o contador —
+  // só cai quando o item é efetivamente enviado/concluído (status='enviado').
+  const pendingTotal = groups.reduce((sum, g) => sum + g.count, 0);
   const pendingCategories = groups.filter((g) => g.count > 0).length;
 
-  return { groups, pendingCategories, isLoading: query.isLoading };
+  return { groups, pendingTotal, pendingCategories, isLoading: query.isLoading };
+
 }
