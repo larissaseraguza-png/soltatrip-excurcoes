@@ -13,6 +13,7 @@ export type OperacionalGroupKey =
   | "combos"
   | "ingressos"
   | "camping"
+  | "copos"
   | "outros";
 
 export type OperacionalItem = {
@@ -31,14 +32,16 @@ export type OperacionalGroup = {
   items: OperacionalItem[];
 };
 
-const ITEM_GROUP_BY_TIPO: Record<string, { key: OperacionalGroupKey; label: string }> = {
-  combo: { key: "combos", label: "combos aguardando envio" },
-  ingresso: { key: "ingressos", label: "ingressos aguardando envio" },
-  camping: { key: "camping", label: "camping aguardando envio" },
-  solidario: { key: "outros", label: "itens aguardando envio" },
+// B-14.10.4: agrupamento estrito por tipo do produto comprado.
+// Combo permanece SEMPRE em "combos", mesmo que internamente represente um
+// ingresso — nunca somar combos na contagem de ingressos avulsos.
+const ITEM_GROUP_BY_TIPO: Record<string, OperacionalGroupKey> = {
+  combo: "combos",
+  ingresso: "ingressos",
+  camping: "camping",
+  copo: "copos",
+  solidario: "copos",
 };
-
-const OUTROS_GROUP = { key: "outros" as const, label: "itens aguardando envio" };
 
 async function fetchOperacional(userId: string): Promise<OperacionalGroup[]> {
   // Usa a mesma RPC do painel /app — inclui excursões onde o usuário é
