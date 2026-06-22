@@ -37,6 +37,7 @@ const ICONS: Record<OperacionalGroupKey, React.ComponentType<{ className?: strin
   combos: Gift,
   ingressos: Ticket,
   camping: Tent,
+  copos: Coffee,
   outros: Package,
 };
 
@@ -47,6 +48,7 @@ const TONES: Record<OperacionalGroupKey, string> = {
   combos: "bg-neon-pink/15 text-neon-pink",
   ingressos: "bg-neon-green/15 text-neon-green",
   camping: "bg-emerald-500/15 text-emerald-400",
+  copos: "bg-orange-500/15 text-orange-400",
   outros: "bg-muted text-muted-foreground",
 };
 
