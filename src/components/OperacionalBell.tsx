@@ -63,8 +63,8 @@ export function OperacionalBell() {
   const [open, setOpen] = useState(false);
   const [openKey, setOpenKey] = useState<OperacionalGroupKey | null>(null);
   const navigate = useNavigate();
-  const { groups, pendingCategories } = useOperacional();
-  const display = pendingCategories > 99 ? "99+" : String(pendingCategories);
+  const { groups, pendingTotal } = useOperacional();
+  const display = pendingTotal > 99 ? "99+" : String(pendingTotal);
 
   const visibles = groups.filter((g) => g.count > 0);
   const current = openKey ? groups.find((g) => g.key === openKey) ?? null : null;
