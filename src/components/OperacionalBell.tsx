@@ -9,6 +9,7 @@ import {
   Ticket,
   Tent,
   Package,
+  Coffee,
   ChevronRight,
   ChevronLeft,
   Copy,
@@ -36,6 +37,7 @@ const ICONS: Record<OperacionalGroupKey, React.ComponentType<{ className?: strin
   combos: Gift,
   ingressos: Ticket,
   camping: Tent,
+  copos: Coffee,
   outros: Package,
 };
 
@@ -46,6 +48,7 @@ const TONES: Record<OperacionalGroupKey, string> = {
   combos: "bg-neon-pink/15 text-neon-pink",
   ingressos: "bg-neon-green/15 text-neon-green",
   camping: "bg-emerald-500/15 text-emerald-400",
+  copos: "bg-orange-500/15 text-orange-400",
   outros: "bg-muted text-muted-foreground",
 };
 
@@ -60,8 +63,8 @@ export function OperacionalBell() {
   const [open, setOpen] = useState(false);
   const [openKey, setOpenKey] = useState<OperacionalGroupKey | null>(null);
   const navigate = useNavigate();
-  const { groups, pendingCategories } = useOperacional();
-  const display = pendingCategories > 99 ? "99+" : String(pendingCategories);
+  const { groups, pendingTotal } = useOperacional();
+  const display = pendingTotal > 99 ? "99+" : String(pendingTotal);
 
   const visibles = groups.filter((g) => g.count > 0);
   const current = openKey ? groups.find((g) => g.key === openKey) ?? null : null;
@@ -112,7 +115,7 @@ export function OperacionalBell() {
           className="relative inline-flex items-center justify-center rounded-lg border border-border bg-card px-3 py-1.5 hover:bg-secondary transition"
         >
           <ClipboardList className="h-4 w-4 text-foreground" />
-          {pendingCategories > 0 && (
+          {pendingTotal > 0 && (
             <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] flex items-center justify-center px-1 text-[10px] font-bold rounded-full bg-neon-pink text-white border-2 border-background">
               {display}
             </span>
