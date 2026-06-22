@@ -9,6 +9,7 @@ import {
   Ticket,
   Tent,
   Package,
+  Coffee,
   ChevronRight,
   ChevronLeft,
   Copy,
