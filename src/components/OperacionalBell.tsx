@@ -115,7 +115,7 @@ export function OperacionalBell() {
           className="relative inline-flex items-center justify-center rounded-lg border border-border bg-card px-3 py-1.5 hover:bg-secondary transition"
         >
           <ClipboardList className="h-4 w-4 text-foreground" />
-          {pendingCategories > 0 && (
+          {pendingTotal > 0 && (
             <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] flex items-center justify-center px-1 text-[10px] font-bold rounded-full bg-neon-pink text-white border-2 border-background">
               {display}
             </span>
